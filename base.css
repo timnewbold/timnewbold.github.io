@@ -1,0 +1,211 @@
+body
+{
+  font-family: Verdana,sans-serif;
+  margin: 0px;
+  font-weight: 400;
+  background: white;
+}
+
+#content
+{
+  width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#header
+{
+  min-height: 213px;
+  background: url('./images/header.jpg') white;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: block;
+  padding-top: 30px;
+}
+
+#menu
+{
+  min-height: 25px;
+  width: 956px;
+  margin: 10px 0;
+  padding: 0;
+  border: 0;
+  text-align: center;
+}
+
+#menu ul
+{
+  min-height: 26px;
+  list-style: none;
+  margin: 0;
+  border: 0;
+  padding: 0 0 0 8px;
+}
+
+#menu li
+{
+  display: inline-block;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+#menu a
+{
+  min-height: 20px;
+  display: inline-block;
+  margin: 0;
+  border: 0;
+  padding: 3px 7px;
+  font-size: 16px;
+}
+
+#footer div
+{
+  width: 888px;
+  margin-left: 15px;
+  padding: 5px 20px;
+}
+
+a
+{
+  text-decoration: none;
+  font-weight: bold;
+  color: #000000;
+  transition: color 125ms, background 125ms;
+}
+
+a:hover, 
+a.menuhere
+{
+  color: #000000;
+  background-color: #cccccc;
+}
+
+img
+{
+  border: 0;
+  margin: 5px;
+}
+
+h4
+{
+  font-style: italic;
+}
+
+.panel
+{
+  width: 888px;
+  margin: 10px 10px;
+  padding: 5px 20px;    
+  background: #ffffff;
+}
+
+.panel p, li
+{
+  color: #404040;
+}
+
+.panel:after 
+{
+  content: '';
+  clear: both;
+  float: none;
+  display: block;
+}
+
+.heading
+{
+  margin: 30px 0px 0px 0px;
+}
+
+.separator
+{
+  border-top-style: solid;
+  border-width: 2px;
+  border-color: black;
+}
+
+.subheading
+{
+  font-style: italic;
+  font-size: small;
+  margin: 0px 20px;
+}
+
+.person
+{
+  overflow: hidden;
+  width: 100%;
+}
+
+.photowide
+{
+  width: 600px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.photoportrait
+{
+  width: 250px;  
+}
+
+.photolandscape
+{
+  width: 275px;  
+}
+
+.photoright
+{
+  float: right;
+  margin-left: 10px;
+}
+
+.photoleft
+{
+  float: left;
+  margin-right: 10px;
+}
+
+.photofull
+{
+  width: 100%;
+  display: block;
+}
+
+.logo:hover
+{
+  background: none;
+}
+
+.logo img
+{
+  width: 120px;
+}
+
+.notice
+{
+  margin: 0px 50px;
+  padding: 0px 50px;
+  border-style: solid none;
+  border-width: 2px;
+  border-color: black;
+  background: #94D4FF;
+  text-align: center;
+}
+
+.button:hover {
+    background-color: #777;
+}
+
+
+
+.figcaption {
+  font-size: 14px;
+}
+
+.clear {
+  clear: both;
+}
