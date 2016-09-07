@@ -23,6 +23,13 @@ body
   padding-top: 30px;
 }
 
+#sidebar 
+{
+    width: 200px;
+    height: 30px;
+    float: right;
+}
+
 #menu
 {
   min-height: 25px;
