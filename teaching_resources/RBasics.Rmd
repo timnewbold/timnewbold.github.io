@@ -1,0 +1,19 @@
+---
+title: R Basics
+author: "Tim Newbold"
+output: html_document
+---
+
+# Overview
+
+In this session, we cover some of the basics of working with R:
+
+* Installing R
+* Getting started with R and conducting basic arithmetic
+* Variable assignment
+* Exploring variables
+* Manipulating variables
+* Commenting your code
+
+# Installing R
+
