@@ -174,16 +174,113 @@ pre code {
 <h1>Overview</h1>
 <p>In this session, we cover some of the basics of working with R:</p>
 <ul>
-<li>Installing R</li>
-<li>Getting started with R and conducting basic arithmetic</li>
+<li>Getting started with R</li>
+<li>Conducting basic arithmetic</li>
 <li>Variable assignment</li>
 <li>Exploring variables</li>
 <li>Manipulating variables</li>
-<li>Commenting your code</li>
+<li>Code structuring and commenting</li>
 </ul>
 </div>
-<div id="installing-r" class="section level1">
-<h1>Installing R</h1>
+<div id="getting-started-with-r" class="section level1">
+<h1>Getting Started with R</h1>
+<p>If you are starting with R for the first time, I recommend playing around with R code on <a href="https://rdrr.io/snippets/" target="_blank">this great website</a>. This allows you to get to grips with the basics without having to install the R software (more on that in a later session).</p>
+<p>Throughout all of the material in my introduction to R sessions, you may find this <a href="https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf" target="_blank">cheatsheet</a> helpful (thanks to Mhairi McNeill for making this available).</p>
+</div>
+<div id="conducting-basic-arithmetic" class="section level1">
+<h1>Conducting Basic Arithmetic</h1>
+<p>If you type a single number into R, perhaps not surprisingly R simply returns that number (here the top line is what I have entered, and the bottom line is what R returns):</p>
+<pre class="r"><code>1.0</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>Try this for yourself.</p>
+<p>Things get more useful if we ask R to perform some basic arithmetic:</p>
+<pre class="r"><code>1.0 + 2.0</code></pre>
+<pre><code>## [1] 3</code></pre>
+<pre class="r"><code>5.0/2</code></pre>
+<pre><code>## [1] 2.5</code></pre>
+<p>Try some simple arithmetic operations.</p>
+</div>
+<div id="variable-assignment" class="section level1">
+<h1>Variable Assignment</h1>
+<p>So far, we have just used R as a glorified calculator. It gets more powerful when we save numbers as variables, allowing them to be re-used and manipulated. We assign variables like this:</p>
+<pre class="r"><code>x &lt;- 1.0</code></pre>
+<p>Because R has simply assigned the variable <em>x</em>, the result isn’t yet displayed. But we can ask R to return the value of x:</p>
+<pre class="r"><code>x</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>You can also reverse the direction of the arrows in variable assignment, although you will rarely see this approach used in practice:</p>
+<pre class="r"><code>1.0 -&gt; x
+x</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>Variables can also be assigned to take the result of an arithmetic operation, for example:</p>
+<pre class="r"><code>y &lt;- 1.0 + 2.0
+y</code></pre>
+<pre><code>## [1] 3</code></pre>
+</div>
+<div id="exploring-variables" class="section level1">
+<h1>Exploring variables</h1>
+<p>Once you have assigned some variables in R, it is useful to be able to find out what variables you have, and to find out what those variables are. I will now introduce a couple of functions that are very useful for this.</p>
+<p>First, to see what variables you have in your R environment, you can use the built-in <em>ls</em> function (incidentally, <em>ls</em> also lists user-specified functions - more on functions later). Running <em>ls</em> shows us that we have created 2 variables, <em>x</em> and <em>y</em>:</p>
+<pre class="r"><code>ls()</code></pre>
+<pre><code>## [1] &quot;x&quot; &quot;y&quot;</code></pre>
+<blockquote>
+<p>TIP: To find out what a function does, and how to use it, try the <em>help</em> function</p>
+</blockquote>
+<pre class="r"><code>help(ls)</code></pre>
+<p>If I specify a new variable, you will see that this now appears in our environment list:</p>
+<pre class="r"><code>a &lt;- 3.0
+ls()</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;x&quot; &quot;y&quot;</code></pre>
+<p>To find out what type of information a variable contains, we can use the <em>class</em> function. I will explain more about data types in R later, but for now we can see that x is a number:</p>
+<pre class="r"><code>class(x)</code></pre>
+<pre><code>## [1] &quot;numeric&quot;</code></pre>
+<p>The <em>str</em> function is also useful. This tells us what type of information we have (‘num’ is short for numeric here), and also the value of our variable. This function is more useful for more complex data types (of which more later):</p>
+<pre class="r"><code>str(x)</code></pre>
+<pre><code>##  num 1</code></pre>
+</div>
+<div id="manipulating-variables" class="section level1">
+<h1>Manipulating Variables</h1>
+<p>We can manipulate variables we have created, for example performing arithmetic on them:</p>
+<pre class="r"><code>x * 3</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>We can assign the results of these manipulations as new variables:</p>
+<pre class="r"><code>z &lt;- x*3
+z</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>We can also overwrite our original variable (which can sometimes be useful, but take care that this doesn’t lead to mistakes):</p>
+<pre class="r"><code>x</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>x&lt;-x*3
+x</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>We can also remove variables from our R environment. We do this using the <em>rm</em> function. First, let’s remind ourselves which variables we currently have:</p>
+<pre class="r"><code>ls()</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;x&quot; &quot;y&quot; &quot;z&quot;</code></pre>
+<p>Now, let’s remove the variable <em>z</em>:</p>
+<pre class="r"><code>rm(z)
+ls()</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;x&quot; &quot;y&quot;</code></pre>
+</div>
+<div id="code-structuring-and-commenting" class="section level1">
+<h1>Code Structuring and Commenting</h1>
+<p>To finish this session, a short note on code structuring and commenting.</p>
+<p>You can write multiple operations on a single line of R code, if you separate them with a semi-colon:</p>
+<pre class="r"><code>x &lt;- 1.0; y &lt;- x * 3; y</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>However, for clarity, it is generally better to have one operation per line, as we have done so far. In a later session, I will talk about organising your code in script files.</p>
+<p>When you write code to run multiple operations in R, it is good to add comments explaining what each line of your code does. You can do this by starting your comment line with a hash tag:</p>
+<pre class="r"><code># Assign the variable x
+x &lt;- 1.0
+
+# Multiply x by 3, saving as a new variable y
+y &lt;- x * 3
+
+# Display y
+y</code></pre>
+<pre><code>## [1] 3</code></pre>
+</div>
+<div id="next-time" class="section level1">
+<h1>Next Time</h1>
+<p>That’s it for this session. Next time, I will introduce some of the different basic data types in R.</p>
 </div>
 
 

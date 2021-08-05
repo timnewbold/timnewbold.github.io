@@ -8,12 +8,165 @@ output: html_document
 
 In this session, we cover some of the basics of working with R:
 
-* Installing R
-* Getting started with R and conducting basic arithmetic
+* Getting started with R
+* Conducting basic arithmetic
 * Variable assignment
 * Exploring variables
 * Manipulating variables
-* Commenting your code
+* Code structuring and commenting
 
-# Installing R
+# Getting Started with R
 
+If you are starting with R for the first time, I recommend playing around with R code on <a href="https://rdrr.io/snippets/" target="_blank">this great website</a>. This allows you to get to grips with the basics without having to install the R software (more on that in a later session).
+
+Throughout all of the material in my introduction to R sessions, you may find this <a href="https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf" target="_blank">cheatsheet</a> helpful (thanks to Mhairi McNeill for making this available).
+
+# Conducting Basic Arithmetic
+
+If you type a single number into R, perhaps not surprisingly R simply returns that number (here the top line is what I have entered, and the bottom line is what R returns):
+
+```{r,echo=TRUE,results=TRUE}
+1.0
+```
+
+Try this for yourself.
+
+Things get more useful if we ask R to perform some basic arithmetic:
+
+```{r,echo=TRUE,results=TRUE}
+1.0 + 2.0
+```
+
+```{r,echo=TRUE,results=TRUE}
+5.0/2
+```
+
+Try some simple arithmetic operations.
+
+# Variable Assignment
+
+So far, we have just used R as a glorified calculator. It gets more powerful when we save numbers as variables, allowing them to be re-used and manipulated. We assign variables like this:
+
+```{r,echo=TRUE,results=TRUE}
+x <- 1.0
+```
+
+Because R has simply assigned the variable _x_, the result isn't yet displayed. But we can ask R to return the value of x:
+
+```{r,echo=TRUE,results=TRUE}
+x
+```
+
+You can also reverse the direction of the arrows in variable assignment, although you will rarely see this approach used in practice:
+
+```{r,echo=TRUE,results=TRUE}
+1.0 -> x
+x
+```
+
+Variables can also be assigned to take the result of an arithmetic operation, for example:
+
+```{r,echo=TRUE,results=TRUE}
+y <- 1.0 + 2.0
+y
+```
+
+# Exploring variables
+
+Once you have assigned some variables in R, it is useful to be able to find out what variables you have, and to find out what those variables are. I will now introduce a couple of functions that are very useful for this.
+
+First, to see what variables you have in your R environment, you can use the built-in _ls_ function (incidentally, _ls_ also lists user-specified functions - more on functions later). Running _ls_ shows us that we have created 2 variables, _x_ and _y_:
+
+```{r,echo=TRUE,results=TRUE}
+ls()
+```
+
+>TIP: To find out what a function does, and how to use it, try the _help_ function
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+help(ls)
+```
+
+If I specify a new variable, you will see that this now appears in our environment list:
+
+```{r,echo=TRUE,results=TRUE}
+a <- 3.0
+ls()
+```
+
+To find out what type of information a variable contains, we can use the _class_ function. I will explain more about data types in R later, but for now we can see that x is a number:
+
+```{r,echo=TRUE,results=TRUE}
+class(x)
+```
+
+The _str_ function is also useful. This tells us what type of information we have ('num' is short for numeric here), and also the value of our variable. This function is more useful for more complex data types (of which more later):
+
+```{r,echo=TRUE,results=TRUE}
+str(x)
+```
+
+# Manipulating Variables
+
+We can manipulate variables we have created, for example performing arithmetic on them:
+
+```{r,echo=TRUE,results=TRUE}
+x * 3
+```
+
+We can assign the results of these manipulations as new variables:
+
+```{r,echo=TRUE,results=TRUE}
+z <- x*3
+z
+```
+
+We can also overwrite our original variable (which can sometimes be useful, but take care that this doesn't lead to mistakes):
+
+```{r,echo=TRUE,results=TRUE}
+x
+x<-x*3
+x
+```
+
+We can also remove variables from our R environment. We do this using the _rm_ function. First, let's remind ourselves which variables we currently have:
+
+```{r,echo=TRUE,results=TRUE}
+ls()
+```
+
+Now, let's remove the variable _z_:
+
+```{r,echo=TRUE,results=TRUE}
+rm(z)
+ls()
+```
+
+# Code Structuring and Commenting
+
+To finish this session, a short note on code structuring and commenting.
+
+You can write multiple operations on a single line of R code, if you separate them with a semi-colon:
+
+```{r,echo=TRUE,results=TRUE}
+x <- 1.0; y <- x * 3; y
+```
+
+However, for clarity, it is generally better to have one operation per line, as we have done so far. In a later session, I will talk about organising your code in script files.
+
+When you write code to run multiple operations in R, it is good to add comments explaining what each line of your code does. You can do this by starting your comment line with a hash tag:
+
+```{r,echo=TRUE,results=TRUE}
+# Assign the variable x
+x <- 1.0
+
+# Multiply x by 3, saving as a new variable y
+y <- x * 3
+
+# Display y
+y
+```
+
+# Next Time
+
+That's it for this session. Next time, I will introduce some of the different basic data types in R.
