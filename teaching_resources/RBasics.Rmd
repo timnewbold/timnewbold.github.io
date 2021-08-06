@@ -29,8 +29,6 @@ If you type a single number into R, perhaps not surprisingly R simply returns th
 1.0
 ```
 
-Try this for yourself.
-
 Things get more useful if we ask R to perform some basic arithmetic:
 
 ```{r,echo=TRUE,results=TRUE}
@@ -40,8 +38,6 @@ Things get more useful if we ask R to perform some basic arithmetic:
 ```{r,echo=TRUE,results=TRUE}
 5.0/2
 ```
-
-Try some simple arithmetic operations.
 
 # Variable Assignment
 

@@ -1,0 +1,510 @@
+---
+title: Data Types in R
+author: "Tim Newbold"
+output: html_document
+---
+  
+# Overview
+
+Any variable in R can be classified into a different type (or 'class'), according to the information it contains. While some variables can contain very complex types of information, there are a few basic types that you will encounter most commonly.
+  
+In this session, I will give a brief introduction to these commonly used basic data types:
+
+* Single-value (atomic) data types
+  + Numeric types (float and integer)
+  + Character strings
+  + Logical values
+  + Converting data types and no-data values
+* Combining multiple values
+  + Vectors
+  + Factors
+  + Lists
+  + Data frames
+  
+As before, I recommend this <a href="https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf" target="_blank">cheatsheet</a>, which gives an overview of functions for working with different data types (thanks to Mhairi McNeill for making this available).
+
+And again, you should try these things for yourself. If you haven't yet installed the R software, you can run simple code using <a href="https://rdrr.io/snippets/" target="_blank">this great website</a>.
+
+# Atomic Data Types
+
+## Numeric Types
+
+Most of the important scientific data are stored as numbers. By default, R stores numbers using the 'numeric' type:
+
+```{r,echo=TRUE,results=TRUE}
+myNumeric <- 1.1
+myNumeric
+class(myNumeric)
+```
+
+As we saw in the previous session, we can manipulate these numeric variables, for example by conducting some simple arithmetic:
+
+```{r,echo=TRUE,results=TRUE}
+myNumeric2 <- myNumeric * 2
+myNumeric2
+```
+
+By default, R will set single integer values to use the numeric class:
+
+```{r,echo=TRUE,results=TRUE}
+myInteger <- 1
+class(myInteger)
+```
+
+If we have very large datasets, we can save memory by storing these using the integer class. R has a series of functions for converting between data types. In this case, we can use the _as.integer_ function:
+
+```{r,echo=TRUE,results=TRUE}
+myInteger <- as.integer(1)
+myInteger
+class(myInteger)
+```
+
+If we convert a non-integer value to an integer, it will be rounded:
+
+```{r,echo=TRUE,results=TRUE}
+myInteger2 <- as.integer(1.1)
+myInteger2
+```
+
+> NOTE: If you convert a non-integer to an integer, R will _always_ round down. If you want to round to the nearest whole number, you can use the _round_ function.
+
+```{r,echo=TRUE,results=TRUE}
+myInteger3 <- as.integer(1.9)
+myInteger3
+myInteger4 <- round(1.9)
+myInteger4
+```
+
+## Character Strings
+
+Character strings (i.e., text) are another very commonly used data type in R:
+
+```{r,echo=TRUE,results=TRUE}
+myCharacter <- "Some text"
+class(myCharacter)
+```
+
+You can convert other data types into strings, should you wish to, using the _as.character_ function:
+
+```{r,echo=TRUE,results=TRUE}
+myCharacter2 <- as.character(myNumeric2)
+myCharacter2
+```
+
+Now we have converted this number into a character string, we can no longer use it in arithmetic operations:
+
+> TIP: The _try_ function allows you to attempt an operation without stopping your R script if an error occurs.
+
+```{r,echo=TRUE,results=TRUE}
+try(myCharacter2*2)
+```
+
+## Logical Values
+
+The other data type that you will commonly encounter in R is logical (i.e. True or False values):
+
+```{r,echo=TRUE,results=TRUE}
+myLogical <- TRUE
+
+class(myLogical)
+```
+
+We can perform arithmetic operations on logical values, as we do with numbers. In doing so, R treats FALSE as being equal to 0 and TRUE equal to 1:
+
+```{r,echo=TRUE,results=TRUE}
+myNumeric4 <- TRUE * 2
+myNumeric4
+myNumeric5 <- FALSE * 2
+myNumeric5
+```
+
+> TIP: By default, R recognises _T_ and _F_ as being TRUE and FALSE, respectively. But, be very careful: _T_ and _F_ can be overwritten with other values, whereas _TRUE_ and _FALSE_ cannot. Therefore, to avoid errors in your code, it is very strongly recommended _always_ to use the full TRUE and FALSE when working with logical values:
+
+```{r,echo=TRUE,results=TRUE}
+T
+T <- FALSE
+T
+try(TRUE <- FALSE)
+```
+
+> TIP: You can find out about the different functions available for working with a particular data type using the _help_ function:
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+help(numeric)
+help(character)
+help(logical)
+```
+
+## Converting Data Types and No-data Values
+
+We have already come across the _as.integer_ function for converting to integer values. All data types have an equivalent function: for example, _as.numeric_, _as.integer_, _as.character_ and _as.logical_:
+
+```{r,echo=TRUE,results=TRUE}
+myInteger <- as.integer(1)
+myNumeric2 <- as.numeric(myInteger)
+myNumeric2
+class(myNumeric2)
+myLogical2 <- as.logical("TRUE")
+myLogical2
+```
+
+We can also convert numbers to logical. We saw before when we converted logical values to numbers, that R converted FALSE to 0 and TRUE to 1. Similarly, converting 0 and 1 to logical values creates FALSE and TRUE, respectively:
+
+```{r,echo=TRUE,results=TRUE}
+myLogical3 <- as.logical(0)
+myLogical3
+myLogical4 <- as.logical(1)
+myLogical4
+```
+
+In fact, R will convert _all_ non-zero numbers (even negative numbers) to a TRUE logical value:
+
+```{r,echo=TRUE,results=TRUE}
+myLogical5 <- as.logical(10)
+myLogical5
+myLogical6 <- as.logical(-10)
+myLogical6
+```
+
+Finally, a note on no-data values, which R stores as _NA_. If we try to convert something to an incompatible data type, we will obtain an NA value:
+
+```{r,echo=TRUE,results=TRUE}
+myNumeric6 <- as.numeric("Some text")
+myNumeric6
+myLogical7 <- as.logical("Some text")
+myLogical7
+```
+
+I will talk more about NAs later, when dealing with data structures that contain multiple values.
+
+> TIP: You can check whether a variable is of the expected data type using another series of functions: for example, _is.numeric_, _is.integer_, _is.character_ and _is.logical_:
+
+```{r, echo=TRUE,results=TRUE}
+
+myNumeric <- 1.1
+is.numeric(myNumeric)
+myNumeric2 <- 1
+is.integer(myNumeric2)
+myLogical <- TRUE
+is.numeric(myLogical)
+is.logical(myLogical)
+
+```
+
+# Combining Multiple Values
+
+Often, when working in R, we don't want to use just single values, but rather to work with sets of data.
+
+## Vectors
+
+The simplest way to combine values in R is into a vector. A vector is a single, one-dimensional set of values. 
+
+You can combine values into a vector using the _c_ function:
+
+```{r,echo=TRUE,results=TRUE}
+
+myVector <- c(2,4,6,8,10)
+myVector
+class(myVector)
+```
+
+Single values, range of values or specific sets of values can be extracted from a vector as follows:
+
+```{r,echo=TRUE,results=TRUE}
+myVector[2]
+myVector[3:5]
+myVector[c(1,4)]
+```
+
+You can perform arithmetic on a vector. In this case, the arithmetic operation is applied to all values in the vector:
+
+```{r,echo=TRUE,results=TRUE}
+myVector2 <- myVector * 2
+myVector2
+```
+
+If instead you apply an arithmetic operation to two vectors of equal length, then the operation will be applied to corresponding pairs of numbers:
+
+```{r,echo=TRUE,results=TRUE}
+myVector * c(1,2,3,4,5)
+```
+
+If your vector contains NA values, the result of the operation will contain corresponding NA values:
+
+```{r,echo=TRUE,results=TRUE}
+myVector3 <- c(2,4,NA,8,10)
+myVector4 <- myVector3 * 2
+myVector4
+```
+
+Vector can contain values of different data types (although each vector can only contain one type):
+
+```{r,echo=TRUE,results=TRUE}
+myLogicalVector <- c(TRUE,FALSE,TRUE,TRUE)
+myLogicalVector
+class(myLogicalVector)
+```
+
+Just as with single logical values, we can apply arithmetic to a logical vector:
+
+```{r,echo=TRUE,results=TRUE}
+myVector5 <- myLogicalVector * 2
+myVector5
+```
+
+Of course, arithmetic operations on a character vector will not work (returning an error):
+
+```{r,echo=TRUE,results=TRUE}
+myCharacterVector <- c("Text 1","Text 2","Text 3")
+myCharacterVector
+try(myCharacterVector * 2)
+```
+
+You can use the _length_ function to find out how many values your vector contains:
+
+```{r,echo=TRUE,results=TRUE}
+myVector <- c(2,4,6,8,10)
+length(myVector)
+```
+
+You can change specific values, ranges of values, or specific sets of values in a vector:
+
+```{r,echo=TRUE,results=TRUE}
+myVector <- c(2,4,6,8,10)
+myVector[4] <- 24
+myVector
+
+myVector <- c(2,4,6,8,10)
+myVector[3:5] <- c(22,24,26)
+myVector
+
+myVector <- c(2,4,6,8,10)
+myVector[c(1,3,5)] <- 0
+myVector
+```
+
+You can also add new values at a specified position that is not already found within the vector (note that any intermediate values are filled with NA):
+
+```{r,echo=TRUE,results=TRUE}
+myVector <- c(2,4,6,8,10)
+myVector[10] <- 20
+myVector
+length(myVector)
+```
+
+And you can also remove specified values:
+
+```{r,echo=TRUE,results=TRUE}
+myVector <- c(2,4,6,8,10)
+myVector <- myVector[-4]
+myVector
+length(myVector)
+```
+
+You can also initialise an empty vector using either the _numeric_, _integer_, _character_ or _logical_  functions:
+
+```{r,echo=TRUE,results=TRUE}
+myVector6 <- numeric()
+length(myVector6)
+```
+
+As before, you can then add values to this vector into specified positions (with intermediate positions then being filled with NA values):
+
+```{r,echo=TRUE,results=TRUE}
+myVector6[6] <- 6.4
+myVector6
+length(myVector6)
+```
+
+>NOTE: the data type of vector is not fixed, so if you enter incompatible data types then the data type of your vector may change. Alternatively, sometimes the data type of the value will change. Therefore, care is advised when entering data into an existing vector (or data-frame - of which more later):
+
+```{r,echo=TRUE,results=TRUE}
+myVector7 <- numeric()
+myVector7[5] <- "Some text"
+class(myVector7)
+```
+
+```{r,echo=TRUE,results=TRUE}
+myVector7[1] <- 1.1
+myVector7
+class(myVector7)
+```
+
+You can also initialise a vector, containing default values (0 for numeric, FALSE for logical or empty strings for character), using the same _numeric_, _integer_, _character_ and _logical_ functions:
+
+```{r,echo=TRUE,results=TRUE}
+myVector8 <- numeric(10)
+myVector8
+```
+
+Or you can do the same thing using the generic _vector_ function:
+
+```{r,echo=TRUE,results=TRUE}
+myVector9 <- vector(mode = "numeric",length = 10)
+myVector9
+myVector10 <- vector(mode = "logical",length = 10)
+myVector10
+myVector11 <- vector(mode = "character",length = 10)
+myVector11
+```
+
+## Factors
+
+Factors are a special type of vector, where there a set of specified values (or 'levels') that a grouping variable is allowed to take. These 'levels' are stored with the variable in R:
+
+```{r,echo=TRUE,results=TRUE}
+
+myFactor <- factor(c("Treatment1","Treatment2","Treatment3",
+                     "Treatment1","Treatment2","Treatment3"))
+myFactor
+levels(myFactor)
+```
+
+If you try to add a new value that does not belong to one of the specified levels, an NA value will be inserted (note that NA values are shown as <NA> in factors):
+
+```{r,echo=TRUE,results=TRUE}
+myFactor[7] <- "Treatment4"
+myFactor
+```
+
+As with the atomic data types, we can coerce a vector (or indeed an atomic value) to be a factor, this time using the _as.factor_ function:
+
+```{r,echo=TRUE,results=TRUE}
+myCharacter <- c("Treatment1","Treatment2","Treatment3",
+                 "Treatment1","Treatment2","Treatment3")
+myFactor2 <- as.factor(myCharacter)
+myFactor2
+```
+
+You can also create a factor with pre-specified values. In this case, any values that don't correspond with these pre-specified levels will become NA values:
+
+```{r,echo=TRUE,results=TRUE}
+myFactor <- factor(c("Treatment1","Treatment2","Treatment3",
+                     "Treatment1","Treatment2","Treatment3"),
+                   levels=c("Treatment1","Treatment2"))
+myFactor
+```
+
+## Lists
+
+Lists are similar to vectors, but more flexible in terms of data types within them. A basic list can be created using the _list_ function:
+
+```{r,echo=TRUE,results=TRUE}
+myList <- list(1,2,3,4,5)
+myList
+```
+
+The whole list has type 'list':
+
+```{r,echo=TRUE,results=TRUE}
+class(myList)
+```
+
+The individual elements within the list have their own class, and can be extracted in a similar way as with vectors, but this time using double rather than single square brackets:
+
+```{r,echo=TRUE,results=TRUE}
+myList[[1]]
+class(myList[[1]])
+```
+
+The values within a list can themselves be vectors of numbers:
+
+```{r,echo=TRUE,results=TRUE}
+myList2 <- list(c(1,2,3,4,5))
+myList2
+myList3 <- list(c(1,2,3,4,5),c(6,7,8,9,10))
+myList3
+```
+
+If you extract an element from one of these lists, you will get a vector:
+
+```{r,echo=TRUE,results=TRUE}
+myList3[[2]]
+```
+
+Alternatively, you can use both double and single square brackets to return a specific position within the vector from a specified position in the list:
+
+```{r,echo=TRUE,results=TRUE}
+myList3[[2]][3]
+```
+
+The elements within a list can be named, which helps with storing and retrieving complex data:
+
+```{r,echo=TRUE,results=TRUE}
+myList4 <- list(Item1=1.0,Item2=4.0)
+myList4
+```
+
+Specific named items in a list can be extracted either by putting the name into the double square brackets, or by using the $ symbol:
+
+```{r,echo=TRUE,results=TRUE}
+myList4[["Item2"]]
+myList4$Item2
+```
+
+If you want to, you can apply names to the elements of an existing list using the _name_ function:
+
+```{r,echo=TRUE,results=TRUE}
+myList3 <- list(c(1,2,3,4,5),c(6,7,8,9,10))
+myList3
+names(myList3) <- c("Vector1","Vector2")
+myList3
+myList3$Vector2
+```
+
+Lists are very flexible. They can take mixed data types:
+
+```{r,echo=TRUE,results=TRUE}
+myList5 <- list(Name="Tim",Role="Tutor",Years=5)
+myList5
+class(myList5[[1]])
+class(myList5[[3]])
+```
+
+Lists can also contain elements of different lengths:
+
+```{r,echo=TRUE,results=TRUE}
+myList5$Modules <- c("BIOS0002","BIOL0032")
+myList5
+```
+
+## Data frames
+
+Data frames are tremendously useful for scientific research. They are a special form of lists, where each element _must_ have the same length. This is good for ensuring that each variable in your dataset has the same number of entries. In a later session, I will show you how to import data from a spreadsheet into an R data frame.
+
+```{r,echo=TRUE,results=TRUE}
+myDataFrame <- data.frame(
+  Treatment=factor(c("Treatment1","Treatment2","Treatment3",
+                     "Treatment1","Treatment2","Treatment3")),
+  Measurement=c(2.0,4.5,1.2,1.0,6.0,2.3))
+myDataFrame
+class(myDataFrame)
+```
+
+We can extract the elements of data frames in exactly the same was as for lists:
+
+```{r,echo=TRUE,results=TRUE}
+myDataFrame$Treatment
+myDataFrame[["Treatment"]]
+myDataFrame[[1]]
+myDataFrame$Treatment[1]
+```
+
+We can also add new elements to a data frame, just as we can with lists:
+
+```{r,echo=TRUE,results=TRUE}
+myDataFrame$Measurement2 <- c(2.1,4.4,1.0,1.4,7.2,2.4)
+myDataFrame
+```
+
+Unlike with a list, if we try to create a data frame where the elements have different lengths (i.e., numbers of values), we will get an error:
+
+```{r,echo=TRUE,results=TRUE}
+myList6 <- list(Component1=c(1,2,3,4,5),Component2=c(6,7))
+myList6
+try(data.frame(Component1=c(1,2,3,4,5),Component2=c(6,7)))
+```
+
+# Next Time
+
+That's it for this session. In the next session, I introduce some of the functions that can be used to conduct arithmetic operations in R, including to calculate summary statistics that are indispensible in scientific research.
