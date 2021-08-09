@@ -1,0 +1,173 @@
+---
+title: Arithemtic in R
+author: "Tim Newbold"
+output: html_document
+---
+  
+# Overview
+  
+In this session, we will cover some of the basic functions for performing summary arithmetic on sets of numbers in R:
+  
+* Basic arithmetic
+* Summary statistics
+* Dealing with no-data values
+* Working with complex data types
+
+As usual, <a href="https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf" target="_blank">this cheatsheet</a> gives you a useful overview of the key operations and functions, and you can try out some R code for yourself on <a href="https://rdrr.io/snippets/" target="_blank">this website</a>.
+
+We will first create a vector of numbers to use:
+
+```{r,echo=TRUE}
+x <- c(8.033245,10.499592,9.983152,10.860751,
+       10.857530,12.865557,8.428087,11.646942,
+       12.121439,10.773926,12.054675,10.578910,
+       8.560825,10.623534,10.580913,13.219849,
+       8.741934,13.927849,11.615910,10.653642,
+       8.034322,9.426207,8.404283,12.127669,
+       9.821571,13.785322,10.524268,7.572063,
+       9.593128,13.225378)
+```
+
+# Basic Arithmetic
+
+In the first session, I showed you how to conduct arithemtic on individual numbers in R. It is also useful to be able summarise sets of numbers. There are many functions in R that enable you to calculate summaries of sets of numbers. Here, I will cover sums, products, and cumulative sums.
+
+To calculate the sum of a vector of numbers, you can use the built-in _sum_ function:
+
+```{r,echo=TRUE,results=TRUE}
+sum(x)
+```
+
+To calculate the product of all numbers in a set, use the _prod_ function:
+
+```{r,echo=TRUE,results=TRUE}
+prod(x)
+```
+
+Finally, to calculate a cumulative sum, there is the _cumsum_ function. Instead of returning a single number, this function returns a vector of same length as the input vector. The first value in the returned vector is equal to the sum of the first value in the input vector, the second value is the sum of the first and second values in the input vector, the third value the sum of the first, second and third values, and so on:
+
+```{r,echo=TRUE,results=TRUE}
+cumsum(x)
+```
+
+# Summary Statistics
+
+If you are using R to run statistics, some of the most useful functions are those that allow you to calculate summary statistics on sets of numbers. Again, there are many functions available in R. Here I will deal with means, medians, variances, standard deviations and standard errors.
+
+The mean is calculated with the built-in _mean_ function:
+
+```{r,echo=TRUE,results=TRUE}
+mean(x)
+```
+
+And the median with the _median_ function:
+
+```{r.echo=TRUE,results=TRUE}
+median(x)
+```
+
+Variance can be calculated with the _var_ function:
+
+```{r,echo=TRUE,results=TRUE}
+var(x)
+```
+
+And standard deviation with the _sd_ function:
+
+```{r,echo=TRUE,results=TRUE}
+sd(x)
+```
+
+We could calculate standard error manually as the standard deviation divided by the square root of the sample size:
+
+```{r,echo=TRUE,results=TRUE}
+sd(x)/sqrt(length(x))
+```
+
+Alternatively, there is a function _std.error_ that will calculate standard error directly (for this we need to load a new package - _plotrix_):
+
+```{r,echo=TRUE,results=TRUE}
+library(plotrix)
+std.error(x)
+```
+
+# Dealing with No-data Values
+
+Things are a very little more complicated if our data contain no-data values. To demonstrate, we will create a new vector that contains some no-data values:
+
+```{r,echo=TRUE,results=TRUE}
+x <- c(8.033245,10.499592,9.983152,10.860751,
+       10.857530,12.865557,8.428087,11.646942,
+       12.121439,10.773926,12.054675,10.578910,
+       8.560825,10.623534,10.580913,13.219849,
+       8.741934,13.927849,11.615910,10.653642,
+       8.034322,9.426207,8.404283,12.127669,
+       9.821571,13.785322,10.524268,7.572063,
+       9.593128,13.225378,NA,NA)
+```
+
+If we try to apply any arithmetic or summary statistics functions on this vector, we will obtain no-data values:
+
+```{r,echo=TRUE,results=TRUE}
+sum(x)
+prod(x)
+mean(x)
+median(x)
+var(x)
+sd(x)
+```
+
+The solution is very simple. All of these functions have an _na.rm_ option, which we need to set to TRUE:
+
+```{r,echo=TRUE,results=TRUE}
+sum(x,na.rm=TRUE)
+prod(x,na.rm=TRUE)
+mean(x,na.rm=TRUE)
+median(x,na.rm=TRUE)
+var(x,na.rm=TRUE)
+sd(x,na.rm=TRUE)
+```
+
+# Working with Complex Data Types
+
+Just a reminder that you can extract vectors of numbers from complex data types, in order to calculate summary arithmetic or statistics.
+
+So, if your data are in a list:
+
+```{r,echo=TRUE,results=TRUE}
+myList <- list(x = c(8.033245,10.499592,9.983152,10.860751,
+       10.857530,12.865557,8.428087,11.646942,
+       12.121439,10.773926,12.054675,10.578910,
+       8.560825,10.623534,10.580913,13.219849,
+       8.741934,13.927849,11.615910,10.653642,
+       8.034322,9.426207,8.404283,12.127669,
+       9.821571,13.785322,10.524268,7.572063,
+       9.593128,13.225378),
+       y = c(1,2,3))
+
+mean(myList[[1]])
+mean(myList$x)
+```
+
+Or if your data are in a data-frame:
+
+```{r,echo=TRUE,results=TRUE}
+myDataFrame <- data.frame(x = c(8.033245,10.499592,9.983152,10.860751,
+       10.857530,12.865557,8.428087,11.646942,
+       12.121439,10.773926,12.054675,10.578910,
+       8.560825,10.623534,10.580913,13.219849,
+       8.741934,13.927849,11.615910,10.653642,
+       8.034322,9.426207,8.404283,12.127669,
+       9.821571,13.785322,10.524268,7.572063,
+       9.593128,13.225378),
+       y = c(1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,
+             3,3,3,3,3,3,3,3,3,3))
+mean(myDataFrame[[1]])
+mean(myDataFrame$x)
+```
+
+> TIP: When extracting data from a data frame, it is always better to extract by name rather than column number. If the columns in the dataset are reordered, you are more likely to make a mistake if you use column numbers.
+
+# Next Time
+
+In the next session, I will show you how to install R and R Studio, so that you can move onto reading in and saving data (which is not possible in the website we have been using so far).
