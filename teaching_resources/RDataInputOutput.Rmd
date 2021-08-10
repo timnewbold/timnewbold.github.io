@@ -1,0 +1,219 @@
+---
+title: R Data Input and Output
+author: "Tim Newbold"
+output: html_document
+references:
+  - id: PanTHERIA
+    title: PanTHERIA&colon; a species-level database of life history, ecology, and geography of extant and recently extinct mammals
+    author:
+      - family: Jones
+        given: Kate E.
+      - family: Bielby
+        given: Jon
+      - family: Cardillo
+        given: Marcel
+      - family: Fritz
+        given: Susanne A.
+      - family: O'Dell
+        given: Justin
+      - family: Orme
+        given: C. David L.
+      - family: Safi
+        given: Kamran
+      - family: Sechrest
+        given: Wes
+      - family: Boakes
+        given: Elizabeth H.
+      - family: Carbone
+        given: Chris
+      - family: Connolly
+        given: Christina
+      - family: Cutts
+        given: Michael J.
+      - family: Foster
+        given: Janine K.
+      - family: Grenyer
+        given: Rich
+      - family: Habib
+        given: Michael
+      - family: Plaster
+        given: Christopher A.
+      - family: Price
+        given: Samantha A.
+      - family: Rigby
+        given: Elizabeth A.
+      - family: Rist
+        given: Janna
+      - family: Teacher
+        given: Amber
+      - family: Bininda-Emonds
+        given: Olaf R. P.
+      - family: Gittleman
+        given: John L.
+      - family: Mace
+        given: Georgina M.
+      - family: Purvis
+        given: Andy
+    container-title: Ecology
+    volume: 90
+    page: 2648
+    URL: https://esapubs.org/archive/ecol/E090/184/metadata.htm
+    type: article-journal
+    issued:
+      year: 2009
+  - id: PREDICTS
+    title: The database of the PREDICTS (Projecting Responses of Ecological Diversity In Changing Terrestrial Systems) project
+    author:
+      - family: Hudson
+        given: Lawrence N.
+      - family: Newbold
+        given: Tim
+      - family: Contu
+        given: Sara
+      - family: Hill
+        given: Samantha L. L.
+      - family: Lysenko
+        given: Igor
+      - family: De Palma
+        given: Adriana
+      - family: Phillips
+        given: Helen R. P.
+      - family: Data entrants
+      - family: Data contributors
+      - family: Collen
+        given: Ben
+      - family: Ewers
+        given: Rob M.
+      - family: Mace
+        given: Georgina M.
+      - family: Purves
+        given: Drew W.
+      - family: Scharlemann
+        given: J&oumlaut;rn P. W.
+      - family: Purvis
+        given: Andy
+    container-title: Ecology & Evolution
+    volume: 7
+    page: 145-188
+    DOI: 10.1002/ece3.2579
+    URL: https://doi.org/10.1002/ece3.2579
+    type: article-journal
+    issued:
+      year: 2017
+---
+
+# Overview
+
+In this session, I will introduce the basics of reading data into R and saving data from R.
+
+* Data Input
+  + Built-in datasets
+  + CSV format
+  + Other table formats
+  + RDS format
+* Data Output
+  + CSV format
+  + Other table formats
+  + RDS format
+
+You will be able to load all of the example datasets in this session for yourself. However, to do so, you will need to have installed the R software on to your computer (see previous session).
+
+The <a href="https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf" target="_blank">cheatsheet</a> from previous sessions will still be useful here.
+
+# Data Input
+
+There are a few ways that you can read data into R.
+
+## Built-in Datasets
+
+Firstly, there are built-in datasets in R. For example, the cars dataset, which we will use again in later sessions:
+
+> TIP: The _head_ and _tail_ functions allow you to view the first and last lines, respectively, of a large data-frame. You can specify a number of rows to display (here 15). Alternatively, 6 rows will be displayed by default.
+
+```{r,echo=TRUE,results=TRUE}
+data(mtcars)
+head(mtcars,10)
+```
+
+## CSV Format
+
+It is also common to need to read data from Comma-Separated-Values files. For example, you can read my moth-trapping data directly from my website using the _read.csv_ function:
+
+```{r,echo=TRUE,results=TRUE}
+moths <- read.csv(file = "https://timnewbold.github.io/moths/TimNewboldMothDataPublicRelease.csv")
+head(moths,10)
+```
+
+You can also use the _read.csv_ function to read local files (just point the _file_ option to the location of the file on your computer).
+
+## Other Table Formats
+
+The _read.csv_ function is a specific instance of the more general _read.table_ function. You can also read CSV files via the more general function, but you have to specify the character that separates entries in the dataset (commas in the case of CSVs), and also that the data contains a header row (i.e., the column names):
+
+```{r,echo=TRUE,results=TRUE}
+moths <- read.table(file = "https://timnewbold.github.io/moths/TimNewboldMothDataPublicRelease.csv",
+                    header = TRUE,sep = ",")
+tail(moths,10)
+```
+
+The _read.table_ function is more useful if you want to read in formats other than CSV, for example tab-separated text files. Here we will read data from the PanTHERIA database of the traits of mammal species [@PanTHERIA] (the '\\t' in the _sep_ argument specifies that this dataset uses the tab character as the data separator):
+
+```{r,echo=TRUE,results=TRUE}
+pantheria <- read.table("https://www.dropbox.com/s/zj3ydfwo79t1n4f/PanTHERIA_1-0_WR05_Aug2008.txt?dl=1",sep = "\t",header = TRUE)
+str(pantheria,list.len=10)
+```
+
+> REMINDER: The _str_ function reports the type and contents of columns in a data-frame (or elements in other R data structures). Specifying the _list.len_ option as 10 restricts the function to displaying the first 10 columns only. I am using that here, because this dataset contains many columns, and so using the _head_ function would clutter the console.
+
+## RDS Format
+
+Another format you may come across is the R proprietorial RDS format. This can be handy for very large datasets, because it is much more efficient than text files, such as CSVs and tab-delimited text files.
+
+We will read here the PREDICTS database [@PREDICTS], which is a very large dataset (3.2 million rows). The CSV version of this database is huge, so it is convenient to use the RDS format. We will come across the PREDICTS database again in later sessions.
+
+> TIP: For some reason, with RDS files we have to use a 2-stage process to load an RDS from an online repository. Alternatively, you can just plug the path to an RDS file on your local machine directly into the _readRDS_ function.
+
+```{r,echo=TRUE,results=TRUE}
+myFile <- url("https://www.dropbox.com/s/pb1mdiel8o22186/database.rds?dl=1")
+predicts <- readRDS(myFile)
+str(predicts,list.len=10)
+```
+
+# Data Output
+
+We will now deal with saving data from R. Let's say for example that you want to add a new column containing a manipulation of the data, and then save the result. Here, we will create a new column in the cars dataset expressing the power-to-weight ratio of the car models (not an ecological example but a simple example for demonstration!):
+
+```{r, echo=TRUE,results=TRUE}
+mtcars$PowerWeightRatio <- mtcars$hp/mtcars$wt
+head(mtcars)
+```
+
+## CSV Format
+
+You can write data to a CSV file using the _write.csv_ function. I prefer to specify not to include row names (_row.names = FALSE_). Specifying _quote = FALSE_ prevents the inclusion of quotation marks around character strings (you may need to use _quote = TRUE_ if any of your characters themselves contain commas!):
+
+```{r,echo=TRUE,eval=FALSE}
+write.csv(x = mtcars,file = "CarData.csv",quote = FALSE,row.names = FALSE)
+```
+
+## Other Table Formats
+
+If you want to write a text file with a separator other than commas, you can use the more generic _write.table_ function. Here, you have to specify the separator, in addition to the other arguments:
+
+```{r,echo=TRUE,eval=FALSE}
+write.table(x = mtcars,file = "CarData.txt",quote = FALSE,row.names = FALSE,sep = '\t')
+```
+
+## RDS Format
+
+Finally, if you are going to keep working in R, and especially if you have a large dataset, you may want to consider using the RDS format. You can output an RDS file using the _saveRDS_ function. Note, though, that you will not be able to read RDS datasets other than in R:
+
+```{r,echo=TRUE,eval=FALSE}
+saveRDS(object = mtcars,file = "CarData.rds")
+```
+
+# Next Time
+
+In the next session, I will give a very brief and rather superficial introduction to the vast plotting capabilities in R.
+
+# References
