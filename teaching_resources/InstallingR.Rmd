@@ -47,3 +47,5 @@ For now, just have a play around and get familiar with R and RStudio&reg;.
 # Next Time
 
 In the next session, I will cover inputting data to and outputting data from R.
+
+# Footnotes
