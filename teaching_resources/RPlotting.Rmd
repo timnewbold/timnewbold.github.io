@@ -1,0 +1,313 @@
+---
+title: Plotting Graphs in R
+author: "Tim Newbold"
+output: html_document
+---
+
+# Overview
+
+In this session, I will give you a very brief introduction to some of the basic plotting options in R. Mastering R graphics would take at least a whole course on its own. Here, we will just scratch the surface. We will cover three basic types of graphs that you will commonly encounter in science (scatter plots, histograms and boxplots), how you output R graphs to a file, and a very brief introduction to a plotting package that many people now use.
+
+* Scatter plots
+* Histograms and density plots
+* Boxplots
+* Exporting graphs to file
+* ggplot
+
+# Scatter Plots
+
+To illustrate scatter plots, we will use data on international airline passenger numbers between 1949 and 1960:
+
+```{r,echo=TRUE,results=TRUE}
+data(AirPassengers)
+head(AirPassengers)
+```
+
+These data contain just numbers of airline passengers (in 1000s) for each month between 1949 and 1960. Therefore, we also need to create our own vector to capture the months (from 1 to the length of the time-series):
+
+```{r,echo=TRUE}
+months <- 1:length(AirPassengers)
+```
+
+Now we will construct the most basic scatterplot of the number of airline passengers against our new vector of months:
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers)
+```
+
+This is a rather ugly plot, but there is a lot we can do to improve its appearance. Getting the hang of tweaking R plots requires practice, but I will show you some examples of things you can do now.
+
+First, we could add lines between the data points, since this is a time-series dataset. We do this by setting parameter _type="l"_ (if we want to have just lines and no points) or _type="b"_ if we also want to include the points:
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers,type="l")
+plot(months,AirPassengers,type="b")
+```
+
+If we are keeping the points, we might also choose to change the symbol. You can do this using the _pch_ parameter. Here, I will switch to solid circles _pch=16_:
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers,type="b",pch=16)
+```
+
+We can also change the colour of our points and lines, using the _col_ parameter. Here, I will use a hexadecimal colour, but there are also text options (e.g., "red", "green" etc.) or RGB options, if you prefer:
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers,type="b",pch=16,col="#581845")
+```
+
+I also prefer not to have a box all around my plots, but just to show the x- and y-axis lines. To do this, I can use parameter _bty="l"_:
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l")
+```
+
+Our x-axis isn't very informative, because it is just our vector of months from 1 to the end of the time series. Instead, I would like to replace the months with an indication of the years. First, I will suppress the original x axis using parameter _xaxt="n"_. We will also change the x-axis label to "Year" using _xlab="Year"_):
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",xlab="Year")
+```
+
+We can add our own axis using the _axis_ function. Specifying _side=1_ says that we want the x axis (_side=2_ for a y axis). The _at_ parameter specifies the position of the labels (the sequence specified here using the _seq_ function says that we want a label every 12 months along the 144 months in the time series). Finally, the _labels_ parameter specifies the labels to add to the axis, here the years from 1949 to 1960.
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",xlab="Year")
+axis(side = 1,at = seq(from=1,to=144,by=12),labels = 1949:1960)
+```
+
+Let's also change the y-axis label to something more informative, using the _ylab_ parameter:
+
+```{r,echo=TRUE,results=TRUE}
+plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",
+     xlab="Year",ylab="Number of passengers (thousands)")
+axis(side = 1,at = seq(from=1,to=144,by=12),labels = 1949:1960)
+```
+
+Finally, we can alter the spacing of each component of the graph, as well as the margin spacing, using R's graphical parameters (see code comments for a description of what each parameter is doing):
+
+```{r,echo=TRUE,results=TRUE}
+# The las parameter changes the orientation of the x labels
+# The default is las = 0, which makes all axis text parallel to the axis line
+# las = 1 makes all axis text horizontal
+par(las=1)
+# The tck parameter determines the length of the tick marks on the axes
+# The default is tck=-0.5 (negative numbers give ticks outside the axis)
+# We will make the tick marks a bit shorter
+par(tck=-0.01)
+# The mgp parameter changes the spacing between the axis and the axis labels
+# The default is c(3,1,0), which leaves a lot of white space
+# We will shrink it to c(1.8,0.2,0)
+par(mgp=c(1.8,0.2,0))
+# The cex parameters control the sizes of points and text in the graph
+# The overall cex parameter controls everything together, cex.axis the axis text,
+# cex.lab the axis labels, and cex.main the graph title (if you have one)
+# We will increase the size of the axis labels slightly from the default of 1
+par(cex.lab=1.2)
+# Finally for now (although there are many other graphical parameters), the mar
+# parameter sets the margin spacing around the figure. The default is c(5.1,4.1,4.1,2.1)
+# Since we have removed other white space, we would now have a lot of white space
+# around our figure, so we will shrink these margins a bit
+par(mar=c(3.2,3.2,0.2,0.2))
+plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",
+     xlab="Year",ylab="Number of passengers (thousands)")
+axis(side = 1,at = seq(from=1,to=144,by=12),labels = 1949:1960)
+```
+
+The final result is a reasonably aesthetically pleasing plot.
+
+# Histograms and Density Plots
+
+Another very useful type of plot is the histogram. This can be used to show the distribution of a variable of interest. For illustrating histograms, we will use the cars dataset that we came across in an earlier session:
+
+```{r,echo=TRUE,results=TRUE}
+data(mtcars)
+head(mtcars)
+```
+
+Let's plot a histogram showing the distribution of fuel economies among the car models in the dataset:
+
+```{r,echo=TRUE,results=TRUE}
+hist(mtcars$mpg)
+```
+
+As with the earlier scatterplot, the default plot does not look great, but we can play around with R's graphical parameters to make our plot look nicer:
+
+```{r,echo=TRUE,results=TRUE}
+par(tck=-0.01)
+par(las=1)
+par(mgp=c(1.8,0.2,0))
+par(mar=c(3.2,3.2,0.2,0.2))
+par(cex.lab=1.2)
+hist(mtcars$mpg,breaks=seq(from=10,to=34,by=2),
+     xlab="Fuel economy (mpg)",xaxp=c(10,34,12),
+     main=NA,col="#581845")
+box(bty="l")
+```
+
+I introduced some new options here: 1) When plotting a histogram, the _breaks_ parameter can be used to manually specify the bins within which to count values (here, I specified bins from values of 10 to 34 in increments of 2); 2) The _xaxp_ parameter specifies where on the x-axis you want to place tick marks - in this case from 10 to 34 in 12 increments, matching the breaks in our histogram (the _xaxp_ and _yaxp_ parameters can also be used for scatterplots); 3) the _main_ parameter allows us to include a title on our graph - a title is included by default in histograms, and so here I have used _main=NA_ to remove this title; 4) the _box_ function allows us to add lines immediately around the plot - here, I have added an l-shaped box as in the scatterplot above (this is not included by default with histograms).
+
+Another way to show a distribution of values within a variable is using a density plot. First, we have to run the _density_ function on the data, and then plot the result of this function. Here, I have performed both of these operations in one go:
+
+```{r,echo=TRUE,results=TRUE}
+par(tck=-0.01)
+par(las=1)
+par(mgp=c(2.0,0.2,0))
+par(mar=c(3.2,3.2,0.2,0.2))
+par(cex.lab=1.2)
+plot(density(mtcars$mpg),main=NA,bty="l",col="#581845",xlab="Fuel economy (mpg)")
+```
+
+The basic density plot gives just a line, but it can look nice if we fill in under the curve. We can do this using the _polygon_ function:
+
+```{r,echo=TRUE,results=TRUE}
+par(tck=-0.01)
+par(las=1)
+par(mgp=c(2.0,0.2,0))
+par(mar=c(3.2,3.2,0.2,0.2))
+par(cex.lab=1.2)
+plot(density(mtcars$mpg),main=NA,bty="l",col="#581845",xlab="Fuel economy (mpg)")
+polygon(density(mtcars$mpg),col="#58184577")
+```
+
+# Boxplots
+
+A third type of graph that you will commonly encounter in science are boxplots. These allow you to show distributions of values for different groupings in a dataset. We will work with the cars dataset again here, making a boxplot of fuel economy depending on the number of cylinders a car model has:
+
+```{r,echo=TRUE,results=TRUE}
+boxplot(mtcars$mpg~mtcars$cyl)
+```
+
+And, as before, we can alter the graphical parameters to improve the appearance of the graph (with boxplots, for some reason, we have to use _frame=FALSE_ to remove the box around the plot):
+
+```{r,echo=TRUE,results=TRUE}
+par(tck=-0.01)
+par(las=1)
+par(mgp=c(1.8,0.2,0))
+par(mar=c(3.2,3.2,0.2,0.2))
+par(cex.lab=1.2)
+boxplot(mtcars$mpg~mtcars$cyl,frame=FALSE,
+        col="#581845",outcol="#581845",
+        xlab="Number of cylinders", ylab="Fuel economy (mpg)",
+        pch=16)
+box(bty="l")
+```
+
+> TIP: I will not go into full detail about the many options you can change in the different plot types I have introduced. Remember to use the _help_ function to see details of how the different plotting functions work, and the options you can set.
+
+# Exporting Graphs to File
+
+For writing reports and papers, you often need to export graphics from R as a image file. You can do this directly from RStudio, but it is difficult to the resolution and aspect ratio right. Therefore, I strongly recommend invoking a proper graphics device to write out your plots. There are a number of functions that allow you to do this.
+
+The most straightforward are those that produce bitmap files (BMP, JPEG, PNG or TIFF): the corresponding functions are _bmp_, _jpeg_, _png_ and _tiff_. These all allow you to specify a filename to write to (you can include a full directory path if necessary), a height and width, the units of your dimensions (_"px"_ for pixels, _"in"_ for inches, _"cm"_ for centimetres, and _"mm"_ for millimetres), and the pixel-resolution to use (the _res_ parameter). There are some other options, but they are not important enough to deal with right now. As ever, you can use the _help_ function if you need to explore all the options. The _dev.off_ function closes the device when you have finished plotting (if you don't do this, your file image will look blank until you close R).
+
+For example, let's write our original scatterplot out as a PNG file:
+
+```{r,echo=TRUE,eval=FALSE}
+png(filename = "AirPassengersGraph.png",width = 12.5,height = 10,units = "cm",res = 1200)
+
+par(las=1)
+par(tck=-0.01)
+par(mgp=c(1.8,0.2,0))
+par(cex.lab=1.2)
+par(mar=c(3.2,3.2,0.2,0.2))
+plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",
+     xlab="Year",ylab="Number of passengers (thousands)")
+axis(side = 1,at = seq(from=1,to=144,by=12),labels = 1949:1960)
+
+dev.off()
+```
+
+# ggplot
+
+So far, we have been using R's built-in plotting functionality. A lot of people use the package _ggplot_ for most of their R graphics. ggplot is great for quickly producing graphs, especially where your data are multi-dimensional (ggplot allows you quickly to break dimensions into different point colours, panels etc.).
+
+First, we will load the _ggplot2_ package:
+
+```{r,echo=TRUE,results=FALSE}
+library(ggplot2)
+```
+
+We will work with the cars dataset again for this illustration. Let's first convert the variable giving the number of cylinders of the car models to a factor (look back at the Data Types session if you are not sure what this means):
+
+```{r,echo=TRUE,results=FALSE}
+mtcars$cyl <- as.factor(mtcars$cyl)
+```
+
+Now we will construct a simple scatter plot of car fuel economy against car weight, using the basic _ggplot_ function. To do so, we need to specify the dataset and the aesthetic mapping (i.e., which variables to plot on the x and y axes). The mapping is performed using the _aes_ function. We also have to add the _geom_point_ function at the end to say what sort of graph we want:
+
+```{r,echo=TRUE,results=TRUE}
+ggplot(data = mtcars,mapping = aes(x=wt, y=mpg)) + geom_point()
+```
+
+A nice feature of ggplot is that we can very quickly add a trendline to our data. This is done by appending the _geom_smooth_ function at the end (the _method=lm_ option tells R that we want to fit a trendline using a linear model - more on linear models in a later session!):
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg)) + 
+  geom_point()+
+  geom_smooth(method=lm)
+```
+
+Where _ggplot_ really comes into its own is when you want to plot quickly relationships consisting of more than just two variables, for instance if you want to plot a relationship divided by a third grouping variable. As an example here, we will separate out the relationship between car weight and fuel efficiency according to the number of cylinders a car has. We can quickly add different shapes to the plot, by adding a _shape_ option to the plot aesthetic:
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg, shape=cyl)) +
+  geom_point()
+```
+
+It is perhaps easier to see the different groupings if we also use different colours, which we can do by adding a _col_ option:
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg, shape=cyl, color=cyl)) +
+  geom_point()
+```
+
+We can also add separate trendlines for each of the groups, by appending the same _geom_smooth_ function that we used before:
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg, color=cyl, shape=cyl)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+```
+
+You can add an aesthetic option here, to make the confidence intervals have the same colour as the points and lines:
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg, color=cyl, shape=cyl)) +
+  geom_point() + 
+  geom_smooth(method=lm, aes(fill=cyl))
+```
+
+You can also separate relationships by a grouping variable into different panels of a plot, rather than using shapes or colours. This can be done very simply using the _facet_wrap_ function (here specifying that we want to divide the relationships as a function of the number of cylinders _~cyl_):
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg)) + 
+  geom_point()+
+  geom_smooth(method=lm) + 
+  facet_wrap(~cyl)
+```
+
+And we can, if we want, divide panels according to two grouping variables. For example here, we divide by the number of cylinders and the number of gears using _~cyl+gear_ (although this isn't a great option here given the imbalance in data among these groups):
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg)) + 
+  geom_point()+
+  geom_smooth(method=lm) + 
+  facet_wrap(~cyl+gear)
+```
+
+As with the basic plots we encountered earlier, you can tweak the appearance of plots made using _ggplot_. Here I add more informative x- and y-axis labels by appending the _scale_x_continuous_ and _scale_y_continuous_ functions. I also make a cleaner looking graph without grid lines and grey shading using the _theme_classic_ option:
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(mtcars, aes(x=wt, y=mpg)) + 
+  geom_point()+
+  geom_smooth(method=lm)+
+  scale_x_continuous(name = "Car weight (1000 lb)",)+
+  scale_y_continuous(name = "Fuel efficiency (MPG)")+
+  theme_classic()
+```
+
+# Next Time
+
+That's all I will cover in terms of plotting in R. There are thousands of ways you can make graphs and visualisations in R. You will only get familiar with some of these possibilities by experience. You might want to look at these cheatsheets for <a href="http://publish.illinois.edu/johnrgallagher/files/2015/10/BaseGraphicsCheatsheet.pdf" target="_blank">base graphics</a> and <a href="https://raw.githubusercontent.com/rstudio/cheatsheets/master/data-visualization.pdf" target="_blank">ggplot</a>.
+
+This is the final session in my Introduction to R. In the next set of sessions, I will introduce how to do some of the statistical tests commonly used in ecology (and other scientific fields).
