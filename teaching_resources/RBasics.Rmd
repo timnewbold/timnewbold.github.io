@@ -6,7 +6,7 @@ output: html_document
 
 # Overview
 
-In this session, we cover some of the basics of working with R:
+In this session, we will cover some of the basics of working with R:
 
 * Getting started with R
 * Conducting basic arithmetic
