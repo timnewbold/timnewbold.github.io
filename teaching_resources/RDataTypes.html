@@ -635,6 +635,36 @@ myList6</code></pre>
 ##   arguments imply differing number of rows: 5, 2</code></pre>
 </div>
 </div>
+<div id="matrices" class="section level1">
+<h1>Matrices</h1>
+<p>Although you may not encounter matrices when running basic statistics in R, you may do if you get into more advanced statistics, and they are useful if you use R for modelling or maths. Like data frames, matrices have a square structure, but unlike data frames can only hold a single data type. You can create a matrix using the <em>matrix</em> function. The <em>byrow</em> option determines whether data are entered along each row (byrow = TRUE) or down each column (byrow = FALSE):</p>
+<pre class="r"><code>myMatrix &lt;- matrix(data = 1:12,nrow = 4,ncol = 3,byrow = TRUE)
+myMatrix</code></pre>
+<pre><code>##      [,1] [,2] [,3]
+## [1,]    1    2    3
+## [2,]    4    5    6
+## [3,]    7    8    9
+## [4,]   10   11   12</code></pre>
+<pre class="r"><code>myMatrix2 &lt;- matrix(data = 1:12,nrow = 4,ncol = 3,byrow = FALSE)
+myMatrix2</code></pre>
+<pre><code>##      [,1] [,2] [,3]
+## [1,]    1    5    9
+## [2,]    2    6   10
+## [3,]    3    7   11
+## [4,]    4    8   12</code></pre>
+<p>We can convert objects of a different class to a matrix using the <em>as.matrix</em> function. In this case, all values become strings, because matrices can’t handle mixed data types:</p>
+<pre class="r"><code>myMatrix3 &lt;- as.matrix(myDataFrame)
+myMatrix3</code></pre>
+<pre><code>##      Treatment    Measurement Measurement2
+## [1,] &quot;Treatment1&quot; &quot;2.0&quot;       &quot;2.1&quot;       
+## [2,] &quot;Treatment2&quot; &quot;4.5&quot;       &quot;4.4&quot;       
+## [3,] &quot;Treatment3&quot; &quot;1.2&quot;       &quot;1.0&quot;       
+## [4,] &quot;Treatment1&quot; &quot;1.0&quot;       &quot;1.4&quot;       
+## [5,] &quot;Treatment2&quot; &quot;6.0&quot;       &quot;7.2&quot;       
+## [6,] &quot;Treatment3&quot; &quot;2.3&quot;       &quot;2.4&quot;</code></pre>
+<p>There are many mathematical operations that you can perform on matrices. In fact, you can also do the same with data frames so long as all the columns contain numbers. Matrix maths can get very complex, and is beyond the scope of these sessions. If you want a quick introduction to the basics, I recommend this <a href="https://stats.idre.ucla.edu/r/seminars/r-matrix-operations/" target="_blank">webpage</a>.</p>
+<p>There are two main advantages of using matrices: 1) it ensures that all the values are of the same data type; and 2) the amount of memory used up by a matrix tends to be much smaller than that of a data frame, which can be important when working with very large datasets.</p>
+</div>
 <div id="next-time" class="section level1">
 <h1>Next Time</h1>
 <p>That’s it for this session. In the next session, I introduce some of the functions that can be used to conduct arithmetic operations in R, including to calculate summary statistics that are indispensible in scientific research.</p>

@@ -505,6 +505,29 @@ myList6
 try(data.frame(Component1=c(1,2,3,4,5),Component2=c(6,7)))
 ```
 
+# Matrices
+
+Although you may not encounter matrices when running basic statistics in R, you may do if you get into more advanced statistics, and they are useful if you use R for modelling or maths. Like data frames, matrices have a square structure, but unlike data frames can only hold a single data type. You can create a matrix using the _matrix_ function. The _byrow_ option determines whether data are entered along each row (byrow = TRUE) or down each column (byrow = FALSE):
+
+```{r,echo=TRUE,results=TRUE}
+myMatrix <- matrix(data = 1:12,nrow = 4,ncol = 3,byrow = TRUE)
+myMatrix
+
+myMatrix2 <- matrix(data = 1:12,nrow = 4,ncol = 3,byrow = FALSE)
+myMatrix2
+```
+
+We can convert objects of a different class to a matrix using the _as.matrix_ function. In this case, all values become strings, because matrices can't handle mixed data types:
+
+```{r,echo=TRUE,results=TRUE}
+myMatrix3 <- as.matrix(myDataFrame)
+myMatrix3
+```
+
+There are many mathematical operations that you can perform on matrices. In fact, you can also do the same with data frames so long as all the columns contain numbers. Matrix maths can get very complex, and is beyond the scope of these sessions. If you want a quick introduction to the basics, I recommend this <a href="https://stats.idre.ucla.edu/r/seminars/r-matrix-operations/" target="_blank">webpage</a>.
+
+There are two main advantages of using matrices: 1) it ensures that all the values are of the same data type; and 2) the amount of memory used up by a matrix tends to be much smaller than that of a data frame, which can be important when working with very large datasets.
+
 # Next Time
 
 That's it for this session. In the next session, I introduce some of the functions that can be used to conduct arithmetic operations in R, including to calculate summary statistics that are indispensible in scientific research.
