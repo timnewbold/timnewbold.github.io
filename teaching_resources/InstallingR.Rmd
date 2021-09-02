@@ -1,7 +1,13 @@
 ---
 title: Installing R and RStudio&reg;
+date: "`r Sys.Date()`"
 author: "Tim Newbold"
-output: html_document
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
 ---
 
 # Overview

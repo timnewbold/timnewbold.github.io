@@ -1,7 +1,12 @@
 ---
 title: Data Types in R
 author: "Tim Newbold"
-output: html_document
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
 ---
   
 # Overview

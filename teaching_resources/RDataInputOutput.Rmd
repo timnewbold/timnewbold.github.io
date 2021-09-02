@@ -1,7 +1,12 @@
 ---
 title: R Data Input and Output
 author: "Tim Newbold"
-output: html_document
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
 references:
   - id: PanTHERIA
     title: PanTHERIA&colon; a species-level database of life history, ecology, and geography of extant and recently extinct mammals
