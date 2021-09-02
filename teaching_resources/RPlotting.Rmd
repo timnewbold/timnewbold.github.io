@@ -1,5 +1,6 @@
 ---
 title: Plotting Graphs in R
+date: "`r Sys.Date()`"
 author: "Tim Newbold"
 output:
   rmdformats::downcute:
