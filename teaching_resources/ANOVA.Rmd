@@ -1,0 +1,251 @@
+---
+title: Analysis of Variance
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+---
+
+# Overview
+
+This session will cover Analysis of Variance (ANOVA). I will start by introducing the manual calculation of an ANOVA, and then show you the function you can use to calculate ANOVA automatically in R.
+
+An ANOVA statistical test allows us to ask whether a measured response variable differs among several treatment groups in an experiment (or observational groups). 
+
+If you are not familiar with basic statistical concepts (hypotheses, null hypotheses, P values, degrees of freedom etc.), I recommend taking a look at <a href="https://www.khanacademy.org/math/statistics-probability/significance-tests-one-sample#idea-of-significance-tests" target="_blank">these videos</a>.
+
+In this session, we will work with the cars dataset that we have used previously:
+
+```{r, echo=TRUE,results=TRUE}
+data(mtcars)
+```
+
+Specifically, we will use ANOVA to test whether the power of cars varies according to how many cylinders they have. Let's start by plotting a boxplot of this relationship:
+
+```{r,echo=TRUE,results=TRUE}
+boxplot(mtcars$hp~mtcars$cyl)
+```
+
+It certainly looks as though cars with more cylinders tend to be more powerful, but we will use an ANOVA to test whether this is a statistically significant relationship.
+
+# Manual Calculation of ANOVA
+
+## Basic principles of ANOVA
+
+To run an ANOVA by hand, we first need to calculate the F ratio. We can then compare this value to the F distribution to obtain a P value (i.e., the probability of obtaining the observed differences among groups by chance, given the null hypothesis that there are actually no differences among the groups). The F ratio is the ratio of the mean of squares between groups to the mean of squares within groups:
+$$F = \frac{MS_{between}}{MS_{within}}$$
+
+The mean of squares is the sum of squares divided by the degrees of freedom:
+$$MS_{between} = \frac{SS_{between}}{DF_{between}}$$
+$$MS_{within} = \frac{SS_{within}}{DF_{within}}$$
+
+For a dataset with $N$ total samples and $K$ treatment groups, the degrees of freedom are as follows:
+$$DF_{between} = K - 1$$
+$$DF_{within} = N - K$$
+$$DF_{total} = N - 1$$
+
+The sums of squares are sums of squared deviances. 
+
+1. The total sum of squares is the sum (across each group $k$, and each data value $i$ within each group) of the squared differences between each recorded data value and the grand mean of data values in the whole dataset $\overline{Y}$:
+$$SS_{total} = \sum_{k=1}^{K}{\sum_{i=1}^{I}{(Y_{ik} - \overline{Y})}}$$
+
+2. The sum of squares between groups is the sum (again, across each group $k$, and each data value $i$ within each group) of squared differences between the mean of data values within each group $k$, $\overline{Y_k}$, and the grand mean of data values in the whole dataset, $\overline{Y}$:
+$$SS_{between} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(\overline{Y_k} - \overline{Y})}$$
+
+3. The sum of squares within groups is the sum (yet again, across each group $k$, and each data value $i$ within each group) of squared differences between each data value, $Y_{ik}$, and the mean of data values across the group to which that data value belongs, $\overline{Y_k}$:
+$$SS_{within} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(Y_{ik} - \overline{Y_k})}$$
+
+## Manual ANOVA on Cars Dataset
+
+Let's put this into practice to ask whether there is a significant difference in the power of cars depending on how many cylinders they have.
+
+First, we will calculate the grand mean of all values in the dataset:
+
+```{r,echo=TRUE,results=TRUE}
+grand.mean <- mean(mtcars$hp)
+grand.mean
+```
+
+Next, we will use the _tapply_ function to calculate the means of values within each group:
+
+```{r,echo=TRUE,results=TRUE}
+group.means <- tapply(mtcars$hp,mtcars$cyl,mean)
+group.means
+```
+
+To help with our later calculations, we will now add these group means as a new column in the original data table. We can do this using the new match function (matching based on the number of cylinders):
+
+```{r,echo=TRUE,results=TRUE}
+mtcars$group.means <- group.means[match(mtcars$cyl,names(group.means))]
+head(mtcars)
+```
+
+> TIP: If you want to read more about the _match_ function:
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+help(match)
+```
+
+Now, let's calculate the total sum of squares (the sum of the squared differences between each data value and the grand mean value across the whole dataset). To do so, we will first create a column to hold the individual squared differences:
+
+```{r,echo=TRUE,results=TRUE}
+mtcars$SquDevTotal <- (mtcars$hp - grand.mean)^2
+sst <- sum(mtcars$SquDevTotal)
+sst
+```
+
+Next, we will calculate the sum of squares between groups (the sum of the squared differences between the group means and the grand mean):
+
+```{r,echo=TRUE,results=TRUE}
+mtcars$SquDevBetween <- (mtcars$group.means - grand.mean)^2
+ssb <- sum(mtcars$SquDevBetween)
+ssb
+```
+
+And then the sum of squares within groups (the sum of the squared differences between each data value and its respective group mean):
+
+```{r,echo=TRUE,results=TRUE}
+mtcars$SquDevWithin <- (mtcars$hp - mtcars$group.means)^2
+ssw <- sum(mtcars$SquDevWithin)
+ssw
+```
+
+We now need to calculate the degrees of freedom (total, between groups and within groups). First, we will derive the $N$ and $K$ parameters (the total size of the dataset and the number of groups, respectively):
+
+```{r,echo=TRUE,results=TRUE}
+N = nrow(mtcars)
+K = length(unique(mtcars$cyl))
+df.total <- N - 1
+df.between <- K - 1
+df.within <- N - K
+df.total
+df.between
+df.within
+```
+
+As a check that we did our calculations correctly, let's make sure that $SS_{total} = SS_{between}+SS_{within}$ and that $DF_{total} = DF_{between} + DF_{within}$:
+
+```{r,echo=TRUE,results=TRUE}
+sst == ssb + ssw
+df.total == df.between + df.within
+```
+
+We can then calculate the mean of squares between and within groups (i.e., the sum of squares divided by the degrees of freedom):
+
+```{r,echo=TRUE,results=TRUE}
+msb <- ssb/df.between
+msw <- ssw/df.within
+msb
+msw
+```
+
+Now we can calculate our F ratio:
+
+```{r,echo=TRUE,results=TRUE}
+f <- msb/msw
+f
+```
+
+Finally, we can use the f ratio and the degrees of freedom (between and within groups) to calculate the P value. We can do this using the _pf_ function, which calculates the probability of obtaining a given F ratio if our null hypothesis is true (i.e., if the data are drawn from a single distribution with no difference in values among groups). We have to specify _lower.tail = FALSE_ to obtain a P value at the correct end of the distribution:
+
+```{r,echo=TRUE,results=TRUE}
+P <- pf(q = f,df1 = df.between,df2 = df.within,lower.tail = FALSE)
+P
+```
+
+# Running ANOVA Automatically in R
+
+## Basic Operation
+
+As you have seen, manually calculating an ANOVA is rather laborious. Luckily, R has a function, _aov_, that can run an ANOVA very quickly.
+
+First, we need to convert the variable giving the number of cylinders to a factor, so that R treats the groups correctly:
+
+```{r,echo=TRUE,results=TRUE}
+mtcars$cyl <- factor(mtcars$cyl)
+```
+
+Now we can run the ANOVA, specifying that we want to model the horsepower of cars as a function of (_~_) the number of cylinders:
+
+```{r,echo=TRUE,results=TRUE}
+a1 <- aov(mtcars$hp~mtcars$cyl)
+summary(a1)
+```
+
+Luckily, this gives us the same answer as before, but requiring a lot less work!
+
+## Checking Model Assumptions
+
+ANOVAs are parametric statistical tests, and as such have to meet the four assumptions of this group of tests:
+
+1. equality of variance 
+2. a normal distribution of residuals
+3. a linear relationship between variables, and 
+4. independence of individual data points. 
+
+We will explore the first two of these assumptions here.
+
+First, the distribution of residuals. We can investigate this using either the _qqnorm_ and _qqline_ functions, or using a simple histogram. In the first plot, if the residuals are normally distributed, we expect to see the points lining up along the diagonal line:
+
+```{r,echo=TRUE,results=TRUE}
+qqnorm(residuals(a1))
+qqline(residuals(a1))
+hist(residuals(a1))
+```
+
+Both of these plots suggest that there is some skew in the model residuals.
+
+Next, we will test for equality of variance, in this case we are interested in equality of variances among groups. Replotting the original boxplot of power against number of cylinders already suggests that variance in horsepower is higher for cars with 8 cylinders:
+
+```{r,echo=TRUE,results=TRUE}
+boxplot(mtcars$hp~mtcars$cyl)
+```
+
+Most important, though, for the model assumptions is whether the model residuals show equality of variance among groups. A boxplot of the residuals against the number of cylinders shows that this assumption is clearly violated:
+
+```{r,echo=TRUE,results=TRUE}
+boxplot(residuals(a1)~mtcars$cyl)
+```
+
+One simple thing to check, if the assumptions of parametric tests are violated, is whether our response variable appears to be drawn from a normal distribution:
+
+```{r,echo=TRUE,results=TRUE}
+hist(mtcars$hp)
+```
+
+The values are clearly right-skewed. To attempt to deal with this issue, let's try log-transforming the values of this variable:
+
+```{r,echo=TRUE,results=TRUE}
+mtcars$LogHP <- log(mtcars$hp)
+hist(mtcars$LogHP)
+```
+
+The distribution of values certainly now looks much better. If we replot our original box-plot, this time with log-transformed values, it looks as though variances are more equal among groups:
+
+```{r,echo=TRUE,results=TRUE}
+boxplot(mtcars$LogHP~mtcars$cyl)
+```
+
+So, let's try re-running our Analysis of Variance, this time with the log-transformed values of horsepower:
+
+```{r,echo=TRUE,results=TRUE}
+a2 <- aov(mtcars$LogHP~mtcars$cyl)
+summary(a2)
+```
+
+We still have a highly significant difference in power among groups with cars with different numbers of cylinders. Let's check against the model assumptions again:
+
+```{r,echo=TRUE,results=TRUE}
+qqnorm(residuals(a2)); qqline(residuals(a2))
+hist(residuals(a2))
+boxplot(residuals(a2)~mtcars$cyl)
+```
+
+The model seems to be behaving much better now. We would probably be happy with this model.
+
+# Next Time
+
+That's it for this session. The next session covers linear regression, where we test for an effect of a continuous (rather than grouping) variable on our response variable.
