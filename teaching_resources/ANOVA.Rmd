@@ -51,14 +51,14 @@ $$DF_{total} = N - 1$$
 
 The sums of squares are sums of squared deviances. 
 
-1. The total sum of squares is the sum (across each group $k$, and each data value $i$ within each group) of the squared differences between each recorded data value and the grand mean of data values in the whole dataset $\overline{Y}$:
-$$SS_{total} = \sum_{k=1}^{K}{\sum_{i=1}^{I}{(Y_{ik} - \overline{Y})}}$$
+1. The total sum of squares is the sum (across each group $k$, and each data value $i$ within each group) of the squared differences between each recorded data value, $Y_{ik}$, and the grand mean of data values in the whole dataset $\overline{Y}$:
+$$SS_{total} = \sum_{k=1}^{K}{\sum_{i=1}^{I}{(Y_{ik} - \overline{Y})^2}}$$
 
 2. The sum of squares between groups is the sum (again, across each group $k$, and each data value $i$ within each group) of squared differences between the mean of data values within each group $k$, $\overline{Y_k}$, and the grand mean of data values in the whole dataset, $\overline{Y}$:
-$$SS_{between} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(\overline{Y_k} - \overline{Y})}$$
+$$SS_{between} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(\overline{Y_k} - \overline{Y})^2}$$
 
 3. The sum of squares within groups is the sum (yet again, across each group $k$, and each data value $i$ within each group) of squared differences between each data value, $Y_{ik}$, and the mean of data values across the group to which that data value belongs, $\overline{Y_k}$:
-$$SS_{within} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(Y_{ik} - \overline{Y_k})}$$
+$$SS_{within} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(Y_{ik} - \overline{Y_k})^2}$$
 
 ## Manual ANOVA on Cars Dataset
 
@@ -157,7 +157,7 @@ P <- pf(q = f,df1 = df.between,df2 = df.within,lower.tail = FALSE)
 P
 ```
 
-# Running ANOVA Automatically in R
+# Running ANOVA in R
 
 ## Basic Operation
 
@@ -185,11 +185,11 @@ ANOVAs are parametric statistical tests, and as such have to meet the four assum
 1. equality of variance 
 2. a normal distribution of residuals
 3. a linear relationship between variables, and 
-4. independence of individual data points. 
+4. independence of individual data points 
 
 We will explore the first two of these assumptions here.
 
-First, the distribution of residuals. We can investigate this using either the _qqnorm_ and _qqline_ functions, or using a simple histogram. In the first plot, if the residuals are normally distributed, we expect to see the points lining up along the diagonal line:
+First, the distribution of residuals. Model residuals are the differences between the observed and predicted values in a model. In an ANOVA, the residuals are the differences between each data value and the group mean value (i.e., the differences that form the basis of the sum of squares within groups).  We can investigate the distribution of model residuals using either the _qqnorm_ and _qqline_ functions, or using a simple histogram. In the first plot, if the residuals are normally distributed, we expect to see the points lining up along the diagonal line:
 
 ```{r,echo=TRUE,results=TRUE}
 qqnorm(residuals(a1))
