@@ -27,7 +27,8 @@ data(mtcars)
 Specifically, we will use ANOVA to test whether the power of cars varies according to how many cylinders they have. Let's start by plotting a boxplot of this relationship:
 
 ```{r,echo=TRUE,results=TRUE}
-boxplot(mtcars$hp~mtcars$cyl)
+library(ggplot2)
+ggplot(data = mtcars,mapping = aes(x=as.factor(cyl),y=hp)) + geom_boxplot() + theme_classic()
 ```
 
 It certainly looks as though cars with more cylinders tend to be more powerful, but we will use an ANOVA to test whether this is a statistically significant relationship.
