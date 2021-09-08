@@ -146,7 +146,7 @@ head(mtcars,10)
 It is also common to need to read data from Comma-Separated-Values files. For example, you can read my moth-trapping data directly from my website using the _read.csv_ function:
 
 ```{r,echo=TRUE,results=TRUE}
-moths <- read.csv(file = "https://timnewbold.github.io/moths/TimNewboldMothDataPublicRelease.csv")
+moths <- read.csv(file = "https://timnewbold.github.io/TimNewboldMothDataPublicRelease.csv")
 head(moths,10)
 ```
 
@@ -157,7 +157,7 @@ You can also use the _read.csv_ function to read local files (just point the _fi
 The _read.csv_ function is a specific instance of the more general _read.table_ function. You can also read CSV files via the more general function, but you have to specify the character that separates entries in the dataset (commas in the case of CSVs), and also that the data contains a header row (i.e., the column names):
 
 ```{r,echo=TRUE,results=TRUE}
-moths <- read.table(file = "https://timnewbold.github.io/moths/TimNewboldMothDataPublicRelease.csv",
+moths <- read.table(file = "https://timnewbold.github.io/TimNewboldMothDataPublicRelease.csv",
                     header = TRUE,sep = ",")
 tail(moths,10)
 ```

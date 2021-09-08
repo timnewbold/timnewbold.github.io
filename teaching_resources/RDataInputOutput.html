@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-02" />
+        <meta name="date" content="2021-09-08" />
     
     <title>R Data Input and Output</title>
 
@@ -227,7 +227,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-02</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-08</p>
            
 
    
@@ -282,7 +282,7 @@
 <div id="csv-format" class="section level2">
 <h2>CSV Format</h2>
 <p>It is also common to need to read data from Comma-Separated-Values files. For example, you can read my moth-trapping data directly from my website using the <em>read.csv</em> function:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>moths <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="st">&quot;https://timnewbold.github.io/moths/TimNewboldMothDataPublicRelease.csv&quot;</span>)</span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>moths <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="st">&quot;https://timnewbold.github.io/TimNewboldMothDataPublicRelease.csv&quot;</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(moths,<span class="dv">10</span>)</span></code></pre></div>
 <pre><code>##    TrapNumber       Date            Species NumberCaught Location
 ## 1           1 08/08/2020   Pebble prominent            1     Home
@@ -311,31 +311,31 @@
 <div id="other-table-formats" class="section level2">
 <h2>Other Table Formats</h2>
 <p>The <em>read.csv</em> function is a specific instance of the more general <em>read.table</em> function. You can also read CSV files via the more general function, but you have to specify the character that separates entries in the dataset (commas in the case of CSVs), and also that the data contains a header row (i.e., the column names):</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>moths <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;https://timnewbold.github.io/moths/TimNewboldMothDataPublicRelease.csv&quot;</span>,</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>moths <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="at">file =</span> <span class="st">&quot;https://timnewbold.github.io/TimNewboldMothDataPublicRelease.csv&quot;</span>,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">header =</span> <span class="cn">TRUE</span>,<span class="at">sep =</span> <span class="st">&quot;,&quot;</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(moths,<span class="dv">10</span>)</span></code></pre></div>
 <pre><code>##     TrapNumber       Date                Species NumberCaught Location
-## 590        104 30/06/2021          Willow beauty            2     Home
-## 591        104 30/06/2021               Fan-foot            1     Home
-## 592        104 30/06/2021         Common footman            2     Home
-## 593        104 30/06/2021            Dark arches            1     Home
-## 594        104 30/06/2021         Heart and dart            1     Home
-## 595        104 30/06/2021 Large yellow underwing            1     Home
-## 596        104 30/06/2021              Uncertain            1     Home
-## 597        104 30/06/2021           Brown rustic            1     Home
-## 598        104 30/06/2021            Buff ermine            1     Home
-## 599        104 30/06/2021                 Miller            1     Home
+## 757        112 06/08/2021 Large yellow underwing            2     Home
+## 758        112 06/08/2021            Riband wave            1     Home
+## 759        112 06/08/2021         Flame shoulder            1     Home
+## 760        112 06/08/2021           Least carpet            1     Home
+## 761        112 06/08/2021      Elephant hawkmoth            1     Home
+## 762        112 06/08/2021     Single-dotted wave            1     Home
+## 763        112 06/08/2021          Scalloped Oak            1     Home
+## 764        112 06/08/2021           Yellow shell            1     Home
+## 765        112 06/08/2021                 Dagger            1     Home
+## 766        112 06/08/2021          Common rustic            1     Home
 ##                    Trap  Type Month Month2 Year Year_Month
-## 590 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 591 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 592 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 593 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 594 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 595 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 596 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 597 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 598 Heath - 40W Actinic Macro     6      6 2021    2021_06
-## 599 Heath - 40W Actinic Macro     6      6 2021    2021_06</code></pre>
+## 757 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 758 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 759 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 760 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 761 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 762 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 763 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 764 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 765 Heath - 40W Actinic Macro     8      8 2021    2021_08
+## 766 Heath - 40W Actinic Macro     8      8 2021    2021_08</code></pre>
 <p>The <em>read.table</em> function is more useful if you want to read in formats other than CSV, for example tab-separated text files. Here we will read data from the PanTHERIA database of the traits of mammal species <span class="citation">(Jones et al. 2009)</span> (the ‘\t’ in the <em>sep</em> argument specifies that this dataset uses the tab character as the data separator):</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>pantheria <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">&quot;https://www.dropbox.com/s/zj3ydfwo79t1n4f/PanTHERIA_1-0_WR05_Aug2008.txt?dl=1&quot;</span>,<span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,<span class="at">header =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(pantheria,<span class="at">list.len=</span><span class="dv">10</span>)</span></code></pre></div>
