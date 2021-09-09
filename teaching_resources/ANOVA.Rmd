@@ -189,9 +189,11 @@ ANOVAs are parametric statistical tests, and as such have to meet the four assum
 
 We will explore the first two of these assumptions here.
 
-First, the distribution of residuals. Model residuals are the differences between the observed and predicted values in a model. In an ANOVA, the residuals are the differences between each data value and the group mean value (i.e., the differences that form the basis of the sum of squares within groups).  We can investigate the distribution of model residuals using either the _qqnorm_ and _qqline_ functions, or using a simple histogram. In the first plot, if the residuals are normally distributed, we expect to see the points lining up along the diagonal line:
+First, the distribution of residuals. Model residuals are the differences between the observed and predicted values in a model. In an ANOVA, the residuals are the differences between each data value and the group mean value (i.e., the differences that form the basis of the sum of squares within groups).  We can investigate the distribution of model residuals using either a Q-Q plot (generated using the _qqnorm_ and _qqline_ functions), or using a simple histogram. In the first plot, if the residuals are normally distributed, we expect to see the points lining up along the diagonal line:
 
 ```{r,echo=TRUE,results=TRUE}
+# The qqnorm function creates the basic Q-Q plot, while the Q-Q line adds the diagonal line
+# along which we expect points to full if there is a normal distribution of residuals
 qqnorm(residuals(a1))
 qqline(residuals(a1))
 hist(residuals(a1))
