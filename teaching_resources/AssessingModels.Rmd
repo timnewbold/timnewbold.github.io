@@ -1,0 +1,176 @@
+---
+title: Analysis of Covariance (ANCOVA)
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+---
+
+# Overview
+
+So far, we have considered whether our models conform to the assumptions of parametric statistical tests. However, we haven't yet thought about how well they describe our study system. In this session, we will look at the ways in which you can assess the ability of a model to explain the measured response variable, and how we might go about selecting the "best" model to describe the study system.
+
+There are three main ways that we might assess the ability of our model to explain our response variable. 
+
+1. We can ask which variables have a **_significant_** effect on our response variable. This allows us to select the most parsimonious model for explaining our study system.
+2. We might be interested in how strong an effect an explanatory variable has on the response variable (i.e., its **_effect size_**).
+3. We can assess how much of the variability in our response variable is explained by the set of explanatory variables in our model. This is referred to as **_model explanatory power_**.
+
+We will return yet again to the cars dataset for this session:
+
+```{r,echo=TRUE,results=TRUE}
+data(mtcars)
+
+mtcars$cyl <- factor(mtcars$cyl)
+```
+
+# Model Selection
+
+In classical statistics, we want to discard any candidate explanatory variables that turn out not to have a significant effect on our response variable. This is referred to as **_frequentist statistics_**. In a later session, we will investigate alternative approaches to model selection that don't involve a binary inclusion or exclusion of explanatory variables. This allows us to select the **_most parsimonious_** model for explaining our study system (as long as we considered all potentially important variables in the first place!).
+
+There are a number of different approaches that are used to select the most parsimonious statistical model. Here, we will follow the most commonly used of these approaches, which is to start with the most complex model, and see which explanatory variables can be dropped from the model because they don't have a significant effect. This approach tends to be referred to as **_backward stepwise model selection_**.
+
+Following on from the session on analysis of covariance, we will start with the most complex interactive model of car fuel efficiency as a function of power and number of cylinders:
+
+```{r,echo=TRUE,results=TRUE}
+# First, we need to create log-transformed versions of our response and continuous
+# explanatory variable, as we saw in the last session that these variables have
+# a skewed distribution
+mtcars$LogMPG <- log(mtcars$mpg)
+mtcars$LogHP <- log(mtcars$hp)
+
+mFull <- lm(mtcars$LogMPG~mtcars$LogHP*mtcars$cyl)
+
+summary(mFull)
+anova(mFull)
+```
+
+The analysis of variance table here already gives us P values, and so some indication of which variables have a significant effect on our response variable. The problem is that these F ratios and P values are influenced by the order in which the variables are entered into the model. We can demonstrate this very easily by creating a model with the same structure, but where the two variables are entered in the opposite order:
+
+```{r,echo=TRUE,results=TRUE}
+mFull2 <- lm(mtcars$LogMPG~mtcars$cyl*mtcars$LogHP)
+
+anova(mFull)
+anova(mFull2)
+```
+
+Here, the F ratios and P values for the effects of the first two variables entered into the model (the effects of power and number of cylinders alone) are slightly different in the two models. The values for the interaction term are identical, because this was the last variable entered into the model.
+
+The best way to assess the significance of terms in a statistical model is to try dropping terms, and seeing whether this leads to a significant drop in the ability of the model to explain the response variable.
+
+The first step in a backward stepwise model selection exercise is to try dropping the interaction term from the model, in this case comparing the full complex model with an additive model that doesn't have the interaction term. As well as allowing us to compute the sums of squares, F ratios and P values from a single model, the _anova_ function in R also allows us to compare two models:
+
+```{r,echo=TRUE,results=TRUE}
+mR1 <- lm(mtcars$LogMPG~mtcars$LogHP+mtcars$cyl)
+
+anova(mFull,mR1)
+```
+
+The analysis of variance to compare two models is based on the reduction in the model sum of squares in the simpler model compared to the more complex model. In other words, this tells us how much less well the simpler model explains the response variable compared to the more complex model. Just as will a classic analysis of variance test, we can use this sum of squares to calculate an F ratio and P value. This P value tells us the probability that the more complex model would be as much better fitting than the simpler model as we observe given the null hypothesis that the extra term in the more complex model is in fact unimportant. Here, a P value substantially greater than 0.05 tells us that the interaction term does not significantly improve the fit of the model to the data.
+
+Once we have tested the significance of the interaction terms in our model, we then remove these and test the main effect (i.e., non-interaction) terms. Here we have two main effects, so we would simultaneously try dropping each of these, and assessing the effect on the fit of the model to the data (by comparison with the additive model that contains both terms):
+
+```{r,echo=TRUE,results=TRUE}
+mR2 <- lm(mtcars$LogMPG~mtcars$LogHP)
+mR3 <- lm(mtcars$LogMPG~mtcars$cyl)
+
+anova(mR1,mR2)
+anova(mR1,mR3)
+```
+
+In this case, dropping car power leads to a significant reduction in model explanatory power, but dropping the number of cylinders leads to a non-significant reduction. If any of our variables yields a non-significant P value, we drop the one that has the highest p value, and then proceed to a second round of model selection. So, now we need to compare a model with just power to a model without power. This second model has no explanatory variables, and is referred to as an intercept-only model. To run such a model in R, we ask R to fit our response variable as a function of 1:
+
+```{r,echo=TRUE,results=TRUE}
+mR4 <- lm(mtcars$LogMPG~1)
+
+# Remember that the model with just power in the last round of model selection was mR2
+anova(mR4,mR2)
+```
+
+Dropping car power leads to a highly significant reduction in our ability to explain fuel efficiency. So, that's it, we have found our most parsimonious model (a model with just car power). Had there still been non-significant terms, we would have continued with successive rounds of model selection until all terms in the model are associated with a significant P value. If any interaction terms were significant, we must add these back into our final model at the end of model selection.
+
+We already had our final, most parsimonious, model stored in R, but we will run the final model again, to avoid any ambiguity: 
+
+```{r,echo=TRUE,results=TRUE}
+mFinal <- lm(mtcars$LogMPG~mtcars$LogHP)
+
+summary(mFinal)
+```
+
+# Effect Sizes
+
+P values tell us how likely it is that we would have observed a given effect by chance given the null hypothesis that there is no relationship between variables. However, this doesn't on its own tell us how strong an effect is in real terms. A weak effect of an explanatory variable on a response variable could be identified as a significant effect given a large enough sample size. To understand how strong an effect of an explanatory variable is, we need to consider *_effect sizes_*. That is, how much a response variable changes for a given change in an explanatory variable.
+
+Let's consider here the difference in fuel economy between a car with the lowest power among those in the dataset (52 horsepower, or 3.95 in log-transformed terms) and the car with the highest power (335 horsepower, 5.81 in log-transformed values).
+
+We can use our model to make some predictions. From the coefficient table, we can extract the intercept and slope of the fitted relationship in our final model:
+
+```{r,echo=TRUE,results=TRUE}
+summary(mFinal)
+
+intercept <- summary(mFinal)$coefficients['(Intercept)','Estimate']
+slope <- summary(mFinal)$coefficients['mtcars$LogHP','Estimate']
+
+intercept
+slope
+```
+
+Now we can calculate the average fuel efficiency of a car with a power of 53 HP and of a car with a power of 335 HP:
+
+```{r,echo=TRUE,results=TRUE}
+# First, let's set the log-transformed horsepowers for cars of 52 and 335 HP
+log.hp.52 <- log(52)
+log.hp.335 <- log(335)
+
+# Now we will use the regression equation to calculate predicted fuel efficiency
+av.fuelecon.52 <- intercept + log.hp.52 * slope
+av.fuelecon.335 <- intercept + log.hp.335 * slope
+
+# We must remember that our response variable was also log-transformed
+# So we need to back-transform by taking the exponential
+av.fuelecon.52 <- exp(av.fuelecon.52)
+av.fuelecon.335 <- exp(av.fuelecon.335)
+
+av.fuelecon.52
+av.fuelecon.335
+```
+
+So, the fuel economy of the most powerful car in this dataset is more than 60% lower than that of the least powerful car. This is a very large effect size!
+
+# Model Explanatory Power
+
+The final piece of information we are likely to be interested in for assessing the quality of our models is explanatory power. Model explanatory power tells us how much of the variation in our response variable is explained by the combination of explanatory variables in our model. The most commonly used measure of explanatory power for basic statistical approaches is the coefficient of determination, or R<sup>2</sup>. We can calculate R<sup>2</sup> manually, based on the sums of squares, using the following equation:
+$$R^2=1-\frac{SS_{residual}}{SS_{total}}$$.
+
+See the session on linear regression for a refresher on the basis for the different sums of squares values.
+
+From this equation, we can easily calculate the R<sup>2</sup> value of our final model from earlier:
+
+```{r,echoo=TRUE,results=TRUE}
+anova(mFinal)
+
+ss.resid <- anova(mFinal)['Residuals','Sum Sq']
+ss.model <- anova(mFinal)['mtcars$LogHP','Sum Sq']
+ss.total <- ss.resid + ss.model
+
+r2 <- 1 - (ss.resid/ss.total)
+r2
+```
+
+However, we don't need to worry about manually calculating R<sup>2</sup> values for every model we run, because it is reported in the model summary:
+
+```{r,echo=TRUE,results=TRUE}
+summary(mFinal)
+```
+
+The R<sup>2</2> of our final model tells us that just over 70% of the variability in car fuel efficiency is explained by the power of the car. This is a very good value - you will be very lucky to get such high R<sup>2</sup> values with real biological datasets, especially ecological datasets.
+
+We may also be interested in the adjusted R<sup>2</sup> value, which is penalized according to the complexity (number of parameters) of the model.
+
+# Next Time
+
+That's it for this session. In the next session, we will look at how to deal with types of data for which we wouldn't expect the assumptions of standard statistical tests to be met.
