@@ -101,4 +101,65 @@ As with all parametric statistical tests, linear regressions are subject to four
 
 Since the data represent different cantons in Switzerland, it is probably OK to assume for now that the data points are independent. We will talk about potential non-independence in spatial datasets in a later session, but for now we will leave this assumption to one side.
 
-To test for equality of variace in a linear regression model, we can look at the spread of residuals across different predicted values in our regression, and we would hope to see a similar spread across these predicted values.
+The figure we plotted earlier of the relationship between education and fertility suggests that the assumption of a linear relationship is reasonable.
+
+To test for equality of variace in a linear regression model, we can look at the spread of residuals across different predicted values in our regression, and we would hope to see a similar spread across these predicted values. The most straightforward way to do this is to plot the relationship between predicted (or fitted) values from the model, and the model residuals:
+
+```{r,echo=TRUE,results=TRUE}
+plot(fitted(m1),residuals(m1))
+# Add a horizontal red dashed line where the residuals = 0
+abline(h=0,lwd=2,lty=2,col="red")
+```
+
+This plot clearly shows an increase in the spread of residuals at higher predicted/fitted values, and so our model definitely violates the assumption of equality of variance.
+
+Before dealing with this issue, we will also check for a normal distribution of residuals. As when we ran ANOVA tests in the previous sessions, we can check for a normal distribution of residuals either using a Q-Q plot, or a simple histogram:
+
+```{r,echo=TRUE,results=TRUE}
+qqnorm(residuals(m1))
+qqline(residuals(m1))
+hist(residuals(m1))
+```
+
+Both these plots suggest a significant deviation from a normal distribution of residuals.
+
+As before, if the assumptions of our test are violated, a simple thing to check is whether the input variables conform to a normal distribution. Although it is not necessary that the input variables are normally distributed, it is more likely that the assumptions of equality of variance and a normal distribution of _residuals_ will be violated if not:
+
+```{r,echo=TRUE,results=TRUE}
+hist(swiss$Education)
+hist(swiss$Fertility)
+```
+
+The fertility values (response variable) seem reasonably close to a normal distribution, but the education values are very right-skewed. The obvious next step, therefore, is to try a model where we log-transform the values for education:
+
+```{r,echo=TRUE,results=TRUE}
+swiss$LogEducation <- log(swiss$Education)
+
+m2 <- lm(swiss$Fertility~swiss$LogEducation)
+summary(m2)
+anova(m2)
+```
+
+Let's check the assumptions of equality of variance and normal distribution of residuals again:
+
+```{r,echo=TRUE,results=TRUE}
+plot(fitted(m2),residuals(m2))
+abline(h=0,lwd=2,lty=2,col="red")
+qqnorm(residuals(m2))
+qqline(residuals(m2))
+hist(residuals(m2))
+```
+
+The spread of residuals certainly seems more even along the range of fitted values. The residuals seem to conform more closely to a normal distributions, although still with a slight deviation. If we were conducting this analysis as part of a scientific study that we wanted to publish, we would probably dig into this issue more carefully.
+
+The eagle-eyed among you may also have noticed that the residuals seem to be lower at either end of the range of fitted values. If we re-plot the original relationship between education and fertility, but this time with the log-transformed education values, we can see why:
+
+```{r,echo=TRUE,results=TRUE}
+ggplot(data = swiss,mapping = aes(x=LogEducation,y=Fertility)) + geom_point() + geom_smooth(method="lm")
+```
+
+In fact, it looks as though the relationship between education and fertility is non-linear, violating our assumption of linearity. We won't deal with the non-linearity issue any further in this session, but we will return to this in later sessions.
+
+# Next Time
+
+In the next session, we will look at analysis of covariance (ANCOVA), which allows us to fit models with a mixture of continuous and categorical (grouping) explanatory variables.

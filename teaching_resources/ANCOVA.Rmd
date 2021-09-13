@@ -1,0 +1,70 @@
+---
+title: Analysis of Covariance (ANCOVA)
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+---
+
+# Overview
+
+This session will cover Analysis of covariance (ANCOVA).
+
+ANCOVAs are used to test for an effect of both continuous and categorical variables on our measured response variable.
+
+If you are not familiar with basic statistical concepts (hypotheses, null hypotheses, P values, degrees of freedom etc.), I recommend taking a look at <a href="https://www.khanacademy.org/math/statistics-probability/significance-tests-one-sample#idea-of-significance-tests" target="_blank">these videos</a>.
+
+We will work again with the cars dataset that we have used previously:
+
+```{r,echo=TRUE,results=TRUE}
+data(mtcars)
+
+# Ensure that the number of cylinders is treated as a categorical (grouping) variable, 
+# by converting it to a factor
+mtcars$cyl <- factor(mtcars$cyl)
+```
+
+# Running ANCOVAs
+
+In this session, we will investigate the effects of car power and fuel efficiency. Let's begin by plotting this relationship:
+
+```{r,echo=TRUE,results=TRUE}
+library(ggplot2)
+
+ggplot(data = mtcars,mapping = aes(x=hp,y=mpg))+geom_point()+
+  scale_x_continuous(name = "Power (HP)")+scale_y_continuous(name = "Fuel Efficiency (MPG)")+
+  geom_smooth(method = "lm")+theme_classic()
+```
+
+We will also additionally consider the effect of the number of cylinders on this relationship, so let's plot the relationship again, but separating car models based on their number of cylinders:
+
+```{r,echo=TRUE,results=TRUE}
+ggplot(data = mtcars,mapping = aes(x=hp,y=mpg,col=cyl,shape=cyl))+geom_point()+
+  scale_x_continuous(name = "Power (HP)")+scale_y_continuous(name = "Fuel Efficiency (MPG)")+
+  geom_smooth(method = "lm")+theme_classic()
+```
+
+To begin with, we will fit a model to test whether both power and number of cylinders affect fuel economy. To do this, we use the _lm_ function. This is the same function that we used when we fit a linear regression, but here we can add extra terms into our model:
+
+```{r,echo=TRUE,results=TRUE}
+m1 <- lm(mtcars$mpg~mtcars$hp+mtcars$cyl)
+summary(m1)
+anova(m1)
+```
+
+If we look at the ANOVA table, both power and number of cylinders have F ratios with a significant P value, suggesting that both might be important in explaining fuel economy (but more on statistical significance in models with multiple explanatory variables in the next session!). 
+
+For now though, we will check our model assumptions. As in previous sessions, we will assume that our data points are independent of one another, and that there is a linear relationship between our explanatory variables and our response variable. So, for now, we will check the assumptions of equality of variance and normal distribution of residuals:
+
+```{r,echo=TRUE,results=TRUE}
+plot(fitted(m1),residuals(m1)); abline(h=0,lty=2,lwd=2,col="red")
+qqnorm(residuals(m1)); qqline(residuals(m1))
+hist(residuals(m1))
+```
+
+It looks as though there is a higher spread of residuals for higher fitted values in the model.
+
