@@ -178,6 +178,18 @@ summary(a1)
 
 Luckily, this gives us the same answer as before, but requiring a lot less work!
 
+## Interpeting Model Coefficients
+
+Once we have run an analysis of variance in R, we can also inspect the coefficients produced by the model. In the case of analysis of variance, this just tells us the group means, but understanding how coefficient tables are structured in models created in R will be very important as we move onto more complex models later.
+
+```{r,echo=TRUE,results=TRUE}
+a1$coefficients
+```
+
+Basically, you get an 'intercept' coefficient, which for an ANOVA gives you the group mean for the reference group (in this case, cars with four cylinders), and you get coefficients describing how the average value differs for the other groups. To obtain group means for the non-reference groups, you simply add together the intercept with the coefficient for the group in question (you can check that this is the same value we calculated earlier):
+
+![Interpreting the cofficient table in an ANOVA](coef_table_anova.jpg)
+
 ## Checking Model Assumptions
 
 ANOVAs are parametric statistical tests, and as such have to meet the four assumptions of this group of tests:

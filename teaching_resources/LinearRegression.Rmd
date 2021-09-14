@@ -90,6 +90,14 @@ We can also obtain our sums of squares by running the _anova_ function. Note tha
 anova(m1)
 ```
 
+## Interpreting Model Coefficients
+
+Let's inspect the model coefficient table in a bit more detail. As I said earlier, this table gives us the slope and intercept of the best-fitting (least-squares-minimizing) regression line. The intercept is the value of the response variable when our explanatory variable has a value of zero. The slope tells us how much (and in what direction) the response variable changes for each unit increase in our explanatory variable.
+
+An important difference compared with the coefficient table for a simple ANOVA is that this table also gives us the uncertainty (specifically the standard error) associated with the coefficients. This is the measure of our confidence in the estimates of the coefficient values. If we were to repeat our experiment a sufficiently large number of times, collecting new datasets each time, and running a linear regression on these datasets, we would expect to obtain normal distributions of intercept and slope parameters with standard deviation equal to the estimated standard errors of the coefficients. In other words, these uncertainty estimates don't tell us how much variation in our response variable there is in the underlying population we sampled, but rather how accurately we are able to estimate the mean values of the coefficients. Up to a point, if we increase our sample size, we expect to see a decrease in the standard error of our coefficient estimates. If you want a nice introduction to the distinction between the standard deviation describing variability in the underlying population, and the standard error of mean estimates, see <a href="https://www.khanacademy.org/math/ap-statistics/sampling-distribution-ap/sampling-distribution-mean/v/standard-error-of-the-mean" target="_blank">this video</a>. 
+
+![Interpreting the cofficient table in a linear regression](coef_table_linearreg.jpg)
+
 ## Checking Model Assumptions
 
 As with all parametric statistical tests, linear regressions are subject to four key assumptions:
@@ -155,7 +163,7 @@ The spread of residuals certainly seems more even along the range of fitted valu
 The eagle-eyed among you may also have noticed that the residuals seem to be lower at either end of the range of fitted values. If we re-plot the original relationship between education and fertility, but this time with the log-transformed education values, we can see why:
 
 ```{r,echo=TRUE,results=TRUE}
-ggplot(data = swiss,mapping = aes(x=LogEducation,y=Fertility)) + geom_point() + geom_smooth(method="lm")
+ggplot(data = swiss,mapping = aes(x=LogEducation,y=Fertility)) + geom_point() + geom_smooth(method="lm") + theme_classic()
 ```
 
 In fact, it looks as though the relationship between education and fertility is non-linear, violating our assumption of linearity. We won't deal with the non-linearity issue any further in this session, but we will return to this in later sessions.

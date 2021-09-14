@@ -61,6 +61,8 @@ anova(m1)
 
 If we look at the ANOVA table, both power and number of cylinders have F ratios with a significant P value, suggesting that both might be important in explaining fuel economy (but more on statistical significance in models with multiple explanatory variables in the next session!). 
 
+## Checking Model Assumptions
+
 For now though, we will check our model assumptions. As in previous sessions, we will assume that our data points are independent of one another, and that there is a linear relationship between our explanatory variables and our response variable. So, for now, we will check the assumptions of equality of variance and normal distribution of residuals:
 
 ```{r,echo=TRUE,results=TRUE}
@@ -133,6 +135,8 @@ The second of these two approaches is useful if you have more than two terms in 
 
 Looking at the model summary and P values, it doesn't look as though the interaction between power and number of cylinders if very helpful in explaining the fuel efficiency of cars (we will return to this in the next session).
 
+## Checking Model Assumptions
+
 Let's check our model assumptions again:
 
 ```{r,echo=TRUE,results=TRUE}
@@ -141,6 +145,16 @@ qqnorm(residuals(m3)); qqline(residuals(m3))
 ```
 
 It looks as though this interactive model is conforming better to the assumptions of equal variance and normal distribution of residuals. Missing important variables in your model is another common cause for violation of model assumptions.
+
+## Interpreting Model Coefficients
+
+The principle is the same for the coefficient tables produced by analysis of covariance models as those produced by simple ANOVAs or linear regressions. For additive models, interpreting the model coefficients is relatively straightforward. We just have a mix of slope coefficients for continuous variables (as in linear regression), and difference coefficients for grouping variables (as in analysis of variance). The intercept now refers to the value of the response variable when continuous variables have a value of zero ***and*** for reference groupings (in this case, cars with 4 cylinders).
+
+![Interpreting the cofficient table in an additive analysis of covariance](coef_table_ancova_additive.jpg)
+
+Things are a little more complicated for analyses of covariance where we have an interaction between variables. In the case of the interaction between a continuous and grouping variable (as in the model above), we now have individual slopes for the continuous variable for each group within the grouping variable.
+
+![Interpreting the cofficient table in an interactive analysis of covariance](coef_table_ancova_interactive.jpg)
 
 # Next Time
 
