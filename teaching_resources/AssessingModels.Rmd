@@ -1,5 +1,5 @@
 ---
-title: Analysis of Covariance (ANCOVA)
+title: Assessing Statistical Models
 date: "`r Sys.Date()`"
 author: "Tim Newbold"
 output:
