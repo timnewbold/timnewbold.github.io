@@ -138,10 +138,44 @@ srMod1 <- glm(hhs2$Species_richness~hhs2$Predominant_land_use+hhs2$ForestCover,f
 
 summary(srMod1)
 ```
-
+ 
 Incidentally, if you run a GLM but specify a Gaussian family (*family=gaussian*), the result will be the same as for a linear model, since a linear model is a special case of a GLM.
 
 You will see that the coefficient table produced by a GLM is the same as for a linear model. The intercept tells us the estimated value of the response variable when the continuous explanatory variables (here just forest cover) have a value of 0, and for reference groups in our grouping (categorical) variables (here for primary vegetation). We then also have coefficients describing the slope of the relationship with our continuous explanatory variables, and coefficients giving the estimated difference in the response variable for non-reference groupings. We can see here that species richness appears to show a negative relationship with forest cover, and appears to be lower in pasture than in primary vegetation.
+
+## Model Selection with GLMs
+
+Model selection can be performed in almost exactly the same way for GLMs as for standard linear models. In the case of our species richness model, we have two potential explanatory variables in our model. If we use backward stepwise model selection, we would test the effect of removing each of these variables from the model:
+
+```{r,echo=TRUE,results=TRUE}
+srMod2 <- glm(hhs2$Species_richness~hhs2$Predominant_land_use,family=poisson)
+anova(srMod1,srMod2)
+
+srMod3 <- glm(hhs2$Species_richness~hhs2$ForestCover,family=poisson)
+anova(srMod1,srMod3)
+```
+
+The key difference for GLMs is that we no longer obtain an F ratio when we compare two models using analysis of variance. This is because you cannot calculate sums of squares from a generalized linear model. Instead GLMs are assessed in terms of changes in the deviance explained. A generalized linear model can be characterized in terms of three types of deviance:
+
+1. The null deviance, which is a measure of the overall variability in the data. 
+
+## Checking Model Assumptions of Poisson GLMs
+
+It is more tricky to check the assumptions of GLMs than those of linear models, because residuals are not expected to behave in the same way for GLMs. I like the DHARMa package in R for working with GLMs, which uses a simulation-based approach to compare the residuals from the actual model with the expectation if the model is behaving normally.
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+install.packages("DHARMa")
+```
+
+```{r,echo=TRUE,results=TRUE}
+library(DHARMa)
+
+# Simulate residuals 
+simResids <- simulateResiduals(srMod1)
+
+# Generate plots to compare the model residuals to expectations
+plot(simResids)
+```
 
 # Binomial GLMs (Logistic Regression)
 
