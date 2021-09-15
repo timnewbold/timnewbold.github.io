@@ -1,0 +1,152 @@
+---
+title: Generalized Linear Models (GLMs)
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+references:
+  - id: Hudson2017
+    title: The database of the PREDICTS (Projecting Responses of Ecological Diversity In Changing Terrestrial Systems) project
+    author:
+      - family: Hudson
+        given: Lawrence N.
+      - family: Newbold
+        given: Tim
+      - family: Contu
+        given: Sara
+      - family: Hill
+        given: Samantha L. L.
+      - family: Lysenko
+        given: Igor
+      - family: De Palma
+        given: Adriana
+      - family: Phillips
+        given: Helen R. P.
+      - family: Data entrants
+      - family: Data contributors
+      - family: Collen
+        given: Ben
+      - family: Ewers
+        given: Rob M.
+      - family: Mace
+        given: Georgina M.
+      - family: Purves
+        given: Drew W.
+      - family: Scharlemann
+        given: J&oumlaut;rn P. W.
+      - family: Purvis
+        given: Andy
+    container-title: Ecology & Evolution
+    volume: 7
+    page: 145-188
+    DOI: 10.1002/ece3.2579
+    URL: https://doi.org/10.1002/ece3.2579
+    type: article-journal
+    issued:
+      year: 2017
+  - id: Gould2013
+    title: Forest restoration and parasitoid wasp communities in montane Hawai'i
+    author:
+      - family: Gould
+        given: Rachelle K.
+      - family: Pejchar
+        given: Liba
+      - family: Bothwell
+        given: Sara G.
+      - family: Brosi
+        given: Berry
+      - family: Wolny
+        given: Stacie
+      - family: Mendenhall
+        given: Chase
+      - family: Daily
+        given: Gretchen
+    container-title: PLoS ONE
+    volume: 8
+    page: e59356
+    DOI: 10.1371/journal.pone.0059356
+    URL: https://doi.org/10.1371/journal.pone.0059356
+    type: article-journal
+    issued:
+      year: 2013
+---
+
+# Overview
+
+In this session, we will cover Generalized Linear Models, which allow us to deal with types of data where we cannot expect a conformation to the standard assumptions of parametric statistical tests.
+
+I will cover here only the practicalities of running Generalized Linear Models in R. If you are interested, <a href="https://towardsdatascience.com/generalized-linear-models-9cbf848bb8ab" target="_blank">this great article</a> gives a very short introduction to the statistics behind GLMs, although it focuses on application in Python rather than R.
+
+This session will require the use of my _MResModelling_ R package, which you can install from Github:
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+remotes::install_github("timnewbold/MResEcologicalModelling",subdir="MResModelling")
+```
+
+```{r,echo=TRUE,results=FALSE,message=FALSE}
+library(MResModelling)
+```
+
+# Example Datasets
+
+We will work with two datasets, both derived from the PREDICTS database [@Hudson2017], and originally from a study of parasitoid wasp assemblages in Hawai'i [@Gould2013]. 
+
+The first dataset describes the abundance of 21 different species of parasitoid wasp at 754 different locations in Hawai'i in three different types of land use: primary vegetation (pristine forest), secondary vegetation (forest recovering after past destruction), and pasture (areas used for livestock grazing).
+
+The second dataset gives site-level metrics of biodiversity (e.g., total species richness, total recorded abundance) at the same sites in Hawai'i. To keep things simple, I have focused this dataset just on the 242 sites in primary vegetation or pasture.
+
+```{r,echo=TRUE,results=TRUE}
+# Load species-level data (loads as object 'hh')
+data(HawaiiHymenoptera)
+# For simplicity, we will select only those columns that we will use later
+# Site_number: the site at which species were sampled
+# LandUse: the land use at the sampled site
+# Taxon_name_entered: the species sampled
+# Measurement: the recorded abundance of the species
+hh <- hh[,c('Site_number','LandUse','Taxon_name_entered','Measurement')]
+# Make the site number a grouping variable (factor)
+hh$Site_number <- factor(hh$Site_number)
+str(hh)
+
+# Load site-level data (loads as object 'hhs2')
+data(HawaiiHymenopteraSitesSubset)
+# Again, we will select the relevant columns
+# Site_number: the site at which species were sampled
+# Predominant_land_use: the land use at the sampled site
+# ForestCover: the percentage forest cover at the sampled site
+# Species_richness: the recorded species richness at the site
+hhs2 <- hhs2[,c('Site_number','Predominant_land_use','ForestCover','Species_richness')]
+# Make the site number a grouping variable (factor)
+hhs2$Site_number <- factor(hhs2$Site_number)
+str(hhs2)
+```
+
+# Poisson GLMs
+
+## Fitting a Poisson GLM in R
+
+Count data often conform to a Poisson distribution, and so are commonly encountered in ecology. For example, in the site-level parasitoid wasp data, we have a count of the number of species recorded at each site.
+
+Fitting a Poisson GLM in R is very similar to fitting an analysis of covariance (or linear model), except that now we need to use the _glm_ function. To run a GLM, we need to provide one extra piece of information beyond that needed for a linear model: the family of model we want to use. In this case, we want a Poisson family, *family=poisson*. 
+
+```{r,echo=TRUE,results=TRUE}
+srMod1 <- glm(hhs2$Species_richness~hhs2$Predominant_land_use+hhs2$ForestCover,family=poisson)
+
+summary(srMod1)
+```
+
+Incidentally, if you run a GLM but specify a Gaussian family (*family=gaussian*), the result will be the same as for a linear model, since a linear model is a special case of a GLM.
+
+You will see that the coefficient table produced by a GLM is the same as for a linear model. The intercept tells us the estimated value of the response variable when the continuous explanatory variables (here just forest cover) have a value of 0, and for reference groups in our grouping (categorical) variables (here for primary vegetation). We then also have coefficients describing the slope of the relationship with our continuous explanatory variables, and coefficients giving the estimated difference in the response variable for non-reference groupings. We can see here that species richness appears to show a negative relationship with forest cover, and appears to be lower in pasture than in primary vegetation.
+
+# Binomial GLMs (Logistic Regression)
+
+## Fitting a Binomial GLM in R
+
+A binomial GLM is useful when we have a binary response variable. Such a situation is often encountered in ecology 
+
+# References
