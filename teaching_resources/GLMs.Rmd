@@ -134,7 +134,8 @@ Count data often conform to a Poisson distribution, and so are commonly encounte
 Fitting a Poisson GLM in R is very similar to fitting an analysis of covariance (or linear model), except that now we need to use the _glm_ function. To run a GLM, we need to provide one extra piece of information beyond that needed for a linear model: the family of model we want to use. In this case, we want a Poisson family, *family=poisson*. 
 
 ```{r,echo=TRUE,results=TRUE}
-srMod1 <- glm(hhs2$Species_richness~hhs2$Predominant_land_use+hhs2$ForestCover,family=poisson)
+srMod1 <- glm(Species_richness~Predominant_land_use+ForestCover,family=poisson,
+              data=hhs2)
 
 summary(srMod1)
 ```
@@ -148,34 +149,116 @@ You will see that the coefficient table produced by a GLM is the same as for a l
 Model selection can be performed in almost exactly the same way for GLMs as for standard linear models. In the case of our species richness model, we have two potential explanatory variables in our model. If we use backward stepwise model selection, we would test the effect of removing each of these variables from the model:
 
 ```{r,echo=TRUE,results=TRUE}
-srMod2 <- glm(hhs2$Species_richness~hhs2$Predominant_land_use,family=poisson)
+srMod2 <- glm(Species_richness~Predominant_land_use,family=poisson,data=hhs2)
 anova(srMod1,srMod2)
 
-srMod3 <- glm(hhs2$Species_richness~hhs2$ForestCover,family=poisson)
+srMod3 <- glm(Species_richness~ForestCover,family=poisson,data=hhs2)
 anova(srMod1,srMod3)
 ```
 
-The key difference for GLMs is that we no longer obtain an F ratio when we compare two models using analysis of variance. This is because you cannot calculate sums of squares from a generalized linear model. Instead GLMs are assessed in terms of changes in the deviance explained. A generalized linear model can be characterized in terms of three types of deviance:
+The key difference for GLMs is that we no longer obtain an F ratio when we compare two models using analysis of variance. This is because you cannot calculate sums of squares from a generalized linear model. Instead GLMs are assessed in terms of changes in the deviance explained. Deviance values are calculated based on the (log) likelihoods of three models: the proposed model, a null model (an intercept-only model, as we encountered in the last session), and a saturated model (which has one parameter per data point).
 
-1. The null deviance, which is a measure of the overall variability in the data. 
+A generalized linear model can then be characterized in terms of two types of deviance:
+
+1. The null deviance, which is a measure of the overall variability in the response variable:
+$$Dev_{null}=2(LL_{saturated} - LL_{null})$$
+2. The residual deviance, which is a measure of the variability in the response variable that remains unexplained by the proposed model:
+$$Dev_{residual}=2(LL_{saturated}-LL_{proposed})$$
+
+The comparison of two models using analysis of variance is based on the difference in the residual deviance of the models. This deviance difference can be compared to a chi-squared distribution to obtain a P value, which we can specify as a parameter to the _anova_ function, _test="Chi"_:
+
+```{r,echo=TRUE,results=TRUE}
+anova(srMod1,srMod2,test="Chi")
+anova(srMod1,srMod3,test="Chi")
+```
+
+
+This tells us that both land use and forest cover have a significant effect on the species richness of parasitoid wasps in this study system, and that our first (most complex) model is the most parsimonious model. Let's re-run the final model, just for clarity:
+
+```{r,echo=TRUE,results=TRUE}
+srModFinal <- glm(Species_richness~Predominant_land_use+ForestCover,
+                  family=poisson,data=hhs2)
+```
+
+## Effect Sizes in Poisson GLMs
+
+Effect sizes can be calculated in exactly the same way for GLMs as for linear models. But it is important to remember that GLMs use a link function to relate the response variable to the linear predictor (the equation describing the effect of the explanatory variables). Therefore, we have to back-transform our predictions to make them match the original scale of the response variable. 
+
+Let's say we are interested to know the percentage change in species richness in pasture compared to primary vegetation:
+
+```{r,echo=TRUE,results=TRUE}
+# First, we will calculate the species richness in primary vegetation (which as 
+# the reference land-use grouping is represented by the model intercept), remembering
+# to back-transform by taking the exponential
+# We will disregard forest cover for now (i.e., assume a forest cover of 0 in 
+# our predictions). Since we did not fit an interaction term in our model, this
+# assumption will not affect our estimated percentage reduction in species richness
+intercept <- srModFinal$coefficients['(Intercept)']
+sp.rich.primary <- exp(intercept)
+sp.rich.primary
+
+# Now we will use the coefficient for the difference in (log) species richness in
+# pasture compared to primary vegetation to calculate the species richness in pasture
+pasture.coef <- srModFinal$coefficients['Predominant_land_usePasture']
+sp.rich.pasture <- exp(pasture.coef+intercept)
+sp.rich.pasture
+
+# Finally, we will calculate the percentage change in species richness in
+# pasture compared to primary vegetation
+pasture.percent.change <- ((sp.rich.pasture/sp.rich.primary)*100)-100
+# Round our final number to 1 decimal place
+pasture.percent.change <- round(pasture.percent.change,1)
+pasture.percent.change
+```
+
+Therefore, our model shows that there is an average reduction in parasitoid species richness of `r -(pasture.percent.change)`%. This is a very large effect size.
+
+## Explanatory Power of GLMs
+
+When we ran linear models, we used the coefficient of determination, or R<sup>2</sup> to assess how much of the variability in our response variable is explained by a given model. R<sup>2</sup> is based on the sums of squares of our model, and so cannot be calculated for GLMs. Instead, we can calculate the analogous "deviance explained" by our model:
+$$Dev_{explained} = \frac{Dev_{null} - Dev_{residual}}{Dev_{null}}$$
+
+For our model of species richness as a function of land use and forest cover:
+
+```{r,echo=TRUE,results=TRUE}
+# Extract the null and residual deviance from the model
+dev.null <- srModFinal$null.deviance
+dev.resid <- srModFinal$deviance
+
+# Calculate the deviance explained by the model
+dev.explained <- (dev.null - dev.resid)/dev.null
+
+# Round to 3 decimal places
+dev.explained <- round(dev.explained,3)
+
+dev.explained
+```
+
+Land use and forest cover explain nearly 30% of the variation in parasitoid species richness in this study system. That is a decent explanatory power for a relatively simple model of a complex ecological system (many factors determine the species richness that is sampled in a field survey).
 
 ## Checking Model Assumptions of Poisson GLMs
 
-It is more tricky to check the assumptions of GLMs than those of linear models, because residuals are not expected to behave in the same way for GLMs. I like the DHARMa package in R for working with GLMs, which uses a simulation-based approach to compare the residuals from the actual model with the expectation if the model is behaving normally.
+It is more tricky to check the assumptions of GLMs than those of linear models, because classical residuals are not expected to behave in the same way for GLMs. I like the DHARMa package in R for working with GLMs, which uses a simulation-based approach to compare the residuals from the actual model with the expectation if the model is behaving normally.
 
 ```{r,echo=TRUE,results=FALSE,eval=FALSE}
 install.packages("DHARMa")
 ```
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 library(DHARMa)
 
 # Simulate residuals 
-simResids <- simulateResiduals(srMod1)
+simResids <- simulateResiduals(srModFinal)
 
 # Generate plots to compare the model residuals to expectations
 plot(simResids)
 ```
+
+These plots show us that this model is behaving as we would expect in terms of homogeneity of variance and normality of residuals (i.e., there are no significant deviations from expectations).
+
+For Poisson GLMs, there is one further assumption that we have not encountered before.
+
+# When Poisson GLMs are Insufficient
 
 # Binomial GLMs (Logistic Regression)
 
