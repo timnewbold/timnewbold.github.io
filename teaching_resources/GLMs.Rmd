@@ -144,7 +144,7 @@ Incidentally, if you run a GLM but specify a Gaussian family (*family=gaussian*)
 
 You will see that the coefficient table produced by a GLM is the same as for a linear model. The intercept tells us the estimated value of the response variable when the continuous explanatory variables (here just forest cover) have a value of 0, and for reference groups in our grouping (categorical) variables (here for primary vegetation). We then also have coefficients describing the slope of the relationship with our continuous explanatory variables, and coefficients giving the estimated difference in the response variable for non-reference groupings. We can see here that species richness appears to show a negative relationship with forest cover, and appears to be lower in pasture than in primary vegetation.
 
-## Model Selection with GLMs
+## Model Selection
 
 Model selection can be performed in almost exactly the same way for GLMs as for standard linear models. In the case of our species richness model, we have two potential explanatory variables in our model. If we use backward stepwise model selection, we would test the effect of removing each of these variables from the model:
 
@@ -180,7 +180,7 @@ srModFinal <- glm(Species_richness~Predominant_land_use+ForestCover,
                   family=poisson,data=hhs2)
 ```
 
-## Effect Sizes in Poisson GLMs
+## Effect Sizes
 
 Effect sizes can be calculated in exactly the same way for GLMs as for linear models. But it is important to remember that GLMs use a link function to relate the response variable to the linear predictor (the equation describing the effect of the explanatory variables). Therefore, we have to back-transform our predictions to make them match the original scale of the response variable. 
 
@@ -213,7 +213,7 @@ pasture.percent.change
 
 Therefore, our model shows that there is an average reduction in parasitoid species richness of `r -(pasture.percent.change)`%. This is a very large effect size.
 
-## Explanatory Power of GLMs
+## Explanatory Power
 
 When we ran linear models, we used the coefficient of determination, or R<sup>2</sup> to assess how much of the variability in our response variable is explained by a given model. R<sup>2</sup> is based on the sums of squares of our model, and so cannot be calculated for GLMs. Instead, we can calculate the analogous "deviance explained" by our model:
 $$Dev_{explained} = \frac{Dev_{null} - Dev_{residual}}{Dev_{null}}$$
@@ -236,7 +236,7 @@ dev.explained
 
 Land use and forest cover explain nearly 30% of the variation in parasitoid species richness in this study system. That is a decent explanatory power for a relatively simple model of a complex ecological system (many factors determine the species richness that is sampled in a field survey).
 
-## Checking Model Assumptions of Poisson GLMs
+## Checking Model Assumptions
 
 It is more tricky to check the assumptions of GLMs than those of linear models, because classical residuals are not expected to behave in the same way for GLMs. I like the DHARMa package in R for working with GLMs, which uses a simulation-based approach to compare the residuals from the actual model with the expectation if the model is behaving normally.
 
@@ -483,6 +483,8 @@ occMod1 <- glm(PresAbs~LandUse+ForestCover,data=hh.sp)
 occMod1
 ```
 
+## Model Selection
+
 As before, we will test the effect of removing each explanatory variable in turn:
 
 ```{r,echo=TRUE,results=TRUE}
@@ -499,6 +501,8 @@ In this case, we find that both land use and forest cover have a significant eff
 occModFinal <- glm(PresAbs~LandUse+ForestCover,data=hh.sp)
 ```
 
+## Checking Model Assumptions
+
 Let's check that our final model is conforming to the assumptions of parametric statistical tests:
 
 ```{r,echo=TRUE,results=TRUE}
@@ -509,10 +513,75 @@ plot(simResids4)
 
 This model is behaving strangely. If this were a real analysis, we would need to investigate further the issues with this model, but such an investigation is beyond the scope of this session.
 
-Let's now investigate the effect sizes for land use and forest cover:
+## Effect Sizes
+
+Let's now investigate the effect sizes for land use and forest cover. A binomial GLM uses a logit link function:
+$$g(p)=ln(\frac{p}{1-p})$$
+
+Where $p$ is the probability that the binary response variable equals one. This means that we need to use an inverse-logit back-transformation to convert our model predictions into a probability that the species is present:
+$$p=\frac{1}{1+exp^{-\eta}}$$
+
+Where $\eta$ is the value predicted using the linear predictor.
 
 ```{r,echo=TRUE,results=TRUE}
+# Get the model intercept
+intercept <- occModFinal$coefficients['(Intercept)']
 
+# First, we will calculate the effect size for land use
+# Calculate probability of presence for primary vegetation (i.e., the intercept value)
+prob.pres.primary <- 1/(1+exp(-intercept))
+
+# Now calculate probability of presence for pasture
+
+# Get the coefficient expressing the difference in probability of presence in pasture
+# compared to primary vegetation
+coef.pasture <- occModFinal$coefficients['LandUsePasture']
+
+# Calculte the probability of presence in pasture
+prob.pres.pasture <- 1/(1+exp(-(intercept+coef.pasture)))
+
+# Express the probability of presence in pasture as a percentage change compared
+# to primary vegetation
+percent.diff.pasture <- ((prob.pres.pasture/prob.pres.primary)*100)-100
+
+percent.diff.pasture
+
+# Second, the effect size for forest cover
+# Calculate probability of presence where forest cover is zero (i.e., the intercept value)
+prob.pres.fc0 <- 1/(1+exp(-intercept))
+
+# Get the coefficient describing the slope of the relationship with forest cover
+fc.slope <- occModFinal$coefficients['ForestCover']
+
+# Calculate the probability of presence where forest cover is 100%
+prob.pres.fc100 <- 1/(1+exp(-(intercept+fc.slope*100)))
+
+# Express the probability of presence where forest cover is 0 as a percent
+# difference compared to where forest cover is 100%
+percent.diff.fc <- ((prob.pres.fc0/prob.pres.fc100)*100)-100
+
+percent.diff.fc
 ```
+
+The probability of presence of *P. punicipes* is therefore `r -round(percent.diff.pasture,1)`% lower in pasture than in primary vegetation, a much smaller reduction than we saw for the abundance of this species. Probability of presence is also `r -round(percent.diff.fc,1)`% lower when there is no forest cover compared to when there is 100% forest cover.
+
+## Explanatory Power
+
+Finally, let's calculate the explanatory power of our model relating *P. punicipes* presence/absence to land use and forest cover.
+
+```{r,echo=TRUE,results=TRUE}
+dev.null <- occModFinal$null.deviance
+dev.resid <- occModFinal$deviance
+
+dev.explained <- (dev.null-dev.resid)/dev.null
+
+dev.explained
+```
+
+Our model thus explains `r round(dev.explained*100,1)``% of the variation in the presence/absence of *P. punicipes*.
+
+# Next Time
+
+That's it for this session on Generalized Linear Models. In the next session, we will look at an alternative to backward stepwise model selection, which avoids the need to somewhat arbitrarily designate terms as significant or not.
 
 # References
