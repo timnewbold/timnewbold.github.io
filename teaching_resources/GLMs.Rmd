@@ -254,16 +254,265 @@ simResids <- simulateResiduals(srModFinal)
 plot(simResids)
 ```
 
-These plots show us that this model is behaving as we would expect in terms of homogeneity of variance and normality of residuals (i.e., there are no significant deviations from expectations).
+These plots show us that this model is behaving as we would expect in terms of homogeneity of variance and distribution of residuals (i.e., there are no significant deviations from expectations).
 
-For Poisson GLMs, there is one further assumption that we have not encountered before.
+For Poisson GLMs, there is one further assumption that we have not encountered before. If data follow a Poisson distribution, then the mean of the distribution is equal to the variance. Accordingly, a Poisson distribution is represented by just one parameter &lambda;, which describes both the mean and the variance of the distribution. We can demonstrate this very simply by drawing some random values from a Poisson distribution:
 
-# When Poisson GLMs are Insufficient
+```{r,echo=TRUE,results=TRUE}
+# Draw 100,000 values from a Poisson distribution with a mean of 5
+x <- rpois(n = 100000,lambda = 5)
+# Check the mean and variance of this distribution
+mean(x); var(x)
+# Now try a Poisson distribution with a mean of 20
+y <- rpois(n = 100000,lambda = 20)
+mean(y); var(y)
+```
+
+However, count data in ecology are often ***overdispersed***, where the variance is greater than the mean. This violates the assumption of a Poisson GLM, and means that any statistics that we calculate from the model may be unreliable. 
+
+We can get an indication of whether a model is over-dispersed by inspecting the model summary. As a rule of thumb, if the response variable conforms to a true Poisson distribution, we expect the residual deviance to be approximately equal to the residual degrees of freedom. If the deviance is much greater than the degrees of freedom, this indicates over-dispersion.
+
+![Identifying over-dipersion by inspecting the model summary](diagnosing_overdispersion.jpg)
+
+There is also a function in the _AER_ package to test for over-dispersion statistically:
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+install.packages("AER")
+```
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+library(AER)
+
+dispersiontest(srModFinal)
+```
+
+In this case, the model is not significantly over-dispersed, so our Poisson model seems to be fine.
+
+Now we will try to run a model of the abundance of one of the parasitoid wasp species. We will focus here on the species *Pimpla punicipes*:
+
+```{r,echo=TRUE,results=TRUE}
+hh.sp <- droplevels(hh[(hh$Taxon_name_entered=="Pimpla punicipes"),])
+# Note - the droplevels function here removes groupings that are not retained
+# in the data subset
+
+# The estimates of forest cover were not included in the species-level dataset,
+# so we will match these from the site-level dataset
+hh.sp$ForestCover <- hhs2$ForestCover[match(hh.sp$Site_number,hhs2$Site_number)]
+
+# Remove sites that have missing (NA) forest-cover estimates
+hh.sp <- droplevels(hh.sp[!is.na(hh.sp$ForestCover),])
+```
+
+We will model the abundance of this species as a function of land use and forest cover again. Since the abundances are also counts, we will assume a Poisson distribution for now.
+
+```{r,echo=TRUE,results=TRUE}
+abundMod1 <- glm(Measurement~LandUse+ForestCover,family=poisson,data=hh.sp)
+
+abundMod1
+```
+
+Let's check the assumptions of this model:
+
+```{r,echo=TRUE,results=TRUE}
+simResids2 <- simulateResiduals(abundMod1)
+
+plot(simResids2)
+
+dispersiontest(abundMod1)
+```
+
+Here the model is violating the assumptions of residual distribution, equality of variance and dispersion.
+
+# GLMs for Overdispersed Poisson Data
+
+There are two main approaches that we can take to deal with over-dispersed count data in GLMs:
+
+1. Fit a quasi-Poisson GLM
+2. Fit a negative binomial GLM
+
+## Quasi-Poisson GLMs
+
+A quasi-Poisson GLM has an extra parameter that represents the dispersion 
+
+Fitting a quasi-Poisson GLM is very simple. We just have to specify _family=quasipoisson_ in the _glm_ function:
+
+```{r,echo=TRUE,results=TRUE}
+abundMod2 <- glm(Measurement~LandUse+ForestCover,family=quasipoisson,data=hh.sp)
+
+summary(abundMod1)
+summary(abundMod2)
+```
+
+Comparing the summary tables for the two models, you will notice that some of the key statistical parameters are identical, such as the estimates of the coefficients, the residual deviance and the null deviance. In contrast, the estimates of uncertainty around the coefficients are larger, and the P values for the individual coefficients correspondingly higher. Furthermore, we can't obtain an AIC value for quasi-Poisson models, because these models use quasi-likelihood rather than true likelihood.
+
+If we want to perform model selection on quasi-Poisson GLMs, and we compare two models using analysis of variance, the comparison is based on a quasi F ratio.
+
+```{r,echo=TRUE,results=TRUE}
+# Let's compare our first model with a simpler model not containing forest cover
+abundMod2a <- glm(Measurement~LandUse,family=quasipoisson,data=hh.sp)
+
+anova(abundMod2,abundMod2a,test="F")
+```
+
+So in the case of the abundance models for *Pimpla punicipes*, if we had stuck with the Poisson model, we would wrongly have concluded that forest cover has a significant effect. In fact, when we account for over-dispersion, we find that the effect of forest cover is (at least marginally) non-significant.
+
+For now, we will work with the model containing just land use, rather than completing the model-selection exercise.
+
+Unfortunately it is difficult to check the assumptions of quasi-Poisson models, as the R packages available for model checking don't handle these model types.
+
+We can, though, perform the normal checks of effect size and explanatory power. In the case of our reduced model (with only land use as an explanatory variable), we can ask how strong a reduction there is in the abundance of *Pimpla punicipes* in pasture compared to primary vegetation (which is the same as for a comparable Poisson model):
+
+```{r,echo=TRUE,results=TRUE}
+intercept <- abundMod2a$coefficients['(Intercept)']
+
+abund.primary <- exp(intercept)
+
+coef.pasture <- abundMod2a$coefficients['LandUsePasture']
+
+abund.pasture <- exp(intercept+coef.pasture)
+
+percent.diff <- ((abund.pasture/abund.primary)*100)-100
+
+percent.diff
+```
+
+We can therefore conclude that this species is `r -round(percent.diff,0)`% less abundant in pasture compared to primary vegetation.
+
+Let's also assess how much of the variation in the species' abundance is captured by our model of land use:
+
+```{r,echo=TRUE,results=TRUE}
+dev.null <- abundMod2a$null.deviance
+dev.resid <- abundMod2a$deviance
+
+dev.explained <- (dev.null-dev.resid)/dev.null
+
+dev.explained
+```
+
+Our model explains `r round(dev.explained*100,0)`% of the variation in the abundance of *Pimpla punicipes*, not bad for such a simple model.
+
+## Negative Binomial GLMs
+
+An alternative to dealing with over-dispersed count data is to use a negative binomial GLM. For this, you need to use a separate R package:
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+install.packages("MASS")
+```
+
+Now, instead of using the _glm_ function, we use the _glm.nb_ function from the MASS package:
+
+```{r,echo=TRUE,results=TRUE}
+abundMod3 <- glm.nb(Measurement~LandUse+ForestCover,data=hh.sp)
+
+summary(abundMod3)
+```
+
+Let's try removing land use and forest cover in turn from the model, to assess their statistical significance in explaining differences in abundance. In the case of negative binomial GLMs, the comparison of two models is done on the basis of the ***ratio*** of their likelihoods (which is the same as the ***difference*** in their log likelihoods). This likelihood ratio can be compared to a chi-squared distribution to obtain a P value.
+
+```{r,echo=TRUE,results=TRUE}
+abundMod3a <- glm.nb(Measurement~LandUse,data=hh.sp)
+abundMod3b <- glm.nb(Measurement~ForestCover,data=hh.sp)
+
+anova(abundMod3,abundMod3a)
+anova(abundMod3,abundMod3b)
+```
+
+Again, we find that forest cover has a (marginally) non-significant effect on the abundance of *Pimpla punicipes*. It appears that land use has a highly significant effect. If we doing a proper analysis, we would now move on to a second round of model selection to ensure that this is definitely the case, but in the interests of time here we will accept the model with just land use as our parsimonious model.
+
+```{r,echo=TRUE,results=TRUE}
+abundModFinal <- glm.nb(Measurement~LandUse,data=hh.sp)
+
+summary(abundModFinal)
+```
+
+Let's check that our model is conforming to the assumptions of parametric tests:
+
+```{r,echo=TRUE,results=TRUE}
+simResids3 <- simulateResiduals(abundModFinal)
+
+plot(simResids3)
+```
+
+The model is behaving very well. Let's look at the effect size for land use again:
+
+```{r,echo=TRUE,results=TRUE}
+intercept <- abundModFinal$coefficients['(Intercept)']
+
+abund.primary <- exp(intercept)
+
+coef.pasture <- abundModFinal$coefficients['LandUsePasture']
+
+abund.pasture <- exp(intercept+coef.pasture)
+
+percent.diff <- ((abund.pasture/abund.primary)*100)-100
+
+percent.diff
+```
+
+Reassuringly, our effect size is very similar as for the quasi-Poisson GLM.
+
+Finally, let's look at the explanatory power of this model:
+
+```{r,echo=TRUE,results=TRUE}
+dev.null <- abundMod2a$null.deviance
+dev.resid <- abundMod2a$deviance
+
+dev.explained <- (dev.null-dev.resid)/dev.null
+
+dev.explained
+```
+
+Again, very similar to the quasi-Poisson model, which is good.
 
 # Binomial GLMs (Logistic Regression)
 
+A binomial GLM is useful when we have a binary response variable. Such a situation is often encountered in ecology. For example, a lot of ecological data describe the presence or absence of species within communities. For this section of the session, we will create a version of the dataset for *Pimpla puncipes* that we have already been working with, adding a variable on species presence or absence.
+
+```{r,echo=TRUE,results=TRUE}
+# Where abundance is > 0 set species as present, otherwise absent
+hh.sp$PresAbs <- ifelse(hh.sp$Measurement>0,1,0)
+```
+
 ## Fitting a Binomial GLM in R
 
-A binomial GLM is useful when we have a binary response variable. Such a situation is often encountered in ecology 
+We will fit a model of the presence/absence of *P. punicipes* as a function of land use and forest cover. The principle of fitting a binomial GLM is the same as for other GLMs. In this case, we have to specify *family=binomial*:
+
+```{r,echo=TRUE,results=TRUE}
+occMod1 <- glm(PresAbs~LandUse+ForestCover,data=hh.sp)
+
+occMod1
+```
+
+As before, we will test the effect of removing each explanatory variable in turn:
+
+```{r,echo=TRUE,results=TRUE}
+occMod1a <- glm(PresAbs~LandUse,data=hh.sp)
+occMod1b <- glm(PresAbs~ForestCover,data=hh.sp)
+
+anova(occMod1,occMod1a,test="Chi")
+anova(occMod1,occMod1b,test="Chi")
+```
+
+In this case, we find that both land use and forest cover have a significant effect on the occupancy of *P. punicipes* at the sampled sites in Hawai'i.
+
+```{r,echo=TRUE,results=TRUE}
+occModFinal <- glm(PresAbs~LandUse+ForestCover,data=hh.sp)
+```
+
+Let's check that our final model is conforming to the assumptions of parametric statistical tests:
+
+```{r,echo=TRUE,results=TRUE}
+simResids4 <- simulateResiduals(occModFinal)
+
+plot(simResids4)
+```
+
+This model is behaving strangely. If this were a real analysis, we would need to investigate further the issues with this model, but such an investigation is beyond the scope of this session.
+
+Let's now investigate the effect sizes for land use and forest cover:
+
+```{r,echo=TRUE,results=TRUE}
+
+```
 
 # References
