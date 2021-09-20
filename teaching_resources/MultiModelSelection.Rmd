@@ -1,0 +1,166 @@
+---
+title: Multi-model Selection
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+references:
+  - id: Hudson2017
+    title: The database of the PREDICTS (Projecting Responses of Ecological Diversity In Changing Terrestrial Systems) project
+    author:
+      - family: Hudson
+        given: Lawrence N.
+      - family: Newbold
+        given: Tim
+      - family: Contu
+        given: Sara
+      - family: Hill
+        given: Samantha L. L.
+      - family: Lysenko
+        given: Igor
+      - family: De Palma
+        given: Adriana
+      - family: Phillips
+        given: Helen R. P.
+      - family: Data entrants
+      - family: Data contributors
+      - family: Collen
+        given: Ben
+      - family: Ewers
+        given: Rob M.
+      - family: Mace
+        given: Georgina M.
+      - family: Purves
+        given: Drew W.
+      - family: Scharlemann
+        given: J&oumlaut;rn P. W.
+      - family: Purvis
+        given: Andy
+    container-title: Ecology & Evolution
+    volume: 7
+    page: 145-188
+    DOI: 10.1002/ece3.2579
+    URL: https://doi.org/10.1002/ece3.2579
+    type: article-journal
+    issued:
+      year: 2017
+  - id: Gould2013
+    title: Forest restoration and parasitoid wasp communities in montane Hawai'i
+    author:
+      - family: Gould
+        given: Rachelle K.
+      - family: Pejchar
+        given: Liba
+      - family: Bothwell
+        given: Sara G.
+      - family: Brosi
+        given: Berry
+      - family: Wolny
+        given: Stacie
+      - family: Mendenhall
+        given: Chase
+      - family: Daily
+        given: Gretchen
+    container-title: PLoS ONE
+    volume: 8
+    page: e59356
+    DOI: 10.1371/journal.pone.0059356
+    URL: https://doi.org/10.1371/journal.pone.0059356
+    type: article-journal
+    issued:
+      year: 2013
+  - id: Burnham2002
+    title: Model Selection and Multimodel Inference&colon; An Information Theoretic Approach
+    author:
+      - family: Burnham
+        given: K.P.
+      - family: Anderson
+        given: D.R.
+    type: book
+    publisher: Springer-Verlag, New York
+    edition: 2nd
+    issued:
+      year: 2002
+---
+
+# Overview
+
+In this session, I will introduce multi-model selection as an alternative to backward stepwise model selection. Classical frequentist statistics is based on P values, which give the probability of obtaining an observed dataset given the null hypothesis of no relationship between explanatory and response variables. If the P value is below a certain threshold, $\alpha$ (often 0.05), then an explanatory variable is deemed to have a significant effect on the response variable. Explanatory variables with a P value above this threshold are deemed not to have a significant effect, and are therefore discarded. The problem with this approach is that the P value is rather arbitrary, and the quest to find significant results can lead to some rather dubious behaviours (collectively often referred to as 'P hacking').
+
+An alternative approach, so-called 'multi-model selection' was proposed by [@Burnham2002]. The idea of this approach is to assess the relative support for each model in a candidate set of models. Models are compared using Information Criteria, the most widely used of which is the Akaike Information Criterion (AIC). 
+
+# Akaike Information Criterion (AIC)
+
+Information criteria measure how well a model fits the data (measured using the likelihood of the model), with some penalty applied for model complexity. The AIC is calculated as:
+$$AIC=-2\times LL_{model}+2\times DF$$
+
+Where $LL_{model}$ is the log-likelihood of the model, and $DF$ is the model degrees of freedom.
+
+As in the last session, you will need my _MResModelling_ R package:
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+remotes::install_github("timnewbold/MResEcologicalModelling",subdir="MResModelling")
+```
+
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+library(MResModelling)
+```
+
+# Example Dataset
+
+We will work again with the dataset describing the abundance of the parasitoid wasp species *Pimpla punicipes* in sites of different land use in Hawai'i.
+
+```{r,echo=TRUE,results=TRUE}
+# Load species-level data (loads as object 'hh')
+data(HawaiiHymenoptera)
+# For simplicity, we will select only those columns that we will use later
+# Site_number: the site at which species were sampled
+# LandUse: the land use at the sampled site
+# Taxon_name_entered: the species sampled
+# Measurement: the recorded abundance of the species
+hh <- hh[,c('Site_number','LandUse','Taxon_name_entered','Measurement')]
+# Make the site number a grouping variable (factor)
+hh$Site_number <- factor(hh$Site_number)
+
+# Subset to the dataset for just Pimpla punicipes
+hh.sp <- droplevels(hh[(hh$Taxon_name_entered=="Pimpla punicipes"),])
+
+# Load site-level data (loads as object 'hhs2'), from which we will obtain
+# forest-cover estimates
+data(HawaiiHymenopteraSitesSubset)
+
+# The estimates of forest cover were not included in the species-level dataset,
+# so we will match these from the site-level dataset
+hh.sp$ForestCover <- hhs2$ForestCover[match(hh.sp$Site_number,hhs2$Site_number)]
+
+# Remove sites that have missing (NA) forest-cover estimates
+hh.sp <- droplevels(hh.sp[!is.na(hh.sp$ForestCover),])
+
+str(hh.sp)
+```
+
+In the session on GLMs, we discovered that land use had a significant effect on the abundance of *P. punicipes*, but that the effect of forest cover was marginally non-significant. Here, we will investigate the same relatioonships, but using a multi-model rather than frequentist approach.
+
+# Candidate Models
+
+The first stage in a multi-model approach is to select a suitable set of candidate models. Ideally, this candidate set would consist of a series of models each reflecting some explanation (or hypothesis) for the way the system works. In reality, we often lack the information required to make an such an informed list of candidate models. One commonly used approach is to run models representing every possible combination of explanatory variables. Here, we will compare four different models of the abundance of *P. punicipes*:
+
+1. A null (intercept-only) model
+2. A model with only land use as an explanatory variable
+3. A model with only forest cover
+4. A model with both land use and forest cover
+
+We know from the session on GLMs that the data describing the abundance of *P. punicipes* are over-dispersed, so we will start straight away by fitting negative binomial GLMs:
+
+```{r,echo=TRUE,results=TRUE}
+mNull <- glm.nb(Measurement~1,data=hh.sp)
+mLU <- glm.nb(Measurement~LandUse,data=hh.sp)
+mFC <- glm.nb(Measurement~ForestCover,data=hh.sp)
+mCombined <- glm.nb(Measurement~LandUse+ForestCover,data=hh.sp)
+```
+
+# References
