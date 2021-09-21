@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-20" />
+        <meta name="date" content="2021-09-21" />
     
     <title>Multi-model Selection</title>
 
@@ -193,6 +193,9 @@
             <li><a href="#overview">Overview</a></li>
             <li><a href="#akaike-information-criterion-aic">Akaike Information Criterion (AIC)</a></li>
             <li><a href="#example-dataset">Example Dataset</a></li>
+            <li><a href="#candidate-models">Candidate Models</a></li>
+            <li><a href="#comparing-candidate-models">Comparing Candidate Models</a></li>
+            <li><a href="#aic-weights">AIC Weights</a></li>
             <li><a href="#references">References</a></li>
             </ul>
           </div>
@@ -215,7 +218,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-20</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-21</p>
            
 
    
@@ -231,7 +234,7 @@
 <div id="akaike-information-criterion-aic" class="section level1">
 <h1>Akaike Information Criterion (AIC)</h1>
 <p>Information criteria measure how well a model fits the data (measured using the likelihood of the model), with some penalty applied for model complexity. The AIC is calculated as: <span class="math display">\[AIC=-2\times LL_{model}+2\times DF\]</span></p>
-<p>Where <span class="math inline">\(LL_{model}\)</span> is the log-likelihood of the model, and <span class="math inline">\(DF\)</span> is the model degrees of freedom.</p>
+<p>Where <span class="math inline">\(LL_{model}\)</span> is the log-likelihood of the model, and <span class="math inline">\(DF\)</span> is the model degrees of freedom. Lower AIC values indicate a better-fitting model.</p>
 <p>As in the last session, you will need my <em>MResModelling</em> R package:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;timnewbold/MResEcologicalModelling&quot;</span>,<span class="at">subdir=</span><span class="st">&quot;MResModelling&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MResModelling)</span></code></pre></div>
@@ -249,34 +252,79 @@
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>hh <span class="ot">&lt;-</span> hh[,<span class="fu">c</span>(<span class="st">&#39;Site_number&#39;</span>,<span class="st">&#39;LandUse&#39;</span>,<span class="st">&#39;Taxon_name_entered&#39;</span>,<span class="st">&#39;Measurement&#39;</span>)]</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Make the site number a grouping variable (factor)</span></span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>hh<span class="sc">$</span>Site_number <span class="ot">&lt;-</span> <span class="fu">factor</span>(hh<span class="sc">$</span>Site_number)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(hh)</span></code></pre></div>
-<pre><code>## &#39;data.frame&#39;:    15834 obs. of  4 variables:
-##  $ Site_number       : Factor w/ 754 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ LandUse           : Factor w/ 3 levels &quot;Primary&quot;,&quot;Pasture&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ Taxon_name_entered: Factor w/ 21 levels &quot;Agasthenes swezeyi&quot;,..: 19 3 4 9 17 1 8 7 5 21 ...
-##  $ Measurement       : num  0 0 0 0 0 0 0 0 0 0 ...</code></pre>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load site-level data (loads as object &#39;hhs2&#39;)</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(HawaiiHymenopteraSitesSubset)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Again, we will select the relevant columns</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Site_number: the site at which species were sampled</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Predominant_land_use: the land use at the sampled site</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ForestCover: the percentage forest cover at the sampled site</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Species_richness: the recorded species richness at the site</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>hhs2 <span class="ot">&lt;-</span> hhs2[,<span class="fu">c</span>(<span class="st">&#39;Site_number&#39;</span>,<span class="st">&#39;Predominant_land_use&#39;</span>,<span class="st">&#39;ForestCover&#39;</span>,<span class="st">&#39;Species_richness&#39;</span>)]</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Make the site number a grouping variable (factor)</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>hhs2<span class="sc">$</span>Site_number <span class="ot">&lt;-</span> <span class="fu">factor</span>(hhs2<span class="sc">$</span>Site_number)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(hhs2)</span></code></pre></div>
-<pre><code>## &#39;data.frame&#39;:    242 obs. of  4 variables:
-##  $ Site_number         : Factor w/ 242 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...
-##  $ Predominant_land_use: Factor w/ 2 levels &quot;Primary vegetation&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ ForestCover         : int  41 41 41 41 41 0 0 0 0 0 ...
-##  $ Species_richness    : int  1 1 2 2 2 0 1 1 2 2 ...</code></pre>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset to the dataset for just Pimpla punicipes</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>hh.sp <span class="ot">&lt;-</span> <span class="fu">droplevels</span>(hh[(hh<span class="sc">$</span>Taxon_name_entered<span class="sc">==</span><span class="st">&quot;Pimpla punicipes&quot;</span>),])</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Load site-level data (loads as object &#39;hhs2&#39;), from which we will obtain</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># forest-cover estimates</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(HawaiiHymenopteraSitesSubset)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co"># The estimates of forest cover were not included in the species-level dataset,</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co"># so we will match these from the site-level dataset</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>hh.sp<span class="sc">$</span>ForestCover <span class="ot">&lt;-</span> hhs2<span class="sc">$</span>ForestCover[<span class="fu">match</span>(hh.sp<span class="sc">$</span>Site_number,hhs2<span class="sc">$</span>Site_number)]</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove sites that have missing (NA) forest-cover estimates</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>hh.sp <span class="ot">&lt;-</span> <span class="fu">droplevels</span>(hh.sp[<span class="sc">!</span><span class="fu">is.na</span>(hh.sp<span class="sc">$</span>ForestCover),])</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(hh.sp)</span></code></pre></div>
+<pre><code>## &#39;data.frame&#39;:    242 obs. of  5 variables:
+##  $ Site_number       : Factor w/ 242 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,..: 1 2 3 4 5 6 7 8 9 10 ...
+##  $ LandUse           : Factor w/ 2 levels &quot;Primary&quot;,&quot;Pasture&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Taxon_name_entered: Factor w/ 1 level &quot;Pimpla punicipes&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Measurement       : num  0 3 1 1 1 0 0 0 0 0 ...
+##  $ ForestCover       : int  41 41 41 41 41 0 0 0 0 0 ...</code></pre>
+<p>In the session on GLMs, we discovered that land use had a significant effect on the abundance of <em>P. punicipes</em>, but that the effect of forest cover was marginally non-significant. Here, we will investigate the same relatioonships, but using a multi-model rather than frequentist approach.</p>
+</div>
+<div id="candidate-models" class="section level1">
+<h1>Candidate Models</h1>
+<p>The first stage in a multi-model approach is to select a suitable set of candidate models. Ideally, this candidate set would consist of a series of models each reflecting some explanation (or hypothesis) for the way the system works. In reality, we often lack the information required to make an such an informed list of candidate models. One commonly used approach is to run models representing every possible combination of explanatory variables. Here, we will compare four different models of the abundance of <em>P. punicipes</em>:</p>
+<ol style="list-style-type: decimal">
+<li>A null (intercept-only) model</li>
+<li>A model with only land use as an explanatory variable</li>
+<li>A model with only forest cover</li>
+<li>A model with both land use and forest cover</li>
+</ol>
+<p>We know from the session on GLMs that the data describing the abundance of <em>P. punicipes</em> are over-dispersed, so we will start straight away by fitting negative binomial GLMs:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mNull <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(Measurement<span class="sc">~</span><span class="dv">1</span>,<span class="at">data=</span>hh.sp)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mLU <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(Measurement<span class="sc">~</span>LandUse,<span class="at">data=</span>hh.sp)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mFC <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(Measurement<span class="sc">~</span>ForestCover,<span class="at">data=</span>hh.sp)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>mCombined <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(Measurement<span class="sc">~</span>LandUse<span class="sc">+</span>ForestCover,<span class="at">data=</span>hh.sp)</span></code></pre></div>
+</div>
+<div id="comparing-candidate-models" class="section level1">
+<h1>Comparing Candidate Models</h1>
+<p>We can now compare the AIC values of our candidate models:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>aics <span class="ot">&lt;-</span> <span class="fu">AIC</span>(mNull,mLU,mFC,mCombined)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>aics</span></code></pre></div>
+<pre><code>##           df      AIC
+## mNull      2 436.8199
+## mLU        3 401.8646
+## mFC        3 420.6416
+## mCombined  4 400.1322</code></pre>
+<p>These AIC values suggest that the combined model with both land use and forest cover is the best-fitting of the four models.</p>
+<p>Another useful way to compare models is using the difference in the model’s AIC value compared with the AIC of the best-fitting model. As a rule of thumb, models with an AIC difference <strong>less than 2</strong> are considered to have <strong>‘substantial’ support</strong>, models with an AIC difference <strong>between 4 and 7</strong> to have <strong>‘considerably less’ support</strong>, and models with an AIC difference <strong>greater than 10</strong> to have <strong>‘essentially no’ support</strong> <span class="citation">(Burnham and Anderson 2004)</span>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>aics<span class="sc">$</span>AIC.Diff <span class="ot">&lt;-</span> aics<span class="sc">$</span>AIC <span class="sc">-</span> <span class="fu">min</span>(aics<span class="sc">$</span>AIC)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>aics</span></code></pre></div>
+<pre><code>##           df      AIC  AIC.Diff
+## mNull      2 436.8199 36.687739
+## mLU        3 401.8646  1.732422
+## mFC        3 420.6416 20.509448
+## mCombined  4 400.1322  0.000000</code></pre>
+<p>Here we find that the model with only land use as an explanatory variable has substantial support, consistent with the findings of our backward stepwise selection in the session on Generalized Linear Models.</p>
+</div>
+<div id="aic-weights" class="section level1">
+<h1>AIC Weights</h1>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Burnham2002" class="csl-entry">
 Burnham, K.P., and D.R. Anderson. 2002. <em>Model Selection and Multimodel Inference: An Information Theoretic Approach</em>. 2nd ed. Springer-Verlag, New York.
+</div>
+<div id="ref-Burnham2004" class="csl-entry">
+———. 2004. <span>“Multimodel Inference: Understanding AIC and BIC in Model Selection.”</span> <em>Sociological Methods &amp; Research</em> 33: 261–304. <a href="https://doi.org/10.1177/0049124104268644">https://doi.org/10.1177/0049124104268644</a>.
 </div>
 <div id="ref-Gould2013" class="csl-entry">
 Gould, Rachelle K., Liba Pejchar, Sara G. Bothwell, Berry Brosi, Stacie Wolny, Chase Mendenhall, and Gretchen Daily. 2013. <span>“Forest Restoration and Parasitoid Wasp Communities in Montane Hawai’i.”</span> <em>PLoS ONE</em> 8: e59356. <a href="https://doi.org/10.1371/journal.pone.0059356">https://doi.org/10.1371/journal.pone.0059356</a>.

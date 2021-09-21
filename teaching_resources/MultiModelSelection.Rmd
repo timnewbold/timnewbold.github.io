@@ -85,6 +85,22 @@ references:
     edition: 2nd
     issued:
       year: 2002
+  - id: Burnham2004
+    title: Multimodel Inference&colon; Understanding AIC and BIC in model selection
+    author:
+      - family: Burnham
+        given: K.P.
+      - family: Anderson
+        given: D.R.
+    type: article-journal
+    container-title: Sociological Methods & Research
+    volume: 33
+    page: 261-304
+    DOI: 10.1177/0049124104268644
+    URL: https://doi.org/10.1177/0049124104268644
+    issued:
+      year: 2004
+    
 ---
 
 # Overview
@@ -98,7 +114,7 @@ An alternative approach, so-called 'multi-model selection' was proposed by [@Bur
 Information criteria measure how well a model fits the data (measured using the likelihood of the model), with some penalty applied for model complexity. The AIC is calculated as:
 $$AIC=-2\times LL_{model}+2\times DF$$
 
-Where $LL_{model}$ is the log-likelihood of the model, and $DF$ is the model degrees of freedom.
+Where $LL_{model}$ is the log-likelihood of the model, and $DF$ is the model degrees of freedom. Lower AIC values indicate a better-fitting model.
 
 As in the last session, you will need my _MResModelling_ R package:
 
@@ -162,5 +178,29 @@ mLU <- glm.nb(Measurement~LandUse,data=hh.sp)
 mFC <- glm.nb(Measurement~ForestCover,data=hh.sp)
 mCombined <- glm.nb(Measurement~LandUse+ForestCover,data=hh.sp)
 ```
+
+# Comparing Candidate Models
+
+We can now compare the AIC values of our candidate models:
+
+```{r,echo=TRUE,results=TRUE}
+aics <- AIC(mNull,mLU,mFC,mCombined)
+
+aics
+```
+
+These AIC values suggest that the combined model with both land use and forest cover is the best-fitting of the four models.
+
+Another useful way to compare models is using the difference in the model's AIC value compared with the AIC of the best-fitting model. As a rule of thumb, models with an AIC difference **less than 2** are considered to have **'substantial' support**, models with an AIC difference **between 4 and 7** to have **'considerably less' support**, and models with an AIC difference **greater than 10** to have **'essentially no' support** [@Burnham2004].
+
+```{r,echo=TRUE,results=TRUE}
+aics$AIC.Diff <- aics$AIC - min(aics$AIC)
+
+aics
+```
+
+Here we find that the model with only land use as an explanatory variable has substantial support, consistent with the findings of our backward stepwise selection in the session on Generalized Linear Models.
+
+# AIC Weights
 
 # References
