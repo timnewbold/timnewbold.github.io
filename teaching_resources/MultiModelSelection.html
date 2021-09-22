@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-21" />
+        <meta name="date" content="2021-09-22" />
     
     <title>Multi-model Selection</title>
 
@@ -218,7 +218,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-21</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-22</p>
            
 
    
@@ -303,7 +303,7 @@
 ## mFC        3 420.6416
 ## mCombined  4 400.1322</code></pre>
 <p>These AIC values suggest that the combined model with both land use and forest cover is the best-fitting of the four models.</p>
-<p>Another useful way to compare models is using the difference in the model’s AIC value compared with the AIC of the best-fitting model. As a rule of thumb, models with an AIC difference <strong>less than 2</strong> are considered to have <strong>‘substantial’ support</strong>, models with an AIC difference <strong>between 4 and 7</strong> to have <strong>‘considerably less’ support</strong>, and models with an AIC difference <strong>greater than 10</strong> to have <strong>‘essentially no’ support</strong> <span class="citation">(Burnham and Anderson 2004)</span>.</p>
+<p>Another useful way to compare models is to calculate, for any model <span class="math inline">\(i\)</span> in candidate model set <span class="math inline">\(I\)</span>, the difference, <span class="math inline">\(\Delta AIC_i\)</span>, in the model’s AIC value compared with the AIC of the best-fitting model. As a rule of thumb, models with an AIC difference <strong>less than 2</strong> are considered to have <strong>‘substantial’ support</strong>, models with an AIC difference <strong>between 4 and 7</strong> to have <strong>‘considerably less’ support</strong>, and models with an AIC difference <strong>greater than 10</strong> to have <strong>‘essentially no’ support</strong> <span class="citation">(Burnham and Anderson 2004)</span>.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>aics<span class="sc">$</span>AIC.Diff <span class="ot">&lt;-</span> aics<span class="sc">$</span>AIC <span class="sc">-</span> <span class="fu">min</span>(aics<span class="sc">$</span>AIC)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>aics</span></code></pre></div>
@@ -316,6 +316,7 @@
 </div>
 <div id="aic-weights" class="section level1">
 <h1>AIC Weights</h1>
+<p>In multi-model selection, the AIC difference for each model <span class="math inline">\(i\)</span> in candidate set <span class="math inline">\(I\)</span> are converted into an AIC weight, <span class="math inline">\(W_i\)</span> using the following formula: <span class="math display">\[W_i=\frac{e^{-\frac{1}{2}\times\Delta AIC_i}}{\sum_{i=1}^I{e^{-\frac{1}{2}\times \Delta AIC_i}}}\]</span></p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>

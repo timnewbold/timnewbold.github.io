@@ -191,7 +191,7 @@ aics
 
 These AIC values suggest that the combined model with both land use and forest cover is the best-fitting of the four models.
 
-Another useful way to compare models is using the difference in the model's AIC value compared with the AIC of the best-fitting model. As a rule of thumb, models with an AIC difference **less than 2** are considered to have **'substantial' support**, models with an AIC difference **between 4 and 7** to have **'considerably less' support**, and models with an AIC difference **greater than 10** to have **'essentially no' support** [@Burnham2004].
+Another useful way to compare models is to calculate, for any model $i$ in candidate model set $I$, the difference, $\Delta AIC_i$, in the model's AIC value compared with the AIC of the best-fitting model. As a rule of thumb, models with an AIC difference **less than 2** are considered to have **'substantial' support**, models with an AIC difference **between 4 and 7** to have **'considerably less' support**, and models with an AIC difference **greater than 10** to have **'essentially no' support** [@Burnham2004].
 
 ```{r,echo=TRUE,results=TRUE}
 aics$AIC.Diff <- aics$AIC - min(aics$AIC)
@@ -202,5 +202,10 @@ aics
 Here we find that the model with only land use as an explanatory variable has substantial support, consistent with the findings of our backward stepwise selection in the session on Generalized Linear Models.
 
 # AIC Weights
+
+In multi-model selection, the AIC difference for each model $i$ in candidate set $I$ are converted into an AIC weight, $W_i$ using the following formula:
+$$W_i=\frac{e^{-\frac{1}{2}\times\Delta AIC_i}}{\sum_{i=1}^I{e^{-\frac{1}{2}\times \Delta AIC_i}}}$$
+
+
 
 # References
