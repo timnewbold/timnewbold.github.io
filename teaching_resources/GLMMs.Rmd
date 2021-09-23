@@ -1,0 +1,113 @@
+---
+title: Linear Mixed-effects Models (LMMs)
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+---
+
+# Overview
+
+Many ecological datasets, especially those collected in the field, have some sort of hierarchical structure. Often, there is some sort of spatial structuring in the locations sampled. Furthermore, an increasing number of ecological studies are conducted by collating data from many separate previous studies. In these cases, the assumption of independence of data points is not met. The most commonly used solution to this non-independence issue is to use mixed models, so called because they consist of two classes of independent variables:
+
+1. Fixed effects, which are variables that we control in our experimental design.
+2. Random effects, which are variables that describe groups that are representative of the wider population.
+
+Let's say that we sample the species richness of lake-shore versus lake-centre habitats in a series of lakes. Clearly we can't assume that the samples from different lakes are independent of one another, because the measured species richness may depend not only on which habitat we sampled, but also on properties of the lakes. In this case, we controlled the sampling of lake-shore versus lake-centre habitats in our experimental design, and so this would be a fixed effect. In contrast, we would probably assume that the lakes were a random sample of the wider population of lakes in the study system, and so we would treat lake idenity as a random variable.
+
+For this session, you will need the _lme4_ R package, as well as the _StatisticalModels_ package that I wrote, and also the _ggplot2_ package, which you will have already installed if you completed the previous sessions:
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+install.packages("lme4")
+remotes::install_github("timnewbold/StatisticalModels")
+```
+
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+library(ggplot2)
+library(lme4)
+library(StatisticalModels)
+```
+
+# Example Dataset
+
+In this session, we will work with a dataset describing the growth of five individual orange trees:
+
+```{r,echo=TRUE,results=TRUE}
+data(Orange)
+
+head(Orange)
+```
+
+If we plot the relationship between tree age and trunk circumference, there is (not surprisingly) a strong positive relationship:
+
+```{r,echo=TRUE,results=TRUE}
+ggplot(Orange,aes(x=age,y=circumference))+geom_point()+theme_classic()
+```
+
+So, let's try fitting a simple linear model of circumference as a function of age:
+
+```{r,echo=TRUE,results=TRUE}
+m1 <- lm(circumference~age,data=Orange)
+
+m1
+```
+
+If we check the assumptions of the model, we can see that there is a strong increase in variance at higher fitted values of the model.
+
+```{r,echo=TRUE,results=TRUE}
+qqnorm(residuals(m1)); qqline(residuals(m1))
+
+plot(fitted(m1),residuals(m1))
+```
+
+Furthermore, because the data are collected from five individual trees, it is very unlikely that we can safely assume that the data points are independent.
+
+If we re-plot the relationship between age and trunk circumference for individual trees, we can see that there is strong variation in the growth of individual trees:
+
+```{r,echo=TRUE,results=TRUE}
+ggplot(Orange,aes(x=age,y=circumference,col=Tree))+geom_point()+theme_classic()
+```
+
+# Fitting Mixed-effects Models in R
+
+One solution to the problems here is to try a mixed-effects model to account for non-independence among individual trees. Here, age is the variable controlled by our experimental design, and so will be our fixed effect. The sampled individual trees can be considered to be a random sample of the wider population of trees, and so tree identity will be our random effect. Random effects are designated as *(1|RandomEffect)* in the model code:
+
+```{r,echo=TRUE,results=TRUE}
+m2 <- lmer(circumference~age+(1|Tree),data=Orange)
+
+summary(m2)
+```
+
+# Effect Sizes
+
+The model summary gives a coefficient table for the fixed effects very similar to that produced by standard linear or generalized linear models. Effect sizes can be calculated in exactly the same way as for linear models (see ANCOVA session). We also get a table describing the variation in our response variable that is explained by variation among random-effect groups (in this case tree indivciduals) and the residual, unexplained variation.
+
+By inspecting the random effect values, we can see the variation in trunk circumference of each individual tree (these random intercepts are centered around 0):
+
+```{r,echo=TRUE,results=TRUE}
+ranef(m2)
+```
+
+These random intercepts show, consistent with the graph we plotted earlier, that trees 2 and 4 are particularly large, while trees 1 and 3 are small.
+
+# Model Selection
+
+Model selection can be performed in exactly the same way as for linear or generalized linear models. Here we will use simple backward stepwise selection, but you could also use multi-model inference.
+
+In this case, we will compare our model with age as a single explanatory variable with the simpler, intercept-only, null model:
+
+```{r,echo=TRUE,results=TRUE}
+m3 <- lmer(circumference~1+(1|Tree),data=Orange)
+
+anova(m2,m3)
+```
+
+As with generalized linear models, the comparison of two mixed-effects models is made on the basis of the difference in deviance, with P values calculated by assessing this difference against a chi-squared distribution. Not surprisingly, we find that age has a highly significant effect on the trunk circumference of orange trees.
+
+# Model Explanatory Power
+
+Estimating model explanatory power is more complicated than for linear or generalized linear models. Mixed-effects models do not use sums of squares, and so we cannot use classic R<sup>2</sup> values, and the calculation of deviance explained is complicated by the presence of the random effects. Instead, a method to calculate pseudo-R<sup>2</sup> values has been proposed [@Nakagawa].
