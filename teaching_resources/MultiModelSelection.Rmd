@@ -206,6 +206,39 @@ Here we find that the model with only land use as an explanatory variable has su
 In multi-model selection, the AIC difference for each model $i$ in candidate set $I$ are converted into an AIC weight, $W_i$ using the following formula:
 $$W_i=\frac{e^{-\frac{1}{2}\times\Delta AIC_i}}{\sum_{i=1}^I{e^{-\frac{1}{2}\times \Delta AIC_i}}}$$
 
+These weights give the probability that the model is the most appropriate one from among those considered.
 
+Let's calcualte the weights for the set of candidate models of *P. punicipes* abundance that we fitted earlier:
+
+```{r,echo=TRUE,results=TRUE}
+aics$AIC.Wt <- (exp(-0.5*aics$AIC.Diff))/(sum(exp(-0.5*aics$AIC.Diff)))
+
+# This makes sure that numbers are not given in standard form, and so are easier to interpret
+options(scipen=5)
+
+aics
+```
+
+This shows that our model with both land use and forest cover has a `r round(aics['mCombined','AIC.Wt']*100,0)`% chance, while the model with just land use has a `r round(aics['mLU','AIC.Wt']*100,0)`% chance of being the most appropriate model. The null model, and the model with just forest cover both have a negligible probability of being the most appropriate model.
+
+# Assessing Variable Importance
+
+The other thing we can do with AIC weights is to assess the probability that a given explanatory variable appears in the most appropriate model. This is done by summing the AIC weights of all of the models that contain that variable:
+
+```{r,echo=TRUE,results=TRUE}
+LU.weight <- sum(aics[c('mLU','mCombined'),]$AIC.Wt)
+FC.weight <- sum(aics[c('mFC','mCombined'),]$AIC.Wt)
+
+LU.weight
+FC.weight
+```
+
+Explanatory variables that have a weight greater than 0.3 are generally considered to be of interest in explaining the measured response variable.
+
+In the case of our models of *P. punicipes* abundance, land use almost certainly appears in the most appropriate model, while forest cover has a `r round(FC.weight*100,0)`% chance of appearing in the most appropriate model. Therefore, we would conclude that forest cover is quite likely to have an important effect on the abundance of this species. This contrasts with the conclusion of our frequentist model selection in the previous session, where we discounted forest cover as an explanatory variable on the basis of a (marginally) non-significant P value. Hopefully you can see the advantages of this more nuanced approach for avoiding the somewhat arbitrary inclusion of exclusion of explanatory variables that occurs when using P values.
+
+# Next Time
+
+In the next session, we will look at mixed-effects models for dealing with datasets that have a hierarchical structure, and thus where the assumption that data points are independent of one another is violated.
 
 # References
