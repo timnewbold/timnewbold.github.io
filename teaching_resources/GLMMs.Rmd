@@ -1,5 +1,5 @@
 ---
-title: Linear Mixed-effects Models (LMMs)
+title: Mixed-effects Models
 date: "`r Sys.Date()`"
 author: "Tim Newbold"
 output:
