@@ -1,0 +1,78 @@
+---
+title: Modelling Land-use Impacts on Biodiversity with the PREDICTS Database
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+references:
+  - id: Hudson2017
+    title: The database of the PREDICTS (Projecting Responses of Ecological Diversity In Changing Terrestrial Systems) project
+    author:
+      - family: Hudson
+        given: Lawrence N.
+      - family: Newbold
+        given: Tim
+      - family: Contu
+        given: Sara
+      - family: Hill
+        given: Samantha L. L.
+      - family: Lysenko
+        given: Igor
+      - family: De Palma
+        given: Adriana
+      - family: Phillips
+        given: Helen R. P.
+      - family: Data entrants
+      - family: Data contributors
+      - family: Collen
+        given: Ben
+      - family: Ewers
+        given: Rob M.
+      - family: Mace
+        given: Georgina M.
+      - family: Purves
+        given: Drew W.
+      - family: Scharlemann
+        given: J&oumlaut;rn P. W.
+      - family: Purvis
+        given: Andy
+    container-title: Ecology & Evolution
+    volume: 7
+    page: 145-188
+    DOI: 10.1002/ece3.2579
+    URL: https://doi.org/10.1002/ece3.2579
+    type: article-journal
+    issued:
+      year: 2017
+---
+
+# Introduction
+
+The PREDICTS database [@Hudson2017] is a fully open-access database containing spatial comparisons of biodiversity in different land uses worldwide. 
+
+You can get started quickly by downloading the PREDICTS database from my website, but if you intend to use the database in your research, I would ask you please to download the database (freely) from the <a href="http://doi.org/10.5519/0066354" target="_blank">Natural History Museum data portal</a>, so that appropriate credit is given.
+
+```{r,echo=TRUE,results=TRUE}
+webFile <- url("https://timnewbold.github.io/predicts_database.rds?dl=1")
+predicts <- readRDS(webFile)
+```
+
+To work with the database, you should install a package that contains some basic data-manipulation functions:
+
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+remotes::install_github("timnewbold/predicts-demo",subdir="predictsFunctions")
+```
+
+```{r,echo=TRUE,results=TRUE}
+library(predictsFunctions)
+```
+
+# Database Structure
+
+The PREDICTS database consists of data drawn from `r length(unique(predicts$Source_ID))` published papers comparing biodiversity in different land uses.
+
+# References
