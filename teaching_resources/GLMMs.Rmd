@@ -8,6 +8,22 @@ output:
     self_contained: true
     thumbnails: false
     lightbox: true
+references:
+  - id: Nakagawa2013
+    title: A general and simple method for obtaining R<sup>2</sup> from generalized linear mixed-effects models
+    author:
+      - family: Nakagawa
+        given: Shinichi
+      - family: Schielzeth
+        given: Holger
+    container-title: Methods in Ecology & Evolution
+    volume: 4
+    page: 133-142
+    DOI: 10.1111/j.2041-210x.2012.00261.x
+    URL: http://doi.org/10.1111/j.2041-210x.2012.00261.x
+    type: article-journal
+    issued:
+      year: 2013
 ---
 
 # Overview
@@ -84,7 +100,7 @@ summary(m2)
 
 # Effect Sizes
 
-The model summary gives a coefficient table for the fixed effects very similar to that produced by standard linear or generalized linear models. Effect sizes can be calculated in exactly the same way as for linear models (see ANCOVA session). We also get a table describing the variation in our response variable that is explained by variation among random-effect groups (in this case tree indivciduals) and the residual, unexplained variation.
+The model summary gives a coefficient table for the fixed effects very similar to that produced by standard linear or generalized linear models. Effect sizes can be calculated in exactly the same way as for linear models (see ANCOVA session). The slope of the relationship fitted here shows us that trunk circumference grows by approximately 0.1 mm each day, on average. We also get a table describing the variation in our response variable that is explained by variation among random-effect groups (in this case tree individuals, which unsurprisingly accounts for a large proportion of the variation in tree growth) and the residual, unexplained variation.
 
 By inspecting the random effect values, we can see the variation in trunk circumference of each individual tree (these random intercepts are centered around 0):
 
@@ -110,4 +126,23 @@ As with generalized linear models, the comparison of two mixed-effects models is
 
 # Model Explanatory Power
 
-Estimating model explanatory power is more complicated than for linear or generalized linear models. Mixed-effects models do not use sums of squares, and so we cannot use classic R<sup>2</sup> values, and the calculation of deviance explained is complicated by the presence of the random effects. Instead, a method to calculate pseudo-R<sup>2</sup> values has been proposed [@Nakagawa].
+Estimating model explanatory power is more complicated than for linear or generalized linear models. Mixed-effects models do not use sums of squares, and so we cannot use classic R<sup>2</sup> values, and the calculation of deviance explained is complicated by the presence of the random effects. Instead, a method to calculate pseudo-R<sup>2</sup> values has been proposed [@Nakagawa2013]. This method calculates two R<sup>2</sup> values. The conditional R<sup>2</sup> describes the variation in the response variable explained by both the fixed and random effects. The marginal R<sup>2</sup> describes the variation explained by the fixed effects alone. I have implemented this method as a function *R2GLMER* in my *StatisticalModels* package:
+
+```{r,echo=TRUE,results=TRUE}
+R2GLMER(m2)
+```
+
+For our model of orange-tree growth, both marginal and conditional R<sup>2</sup> values are very high, indicating that most of the variation in trunk circumference can be explained by tree age, but that much of the variation unexplained by age is captured by variation among individual trees.
+
+# Checking Model Assumptions
+
+Finally, let's check how well our mixed-effects model conforms to the assumptions of parametric statistical tests:
+
+```{r,echo=TRUE,results=TRUE}
+qqnorm(residuals(m2)); qqline(residuals(m2))
+plot(fitted(m2),residuals(m2))
+```
+
+By accounting for variation in growth among individual trees, our mixed-effects model seems to be behaving much better in terms of equality of variance compared to the simple linear model we fitted earlier. This in addition to dealing with the issue of non-independence of data points caused by sampling repeated measures on the same individual trees.
+
+# References
