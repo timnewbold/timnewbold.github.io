@@ -50,6 +50,10 @@ references:
       year: 2017
 ---
 
+```{r,echo=FALSE,eval=TRUE}
+library(kableExtra)
+```
+
 # Introduction
 
 The PREDICTS database [@Hudson2017] is a fully open-access database containing spatial comparisons of biodiversity in different land uses worldwide. 
@@ -73,6 +77,81 @@ library(predictsFunctions)
 
 # Database Structure
 
-The PREDICTS database consists of data drawn from `r length(unique(predicts$Source_ID))` published papers comparing biodiversity in different land uses.
+```{r,echo=FALSE,eval=TRUE}
+colsStruct <- data.frame(Field=c('Source_ID',
+                           'Study_number',
+                           'Study_name',
+                           'SS',
+                           'Block',
+                           'SSB',
+                           'Site_number',
+                           'Site_name',
+                           'SSBS',
+                           'SSS',
+                           'Measurement'),
+                   Description=c('The published paper (***Source***) from which data were derived',
+                                 'Within each ***Source***, the ***Study*** identifier',
+                                 'A text description to identify the ***Study***',
+                                 'An amalgamation of ***Source*** and ***Study*** IDs, so that each ***Study*** in the database is uniquely identifiable',
+                                 'A text description of distinct spatial ***Blocks***, blank where sites were not spatially clustered',
+                                 'An almagamation of the unique ***Study*** identifier, *SS*, and *Block*, so that each ***Block*** is uniquely identifiable',
+                                 'Within each ***Study***, the ***Site*** identifier',
+                                 'A text description to identify the ***Site***',
+                                 'An almagamation of the unique ***Block*** identifier, *SSB*, and the ***Site*** number, so that each ***Site*** is uniquely identifiable',
+                                 'As for *SSBS*, but excluding the block identifier - not recommended, but can be used if you don\'t want to account for spatial structure',
+                                 'The recorded ***Measurement*** of species abundance, species occurrence, or species richness (see next section)'))
+```
+
+The PREDICTS database has a hierarchical structure.
+
+At the highest level, data are drawn from `r length(unique(predicts$Source_ID))` published papers (***Sources***) comparing biodiversity in different land uses. 
+
+Each data Source consists of one or more ***Studies***. Sometimes, a published paper will contain biodiversity samples collected using more than one fundamental approach. For example, a paper may contain data for different taxonomic groups that would not appropriately have been sampled using the same methods. In such cases, because data are not directly comparable if collected using different methods, data Sources were split into multiple Studies. Otherwise, each Source contained a single Study.
+
+Each Study consists of data sampled in one or more spatial ***Blocks***. A Study was divided into more than one Block if the sampling showed spatial structuring, to allow us to delimit spatial aggregations of Sites, and thus to account for spatial structuring later when modelling the data.
+
+Each ***Block*** contains two or more ***Sites***, which are the specific locations at which biodiversity was sampled.
+
+Within each ***Site***, there are a series of ***Measurements*** - of species abundance (`r format(table(predicts$Diversity_metric_type)["Abundance"],big.mark=",")` records), species occurrence (`r format(table(predicts$Diversity_metric_type)["Occurrence"],big.mark=",")` records), or species richness (`r format(table(predicts$Diversity_metric_type)["Species richness"],big.mark=",")` records) - for each of the sampled taxa.
+
+```{r,echo=FALSE,eval=TRUE}
+knitr::kable(colsStruct,caption="Key fields in the PREDICTS database relating to the hierarchical structure of the database")
+```
+
+# Key Sampling Information
+
+Measurements in PREDICTS consist of three broad types: species abundance, species occurrence (i.e., presence or absence), or species richness (the number of species sampled). Within these categories, there are lots of different specific metrics. Some measures of diversity are inherently sensitive to sampling effort, which has important implications for processing the data (see below).
+
+The different underlying ***Studies*** in PREDICTS consist of data sampled using a whole host of different methods, and with widely differing levels of sampling effort. When analysing the PREDICTS data, it is important that diversity ***Measurements*** are comparable within ***Studies***. Differences among ***Studies*** are handled by the hierarchical design of the models. Therefore, it is a requirement of the PREDICTS database that sampling *methods* are constant within studies. Nevertheless, for `r length(which(tapply(X = predicts$Sampling_effort,INDEX = predicts$SS,FUN = function(s) return(diff(range(s))))>0))/length(unique(predicts$SS))`% of studies, sampling effort differs among the sampled sites.
+
+```{r,echo=FALSE,eval=TRUE}
+colsSampling <- data.frame(Field=c('Measurement',
+                                   'Diversity_metric_type',
+                                   'Diversity_metric',
+                                   'Diversity_metric_unit',
+                                   'Diversity_metric_is_effort_sensitive',
+                                   'Sampling_method'),
+                   Description=c('The recorded ***Measurement*** of species abundance, species occurrence, or species richness',
+                                 'Whether the recorded ***Measurement*** is of species abundance, species occurrence or species richness',
+                                 'The specific metric used for the taxon ***Measurement***',
+                                 'The units of the diversity metric',
+                                 'Whether the diversity metric is sensitive to sampling effort',
+                                 'The method used to sample taxa'))
+```
+
+```{r,echo=FALSE,eval=TRUE}
+knitr::kable(colsSampling,caption="Key fields in the PREDICTS database describing biodiversity sampling")
+```
+
+
+
+```{r,echo=FALSE,eval=FALSE,fig.cap="Time span of sampling for the PREDICTS sites in each biome",message=FALSE,warning=FALSE}
+library(yarg)
+
+sites <- unique(predicts[,c('SSS','Sample_start_earliest','Sample_end_latest','Latitude','Longitude','Biome')])
+
+PlotBiomeByDate(sites = sites,diversity = predicts)
+```
+
 
 # References

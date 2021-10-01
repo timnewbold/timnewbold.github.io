@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-24" />
+        <meta name="date" content="2021-09-30" />
     
     <title>Modelling Land-use Impacts on Biodiversity with the PREDICTS Database</title>
 
@@ -192,6 +192,7 @@
             <ul>
             <li><a href="#introduction">Introduction</a></li>
             <li><a href="#database-structure">Database Structure</a></li>
+            <li><a href="#key-sampling-information">Key Sampling Information</a></li>
             <li><a href="#references">References</a></li>
             </ul>
           </div>
@@ -214,7 +215,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-24</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-30</p>
            
 
    
@@ -234,7 +235,187 @@
 </div>
 <div id="database-structure" class="section level1">
 <h1>Database Structure</h1>
-<p>The PREDICTS database consists of data drawn from 480 published papers comparing biodiversity in different land uses.</p>
+<p>The PREDICTS database has a hierarchical structure.</p>
+<p>At the highest level, data are drawn from 480 published papers (<strong><em>Sources</em></strong>) comparing biodiversity in different land uses.</p>
+<p>Each data Source consists of one or more <strong><em>Studies</em></strong>. Sometimes, a published paper will contain biodiversity samples collected using more than one fundamental approach. For example, a paper may contain data for different taxonomic groups that would not appropriately have been sampled using the same methods. In such cases, because data are not directly comparable if collected using different methods, data Sources were split into multiple Studies. Otherwise, each Source contained a single Study.</p>
+<p>Each Study consists of data sampled in one or more spatial <strong><em>Blocks</em></strong>. A Study was divided into more than one Block if the sampling showed spatial structuring, to allow us to delimit spatial aggregations of Sites, and thus to account for spatial structuring later when modelling the data.</p>
+<p>Each <strong><em>Block</em></strong> contains two or more <strong><em>Sites</em></strong>, which are the specific locations at which biodiversity was sampled.</p>
+<p>Within each <strong><em>Site</em></strong>, there are a series of <strong><em>Measurements</em></strong> - of species abundance (2,692,493 records), species occurrence (557,616 records), or species richness (295 records) - for each of the sampled taxa.</p>
+<table>
+<caption>
+Key fields in the PREDICTS database relating to the hierarchical structure of the database
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Field
+</th>
+<th style="text-align:left;">
+Description
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Source_ID
+</td>
+<td style="text-align:left;">
+The published paper (<strong><em>Source</em></strong>) from which data were derived
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study_number
+</td>
+<td style="text-align:left;">
+Within each <strong><em>Source</em></strong>, the <strong><em>Study</em></strong> identifier
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Study_name
+</td>
+<td style="text-align:left;">
+A text description to identify the <strong><em>Study</em></strong>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SS
+</td>
+<td style="text-align:left;">
+An amalgamation of <strong><em>Source</em></strong> and <strong><em>Study</em></strong> IDs, so that each <strong><em>Study</em></strong> in the database is uniquely identifiable
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Block
+</td>
+<td style="text-align:left;">
+A text description of distinct spatial <strong><em>Blocks</em></strong>, blank where sites were not spatially clustered
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SSB
+</td>
+<td style="text-align:left;">
+An almagamation of the unique <strong><em>Study</em></strong> identifier, <em>SS</em>, and <em>Block</em>, so that each <strong><em>Block</em></strong> is uniquely identifiable
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Site_number
+</td>
+<td style="text-align:left;">
+Within each <strong><em>Study</em></strong>, the <strong><em>Site</em></strong> identifier
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Site_name
+</td>
+<td style="text-align:left;">
+A text description to identify the <strong><em>Site</em></strong>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SSBS
+</td>
+<td style="text-align:left;">
+An almagamation of the unique <strong><em>Block</em></strong> identifier, <em>SSB</em>, and the <strong><em>Site</em></strong> number, so that each <strong><em>Site</em></strong> is uniquely identifiable
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SSS
+</td>
+<td style="text-align:left;">
+As for <em>SSBS</em>, but excluding the block identifier - not recommended, but can be used if you don’t want to account for spatial structure
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Measurement
+</td>
+<td style="text-align:left;">
+The recorded <strong><em>Measurement</em></strong> of species abundance, species occurrence, or species richness (see next section)
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="key-sampling-information" class="section level1">
+<h1>Key Sampling Information</h1>
+<p>Measurements in PREDICTS consist of three broad types: species abundance, species occurrence (i.e., presence or absence), or species richness (the number of species sampled). Within these categories, there are lots of different specific metrics. Some measures of diversity are inherently sensitive to sampling effort, which has important implications for processing the data (see below).</p>
+<p>Data in PREDICTS were sampled using a whole host of different methods.</p>
+<table>
+<caption>
+Key fields in the PREDICTS database describing biodiversity sampling
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Field
+</th>
+<th style="text-align:left;">
+Description
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Measurement
+</td>
+<td style="text-align:left;">
+The recorded <strong><em>Measurement</em></strong> of species abundance, species occurrence, or species richness
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Diversity_metric_type
+</td>
+<td style="text-align:left;">
+Whether the recorded <strong><em>Measurement</em></strong> is of species abundance, species occurrence or species richness
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Diversity_metric
+</td>
+<td style="text-align:left;">
+The specific metric used for the taxon <strong><em>Measurement</em></strong>
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Diversity_metric_unit
+</td>
+<td style="text-align:left;">
+The units of the diversity metric
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Diversity_metric_is_effort_sensitive
+</td>
+<td style="text-align:left;">
+Whether the diversity metric is sensitive to sampling effort
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sampling_method
+</td>
+<td style="text-align:left;">
+The method used to sample taxa
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>
