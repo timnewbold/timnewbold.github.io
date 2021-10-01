@@ -120,38 +120,80 @@ knitr::kable(colsStruct,caption="Key fields in the PREDICTS database relating to
 
 # Key Sampling Information
 
-Measurements in PREDICTS consist of three broad types: species abundance, species occurrence (i.e., presence or absence), or species richness (the number of species sampled). Within these categories, there are lots of different specific metrics. Some measures of diversity are inherently sensitive to sampling effort, which has important implications for processing the data (see below).
-
-The different underlying ***Studies*** in PREDICTS consist of data sampled using a whole host of different methods, and with widely differing levels of sampling effort. When analysing the PREDICTS data, it is important that diversity ***Measurements*** are comparable within ***Studies***. Differences among ***Studies*** are handled by the hierarchical design of the models. Therefore, it is a requirement of the PREDICTS database that sampling *methods* are constant within studies. Nevertheless, for `r length(which(tapply(X = predicts$Sampling_effort,INDEX = predicts$SS,FUN = function(s) return(diff(range(s))))>0))/length(unique(predicts$SS))`% of studies, sampling effort differs among the sampled sites.
-
 ```{r,echo=FALSE,eval=TRUE}
 colsSampling <- data.frame(Field=c('Measurement',
                                    'Diversity_metric_type',
                                    'Diversity_metric',
                                    'Diversity_metric_unit',
                                    'Diversity_metric_is_effort_sensitive',
-                                   'Sampling_method'),
+                                   'Sampling_method',
+                                   'Sampling_effort',
+                                   'Rescaled_sampling_effort',
+                                   'Sampling_effort_unit',
+                                   'Sample_start_earliest',
+                                   'Sample_end_latest',
+                                   'Sample_date_resolution',
+                                   'Sample_midpoint',
+                                   'Max_linear_extent_metres'),
                    Description=c('The recorded ***Measurement*** of species abundance, species occurrence, or species richness',
                                  'Whether the recorded ***Measurement*** is of species abundance, species occurrence or species richness',
                                  'The specific metric used for the taxon ***Measurement***',
                                  'The units of the diversity metric',
                                  'Whether the diversity metric is sensitive to sampling effort',
-                                 'The method used to sample taxa'))
+                                 'The method used to sample taxa',
+                                 'The sampling effort applied at the site',
+                                 'Rescaled sampling effort, where the maximum within a study becomes 1, and everything else a fraction of the maximum',
+                                 'The units of the sampling effort',
+                                 'The earliest date at which sampling may have begun',
+                                 'The latest date at which sampling may have ended',
+                                 'The resolution of the sampling start and end dates (day, month or year)',
+                                 'The mid-point between earliest sampling start and latest sampling end',
+                                 'The maximum linear span sampled at a given site'))
+```
+
+
+Measurements in PREDICTS consist of three broad types: species abundance, species occurrence (i.e., presence or absence), or species richness (the number of species sampled). Within these categories, there are lots of different specific metrics. Some measures of diversity are inherently sensitive to sampling effort, which has important implications for processing the data (see below).
+
+The different underlying ***Studies*** in PREDICTS consist of data sampled using a whole host of different methods, and with widely differing levels of sampling effort. When analysing the PREDICTS data, it is important that diversity ***Measurements*** are comparable within ***Studies***, whereas differences among ***Studies*** are handled by the hierarchical design of the models (see below). Therefore, it is a requirement of the PREDICTS database that sampling *methods* are constant within studies. Nevertheless, for `r round((length(which(tapply(X = predicts$Sampling_effort,INDEX = predicts$SS,FUN = function(s) return(diff(range(s))))>0))/length(unique(predicts$SS)))*100,0)`% of studies, sampling effort differs among the sampled sites.
+
+Most of the original biodiversity sampling in the studies contained within the PREDICTS database took place between 2000 and 2013.
+
+```{r,echo=FALSE,eval=TRUE,fig.cap="Distribution of mid-point sampling dates for the PREDICTS sites",message=FALSE,warning=FALSE,fig.width=12,fig.height=8}
+
+sites <- unique(predicts[,c('SSS','Sample_midpoint','Max_linear_extent_metres','Latitude','Longitude','Biome')])
+
+years <- as.numeric(format(as.POSIXct(sites$Sample_midpoint),format="%Y"))
+
+par(cex=2)
+par(tck=-0.01)
+par(mgp=c(1.8,0.2,0))
+par(mar=c(3.2,3.6,0.2,0.2))
+
+hist(years,breaks=c(1983,2000:2014),xlab="Sampling mid-point",freq=FALSE,ylab="Frequency",col="#800000",main=NA,las=1)
+box(bty="l")
+```
+
+Sampling at the sites in PREDICTS can span a range of different spatial extents. The maximum linear span of sampling for three-quarters of sites in the PREDICTS database falls between `r round(quantile(sites$Max_linear_extent_metres,probs=0.125,na.rm=TRUE),0)` and `r round(quantile(sites$Max_linear_extent_metres,probs=0.875,na.rm=TRUE),0)` metres.
+
+```{r,echo=FALSE,eval=TRUE,fig.cap="Distribution of maximum linear spans sampled at the PREDICTS sites",message=FALSE,warning=FALSE,fig.width=12,fig.height=8}
+par(cex=2)
+par(tck=-0.01)
+par(mgp=c(1.8,0.2,0))
+par(mar=c(3.2,3.6,0.2,0.2))
+
+hist(log10(sites$Max_linear_extent_metres),
+     breaks=c(-2:5),xlab="Maximum linear span sampled (metres)",freq=FALSE,ylab="Frequency",col="#800000",main=NA,las=1,xaxt="n")
+axis(1,at=c(-2:5),labels=c(10^(-2:5)))
+box(bty="l")
 ```
 
 ```{r,echo=FALSE,eval=TRUE}
 knitr::kable(colsSampling,caption="Key fields in the PREDICTS database describing biodiversity sampling")
 ```
 
+# Spatial Information
 
-
-```{r,echo=FALSE,eval=FALSE,fig.cap="Time span of sampling for the PREDICTS sites in each biome",message=FALSE,warning=FALSE}
-library(yarg)
-
-sites <- unique(predicts[,c('SSS','Sample_start_earliest','Sample_end_latest','Latitude','Longitude','Biome')])
-
-PlotBiomeByDate(sites = sites,diversity = predicts)
-```
+# Taxonomic Information
 
 
 # References
