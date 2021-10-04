@@ -105,7 +105,54 @@ references:
     type: article-journal
     issued:
       year: 2001
-    
+  - id: Myers2000
+    title: Biodiversity hotspots for conservation priorities
+    author:
+      - family: Myers
+        given: Norman
+      - family: Mittermeier
+        given: Russell A.
+      - family: Mittermeier
+        given: Cristina G.
+      - family: da Fonseca
+        given: Gustavo A.B.
+      - family: Kent
+        given: Jennifer
+    container-title: Nature
+    volume: 403
+    page: 853-858
+    type: article-journal
+    issued:
+      year: 2000
+  - id: Brooks2006
+    title: Global biodiversity conservation priorities
+    author:
+      - family: Brooks
+        given: Thomas M.
+      - family: Mittermeier
+        given: Russell A.
+      - family: da Fonseca
+        given: Gustavo A.B.
+      - family: Gerlach
+        given: J.
+      - family: Hoffmann
+        given: Michael
+      - family: Lamoreux
+        given: John F.
+      - family: Mittermeier
+        given: Cristina G.
+      - family: Pilgrim
+        given: John D.
+      - family: Rodrigues
+        given: Ana S.L.
+    container-title: Science
+    volume: 313
+    page: 58-61
+    DOI: 10.1126/science.1127609
+    URL: https://doi.org/10.1126/science.1127609
+    type: article-journal
+    issued:
+      year: 2006
 ---
 
 ```{r,echo=FALSE,eval=TRUE}
@@ -282,15 +329,76 @@ knitr::kable(colsSpatial,caption="Key fields in the PREDICTS database describing
 
 # Human Pressure Information
 
+```{r,echo=FALSE,eval=TRUE}
+colsPressure <- data.frame(Field=c('Habitat_as_described',
+                                  'Predominant_land_use',
+                                  'Source_for_predominant_land_use',
+                                  'Use_intensity'),
+                   Description=c('The description of the habitat from the original source publication',
+                                           'The land-use type, as classified by the data entrant',
+                                           'Whether land-use type was classified based on information given in the original source publication or Google Maps',
+                                 'Intensity of human land use, as classified by the data entrant'))
+```
+
 The only information on human pressures that is endogenous to the PREDICTS database describes the land-use conditions at the sampled site, with the key variables representing land-use type and intensity of human land use.
 
-Land-use type is classified as one of: 
+In the majority of cases (at least `r round((length(which(predicts$Source_for_predominant_land_use=="Direct from publication / author"))/nrow(predicts))*100,1)`%), land-use variables in the PREDICTS database were encoded using information given in the original source publications. Occasionally, the data entrant used Google Maps to infer the land-use type.
 
-Land-use intensity is classified at one of three levels, with the criteria for classification depending on land-use type (see [@Hudson2017] for more details)
+Land-use type is classified as one of: primary vegetation (apparently pristine habitat, with no record of prior destruction); secondary vegetation (habitat previously destroyed by human actions or extreme natural events, but now recovering towards its natural state); plantation forest (area used for growing woody crops); cropland (area used for growing herbaceous crops); pasture (area used for grazing livestock); urban (human settlements or areas of civic amenity). Secondary vegetation is also divided according to the stage of recovery toward its natural state: young, intermediate or mature. For full definitions, see [@Hudson2017].
+
+Land-use intensity is classified at one of three levels (minimal, light or intense), with the criteria for classification depending on land-use type (see [@Hudson2017] for more details)
+
+```{r,echo=FALSE,eval=TRUE}
+knitr::kable(colsPressure,caption="Key fields in the PREDICTS database describing human land-use pressures")
+```
 
 # Taxonomic Information
 
+```{r,echo=FALSE,eval=TRUE}
+colsTax <- data.frame(Field=c('Taxon_name_entered',
+                              'Parsed_name',
+                              'Taxon',
+                              'Name_status',
+                              'Rank',
+                              'Kingdom',
+                              'Phylum',
+                              'Class',
+                              'Order',
+                              'Family',
+                              'Genus',
+                              'Species',
+                              'Best_guess_binomial',
+                              'Study_common_taxon'),
+                   Description=c('The name of the sampled taxon, as given in the original source publication',
+                                 'The name of the sampled taxon, after resolving any typos',
+                                 'The accepted or provisionally accepted name for the species',
+                                 'Whether the taxon name is accepted or provisionally accepted',
+                                 'The taxonomic rank of the accepted/provisionally accepted taxon name',
+                                 'For the accepted/provisionally accepted taxon name, the name of the ...Kingdom',
+                                 '...Phylum',
+                                 '...Class',
+                                 '...Order',
+                                 '...Family',
+                                 '...Genus',
+                                 '...Species',
+                                 'For as many sampled taxa as possible, the best guess of the Latin binomial name',
+                                 'The taxonomic group within which all taxa sampled in a particular study belong'))
+```
+
+The names of the sampled taxa, as given in the original source publications, are entered directly into the database. These names were passed through a taxonomic names resolver to attempt to correct any typographical errors from the original papers. Parsed names were then compared to the Catalogue of Life or manually checked, to try to find the accepted name for the species (successfully in the vast majority - `r round((length(which(predicts$Name_status=="accepted name"))/nrow(predicts))*100,1)` - of cases).
+
+```{r,echo=FALSE,eval=TRUE}
+knitr::kable(colsTax,caption="Key fields in the PREDICTS database relating to the taxonomy of sampled taxa")
+```
+
 # Data Pre-processing
+
+Before modelling with the PREDICTS data, there are a few basic pre-processing steps that must be carried out. First, for the `r round((as.integer(summary(predicts$Measurement==predicts$Effort_corrected_measurement)['FALSE'][[1]])/nrow(predicts))*100,1)`% of records that are of an effort-sensitive metric and where sampling effort differs among sampled sites within the study, we need to
+
+```{r,echo=TRUE,results=TRUE}
+# Correct effort-sensitive abundance measures (assumes linear relationship between effort and recorded abundance)
+predicts <- predictsFunctions::CorrectSamplingEffort(diversity = predicts)
+```
 
 # Basic Species-level Models
 
