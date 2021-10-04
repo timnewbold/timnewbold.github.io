@@ -48,6 +48,64 @@ references:
     type: article-journal
     issued:
       year: 2017
+  - id: Ladle2011
+    title: Conservation Biogeography
+    author:
+      - family: Ladle
+        given: Richard J.
+      - family: Whittaker
+        given: Robert J.
+    type: book
+    publisher: Wiley-Blackwell, Chichester, UK
+    issued:
+      year: 2011
+  - id: Olson2001
+    title: Terrestrial ecoregions of the world&colon; a new map of life on Earth
+    author:
+      - family: Olson
+        given: David M.
+      - family: Dinerstein
+        given: Eric
+      - family: Wikramanayake
+        given: Eric D.
+      - family: Burgess
+        given: Neil D.
+      - family: Powell
+        given: George V.N.
+      - family: Underwood
+        given: Emma C.
+      - family: D'Amico
+        given: Jennifer A.
+      - family: Itoua
+        given: Illanga
+      - family: Strand
+        given: Holly E.
+      - family: Morrison
+        given: John C.
+      - family: Loucks
+        given: Colby J.
+      - family: Allnutt
+        given: Thomas F.
+      - family: Ricketts
+        given: Taylor
+      - family: Kura
+        given: Yumiko
+      - family: Lamoreux
+        given: John F.
+      - family: Wettengel
+        given: Wesley W.
+      - family: Hedao
+        given: Prashant
+      - family: Kassem
+        given: Kenneth R.
+    container-title: Bioscience
+    volume: 51
+    page: 933-938
+    URL: https://academic.oup.com/bioscience/article/51/11/933/227116
+    type: article-journal
+    issued:
+      year: 2001
+    
 ---
 
 ```{r,echo=FALSE,eval=TRUE}
@@ -193,7 +251,49 @@ knitr::kable(colsSampling,caption="Key fields in the PREDICTS database describin
 
 # Spatial Information
 
+```{r,echo=FALSE,eval=TRUE}
+colsSpatial <- data.frame(Field=c('Longitude',
+                                  'Latitude',
+                                  'Realm',
+                                  'Biome',
+                                  'Ecoregion',
+                                  'UN_region',
+                                  'UN_subregion',
+                                  'Hotspot',
+                                  'Wilderness_area'),
+                   Description=c('The longitude of the site at which sampling was undertaken',
+                                           'The latitude of the site at which sampling was undertaken',
+                                           'Based on the coordinates, the location of the site within...biogeographic realms',
+                                 '...biomes',
+                                 '...ecoregions',
+                                 '...UN regions',
+                                 '...UN sub-regions',
+                                 '...Biodiversity hotspots',
+                                 '...High-biodiversity wilderness areas'))
+```
+
+The vast majority of sampled sites in the PREDICTS database (`r round((length(which(!is.na(sites$Longitude)))/nrow(sites))*100,1)`%) are associated with geographical coordinates (longitude and latitude).
+
+These geographical coordinates are then used to assign the site within various geographic schemes: biogeographic realms [@Ladle2011; @Olson2001], biomes [@Olson2001], ecoregions [@Olson2001], UN regions and sub-regions (<a href="https://unstats.un.org/unsd/methodology/m49/" target="_blank">United Nations, 1999</a>), biodiversity hotspots [@Myers2000] and high-biodiversity wilderness areas [@Brooks2006].
+
+```{r,echo=FALSE,eval=TRUE}
+knitr::kable(colsSpatial,caption="Key fields in the PREDICTS database describing the spatial location of biodiversity sampling")
+```
+
+# Human Pressure Information
+
+The only information on human pressures that is endogenous to the PREDICTS database describes the land-use conditions at the sampled site, with the key variables representing land-use type and intensity of human land use.
+
+Land-use type is classified as one of: 
+
+Land-use intensity is classified at one of three levels, with the criteria for classification depending on land-use type (see [@Hudson2017] for more details)
+
 # Taxonomic Information
 
+# Data Pre-processing
+
+# Basic Species-level Models
+
+# Basic Assemblage-Level Models
 
 # References

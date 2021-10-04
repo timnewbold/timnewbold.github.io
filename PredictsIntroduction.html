@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-10-01" />
+        <meta name="date" content="2021-10-04" />
     
     <title>Modelling Land-use Impacts on Biodiversity with the PREDICTS Database</title>
 
@@ -194,7 +194,11 @@
             <li><a href="#database-structure">Database Structure</a></li>
             <li><a href="#key-sampling-information">Key Sampling Information</a></li>
             <li><a href="#spatial-information">Spatial Information</a></li>
+            <li><a href="#human-pressure-information">Human Pressure Information</a></li>
             <li><a href="#taxonomic-information">Taxonomic Information</a></li>
+            <li><a href="#data-pre-processing">Data Pre-processing</a></li>
+            <li><a href="#basic-species-level-models">Basic Species-level Models</a></li>
+            <li><a href="#basic-assemblage-level-models">Basic Assemblage-Level Models</a></li>
             <li><a href="#references">References</a></li>
             </ul>
           </div>
@@ -217,7 +221,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-01</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-04</p>
            
 
    
@@ -499,15 +503,127 @@ The maximum linear span sampled at a given site
 </div>
 <div id="spatial-information" class="section level1">
 <h1>Spatial Information</h1>
+<p>The vast majority of sampled sites in the PREDICTS database (99.4%) are associated with geographical coordinates (longitude and latitude).</p>
+<p>These geographical coordinates are then used to assign the site within various geographic schemes: biogeographic realms <span class="citation">(Ladle and Whittaker 2011; Olson et al. 2001)</span>, biomes <span class="citation">(Olson et al. 2001)</span>, ecoregions <span class="citation">(Olson et al. 2001)</span>, UN regions and sub-regions (<a href="https://unstats.un.org/unsd/methodology/m49/" target="_blank">United Nations, 1999</a>), biodiversity hotspots <span class="citation">(<strong>Myers2000?</strong>)</span> and high-biodiversity wilderness areas <span class="citation">(<strong>Brooks2006?</strong>)</span>.</p>
+<table>
+<caption>
+Key fields in the PREDICTS database describing the spatial location of biodiversity sampling
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Field
+</th>
+<th style="text-align:left;">
+Description
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Longitude
+</td>
+<td style="text-align:left;">
+The longitude of the site at which sampling was undertaken
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Latitude
+</td>
+<td style="text-align:left;">
+The latitude of the site at which sampling was undertaken
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Realm
+</td>
+<td style="text-align:left;">
+Based on the coordinates, the location of the site within…biogeographic realms
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Biome
+</td>
+<td style="text-align:left;">
+…biomes
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Ecoregion
+</td>
+<td style="text-align:left;">
+…ecoregions
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UN_region
+</td>
+<td style="text-align:left;">
+…UN regions
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UN_subregion
+</td>
+<td style="text-align:left;">
+…UN sub-regions
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Hotspot
+</td>
+<td style="text-align:left;">
+…Biodiversity hotspots
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Wilderness_area
+</td>
+<td style="text-align:left;">
+…High-biodiversity wilderness areas
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="human-pressure-information" class="section level1">
+<h1>Human Pressure Information</h1>
+<p>The only information on human pressures that is endogenous to the PREDICTS database describes the land-use conditions at the sampled site, with the key variables representing land-use type and intensity of human land use.</p>
+<p>Land-use type is classified as one of:</p>
+<p>Land-use intensity is classified at one of three levels, with the criteria for classification depending on land-use type (see <span class="citation">(Hudson et al. 2017)</span> for more details)</p>
 </div>
 <div id="taxonomic-information" class="section level1">
 <h1>Taxonomic Information</h1>
+</div>
+<div id="data-pre-processing" class="section level1">
+<h1>Data Pre-processing</h1>
+</div>
+<div id="basic-species-level-models" class="section level1">
+<h1>Basic Species-level Models</h1>
+</div>
+<div id="basic-assemblage-level-models" class="section level1">
+<h1>Basic Assemblage-Level Models</h1>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Hudson2017" class="csl-entry">
 Hudson, Lawrence N., Tim Newbold, Sara Contu, Samantha L. L. Hill, Igor Lysenko, Adriana De Palma, Helen R. P. Phillips, et al. 2017. <span>“The Database of the PREDICTS (Projecting Responses of Ecological Diversity In Changing Terrestrial Systems) Project.”</span> <em>Ecology &amp; Evolution</em> 7: 145–88. <a href="https://doi.org/10.1002/ece3.2579">https://doi.org/10.1002/ece3.2579</a>.
+</div>
+<div id="ref-Ladle2011" class="csl-entry">
+Ladle, Richard J., and Robert J. Whittaker. 2011. <em>Conservation Biogeography</em>. Wiley-Blackwell, Chichester, UK.
+</div>
+<div id="ref-Olson2001" class="csl-entry">
+Olson, David M., Eric Dinerstein, Eric D. Wikramanayake, Neil D. Burgess, George V.N. Powell, Emma C. Underwood, Jennifer A. D’Amico, et al. 2001. <span>“Terrestrial Ecoregions of the World: A New Map of Life on Earth.”</span> <em>Bioscience</em> 51: 933–38. <a href="https://academic.oup.com/bioscience/article/51/11/933/227116">https://academic.oup.com/bioscience/article/51/11/933/227116</a>.
 </div>
 </div>
 </div>
