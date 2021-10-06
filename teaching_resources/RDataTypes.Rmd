@@ -77,7 +77,7 @@ myInteger2
 ```{r,echo=TRUE,results=TRUE}
 myInteger3 <- as.integer(1.9)
 myInteger3
-myInteger4 <- round(1.9)
+myInteger4 <- as.integer(round(1.9))
 myInteger4
 ```
 
@@ -211,18 +211,35 @@ You can combine values into a vector using the _c_ function:
 
 myVector <- c(2,4,6,8,10)
 myVector
+```
+
+The class of the vector is the class of the individual data values it contains:
+
+```{r,echo=TRUE}
 class(myVector)
 ```
 
-Single values, range of values or specific sets of values can be extracted from a vector as follows:
+Single values, range of values or specific sets of values can be extracted from a vector as follows.
+
+Single values are returned by putting the position of the value you want to return in square brackets.
 
 ```{r,echo=TRUE,results=TRUE}
 myVector[2]
+```
+
+To obtain a range of values, you can specify the start and end positions, separated by a colon:
+
+```{r,echo=TRUE,results=TRUE}
 myVector[3:5]
+```
+
+To return individually specified values, you can give a series of positions using the _c_ function (in other words you specify another vector to give the positions of the values that you want to return):
+
+```{r,echo=TRUE,results=TRUE}
 myVector[c(1,4)]
 ```
 
-You can perform arithmetic on a vector. In this case, the arithmetic operation is applied to all values in the vector:
+You can perform arithmetic on a vector. If your arithmetic operation is based on your vector and one other number, the calculation is applied to all values in the vector:
 
 ```{r,echo=TRUE,results=TRUE}
 myVector2 <- myVector * 2
@@ -243,7 +260,7 @@ myVector4 <- myVector3 * 2
 myVector4
 ```
 
-Vector can contain values of different data types (although each vector can only contain one type):
+Vectors can hold values of any of the atomic data types we encountered earlier (although any one vector can only contain one type):
 
 ```{r,echo=TRUE,results=TRUE}
 myLogicalVector <- c(TRUE,FALSE,TRUE,TRUE)
@@ -273,7 +290,7 @@ myVector <- c(2,4,6,8,10)
 length(myVector)
 ```
 
-You can change specific values, ranges of values, or specific sets of values in a vector:
+You can change specific values, ranges of values, or specific sets of values in a vector. Specifying values is done in the same way as when we asked to return specific values:
 
 ```{r,echo=TRUE,results=TRUE}
 myVector <- c(2,4,6,8,10)
@@ -336,7 +353,7 @@ myVector7
 class(myVector7)
 ```
 
-You can also initialise a vector, containing default values (0 for numeric, FALSE for logical or empty strings for character), using the same _numeric_, _integer_, _character_ and _logical_ functions:
+You can also initialise a vector, containing default values (0 for numeric, FALSE for logical or empty strings for character), using the same _numeric_, _integer_, _character_ and _logical_ functions as before, but this time specifying the number of values you want in your vector:
 
 ```{r,echo=TRUE,results=TRUE}
 myVector8 <- numeric(10)
@@ -356,7 +373,7 @@ myVector11
 
 ## Factors
 
-Factors are a special type of vector, where there a set of specified values (or 'levels') that a grouping variable is allowed to take. These 'levels' are stored with the variable in R:
+Factors are a special type of vector, where there is a set of specified values (or 'levels') that a grouping variable is allowed to take. These 'levels' are stored with the variable in R:
 
 ```{r,echo=TRUE,results=TRUE}
 
@@ -366,7 +383,7 @@ myFactor
 levels(myFactor)
 ```
 
-If you try to add a new value that does not belong to one of the specified levels, an NA value will be inserted (note that NA values are shown as <NA> in factors):
+If you try to add a new value that does not belong to one of the specified levels, an NA value will be inserted (note that NA values are shown as \<NA\> in factors):
 
 ```{r,echo=TRUE,results=TRUE}
 myFactor[7] <- "Treatment4"
@@ -400,7 +417,7 @@ myList <- list(1,2,3,4,5)
 myList
 ```
 
-The whole list has type 'list':
+Unlike with vectors, the class of a list object is 'list', rather than corresponding with the type of the individual data values:
 
 ```{r,echo=TRUE,results=TRUE}
 class(myList)
@@ -448,7 +465,7 @@ myList4[["Item2"]]
 myList4$Item2
 ```
 
-If you want to, you can apply names to the elements of an existing list using the _name_ function:
+If you want to, you can apply names to the elements of an existing list using the _names_ function:
 
 ```{r,echo=TRUE,results=TRUE}
 myList3 <- list(c(1,2,3,4,5),c(6,7,8,9,10))
@@ -476,7 +493,7 @@ myList5
 
 ## Data frames
 
-Data frames are tremendously useful for scientific research. They are a special form of lists, where each element _must_ have the same length. This is good for ensuring that each variable in your dataset has the same number of entries. In a later session, I will show you how to import data from a spreadsheet into an R data frame.
+Data frames are tremendously useful for scientific research. They are a special form of lists, where each element _must_ have the same length. This is good for ensuring that each variable in your dataset has the same number of entries. In a <a href="RDataInputOutput.html">later session</a>, I will show you how to import data from a spreadsheet into an R data frame.
 
 ```{r,echo=TRUE,results=TRUE}
 myDataFrame <- data.frame(
@@ -511,7 +528,7 @@ myList6
 try(data.frame(Component1=c(1,2,3,4,5),Component2=c(6,7)))
 ```
 
-# Matrices
+## Matrices
 
 Although you may not encounter matrices when running basic statistics in R, you may do if you get into more advanced statistics, and they are useful if you use R for modelling or maths. Like data frames, matrices have a square structure, but unlike data frames can only hold a single data type. You can create a matrix using the _matrix_ function. The _byrow_ option determines whether data are entered along each row (byrow = TRUE) or down each column (byrow = FALSE):
 
@@ -523,7 +540,7 @@ myMatrix2 <- matrix(data = 1:12,nrow = 4,ncol = 3,byrow = FALSE)
 myMatrix2
 ```
 
-We can convert objects of a different class to a matrix using the _as.matrix_ function. In this case, all values become strings, because matrices can't handle mixed data types:
+We can convert objects of a different class to a matrix using the _as.matrix_ function. If we convert the data-frame that we created earlier into a matrix, all values become strings, because matrices can't handle mixed data types:
 
 ```{r,echo=TRUE,results=TRUE}
 myMatrix3 <- as.matrix(myDataFrame)
@@ -536,4 +553,4 @@ There are two main advantages of using matrices: 1) it ensures that all the valu
 
 # Next Time
 
-That's it for this session. In the next session, I introduce some of the functions that can be used to conduct arithmetic operations in R, including to calculate summary statistics that are indispensible in scientific research.
+That's it for this session. In the <a href="RArithmetic.html">next session</a>, I introduce some of the functions that can be used to conduct arithmetic operations in R, including to calculate summary statistics that are indispensible in scientific research.

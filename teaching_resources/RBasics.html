@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-02" />
+        <meta name="date" content="2021-10-06" />
     
     <title>R Basics</title>
 
@@ -219,7 +219,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-02</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-06</p>
            
 
    
@@ -241,7 +241,7 @@
 </div>
 <div id="getting-started-with-r" class="section level1">
 <h1>Getting Started with R</h1>
-<p>If you are starting with R for the first time, I recommend playing around with R code on <a href="https://rdrr.io/snippets/" target="_blank">this great website</a>. This allows you to get to grips with the basics without having to install the R software (more on that in a later session).</p>
+<p>If you are starting with R for the first time, I recommend playing around with R code on <a href="https://rdrr.io/snippets/" target="_blank">this great website</a>. This allows you to get to grips with the basics without having to install the R software (more on that in a <a href="./InstallingR.html">later session</a>).</p>
 <p>Throughout all of the material in my introduction to R sessions, you may find this <a href="https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf" target="_blank">cheatsheet</a> helpful (thanks to Mhairi McNeill for making this available).</p>
 </div>
 <div id="conducting-basic-arithmetic" class="section level1">
@@ -274,7 +274,7 @@
 <div id="exploring-variables" class="section level1">
 <h1>Exploring variables</h1>
 <p>Once you have assigned some variables in R, it is useful to be able to find out what variables you have, and to find out what those variables are. I will now introduce a couple of functions that are very useful for this.</p>
-<p>First, to see what variables you have in your R environment, you can use the built-in <em>ls</em> function (incidentally, <em>ls</em> also lists user-specified functions - more on functions later). Running <em>ls</em> shows us that we have created 2 variables, <em>x</em> and <em>y</em>:</p>
+<p>First, to see what variables you have in your R environment, you can use the built-in <em>ls</em> function. Running <em>ls</em> shows us that we have created 2 variables, <em>x</em> and <em>y</em>:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span>()</span></code></pre></div>
 <pre><code>## [1] &quot;x&quot; &quot;y&quot;</code></pre>
 <blockquote>
@@ -285,10 +285,10 @@
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fl">3.0</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span>()</span></code></pre></div>
 <pre><code>## [1] &quot;a&quot; &quot;x&quot; &quot;y&quot;</code></pre>
-<p>To find out what type of information a variable contains, we can use the <em>class</em> function. I will explain more about data types in R later, but for now we can see that x is a number:</p>
+<p>To find out what type of information a variable contains, we can use the <em>class</em> function. I will explain more about data types in R <a href="RDataTypes.html">later</a>, but for now we can see that x is a number:</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(x)</span></code></pre></div>
 <pre><code>## [1] &quot;numeric&quot;</code></pre>
-<p>The <em>str</em> function is also useful. This tells us what type of information we have (‘num’ is short for numeric here), and also the value of our variable. This function is more useful for more complex data types (of which more later):</p>
+<p>The <em>str</em> function is also useful. This tells us what type of information we have (‘num’ is short for numeric here), and also the value of our variable. This function is more useful for more complex data types (of which more <a href="RDataTypes.html">later</a>):</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(x)</span></code></pre></div>
 <pre><code>##  num 1</code></pre>
 </div>
@@ -321,7 +321,7 @@
 <p>You can write multiple operations on a single line of R code, if you separate them with a semi-colon:</p>
 <div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fl">1.0</span>; y <span class="ot">&lt;-</span> x <span class="sc">*</span> <span class="dv">3</span>; y</span></code></pre></div>
 <pre><code>## [1] 3</code></pre>
-<p>However, for clarity, it is generally better to have one operation per line, as we have done so far. In a later session, I will talk about organising your code in script files.</p>
+<p>However, for clarity, it is generally better to have one operation per line, as we have done so far.</p>
 <p>When you write code to run multiple operations in R, it is good to add comments explaining what each line of your code does. You can do this by starting your comment line with a hash tag:</p>
 <div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign the variable x</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fl">1.0</span></span>
@@ -335,7 +335,7 @@
 </div>
 <div id="next-time" class="section level1">
 <h1>Next Time</h1>
-<p>That’s it for this session. Next time, I will introduce some of the different basic data types in R.</p>
+<p>That’s it for this session. <a href="RDataTypes.html">Next time</a>, I will introduce some of the different basic data types in R.</p>
 </div>
 </div>
 

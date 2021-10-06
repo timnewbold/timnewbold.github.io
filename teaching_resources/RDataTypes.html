@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-02" />
+        <meta name="date" content="2021-10-06" />
     
     <title>Data Types in R</title>
 
@@ -204,8 +204,8 @@
             <li><a href="#factors">Factors</a></li>
             <li><a href="#lists">Lists</a></li>
             <li><a href="#data-frames">Data frames</a></li>
-            </ul></li>
             <li><a href="#matrices">Matrices</a></li>
+            </ul></li>
             <li><a href="#next-time">Next Time</a></li>
             </ul>
           </div>
@@ -228,7 +228,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-02</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-06</p>
            
 
    
@@ -293,7 +293,7 @@
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>myInteger3 <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fl">1.9</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>myInteger3</span></code></pre></div>
 <pre><code>## [1] 1</code></pre>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>myInteger4 <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fl">1.9</span>)</span>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>myInteger4 <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">round</span>(<span class="fl">1.9</span>))</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>myInteger4</span></code></pre></div>
 <pre><code>## [1] 2</code></pre>
 </div>
@@ -406,16 +406,20 @@
 <div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>myVector <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>,<span class="dv">10</span>)</span>
 <span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>myVector</span></code></pre></div>
 <pre><code>## [1]  2  4  6  8 10</code></pre>
+<p>The class of the vector is the class of the individual data values it contains:</p>
 <div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(myVector)</span></code></pre></div>
 <pre><code>## [1] &quot;numeric&quot;</code></pre>
-<p>Single values, range of values or specific sets of values can be extracted from a vector as follows:</p>
+<p>Single values, range of values or specific sets of values can be extracted from a vector as follows.</p>
+<p>Single values are returned by putting the position of the value you want to return in square brackets.</p>
 <div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>myVector[<span class="dv">2</span>]</span></code></pre></div>
 <pre><code>## [1] 4</code></pre>
+<p>To obtain a range of values, you can specify the start and end positions, separated by a colon:</p>
 <div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>myVector[<span class="dv">3</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
 <pre><code>## [1]  6  8 10</code></pre>
+<p>To return individually specified values, you can give a series of positions using the <em>c</em> function (in other words you specify another vector to give the positions of the values that you want to return):</p>
 <div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>myVector[<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">4</span>)]</span></code></pre></div>
 <pre><code>## [1] 2 8</code></pre>
-<p>You can perform arithmetic on a vector. In this case, the arithmetic operation is applied to all values in the vector:</p>
+<p>You can perform arithmetic on a vector. If your arithmetic operation is based on your vector and one other number, the calculation is applied to all values in the vector:</p>
 <div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>myVector2 <span class="ot">&lt;-</span> myVector <span class="sc">*</span> <span class="dv">2</span></span>
 <span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>myVector2</span></code></pre></div>
 <pre><code>## [1]  4  8 12 16 20</code></pre>
@@ -427,7 +431,7 @@
 <span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>myVector4 <span class="ot">&lt;-</span> myVector3 <span class="sc">*</span> <span class="dv">2</span></span>
 <span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>myVector4</span></code></pre></div>
 <pre><code>## [1]  4  8 NA 16 20</code></pre>
-<p>Vector can contain values of different data types (although each vector can only contain one type):</p>
+<p>Vectors can hold values of any of the atomic data types we encountered earlier (although any one vector can only contain one type):</p>
 <div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>myLogicalVector <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>,<span class="cn">TRUE</span>)</span>
 <span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>myLogicalVector</span></code></pre></div>
 <pre><code>## [1]  TRUE FALSE  TRUE  TRUE</code></pre>
@@ -447,7 +451,7 @@
 <div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>myVector <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>,<span class="dv">10</span>)</span>
 <span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(myVector)</span></code></pre></div>
 <pre><code>## [1] 5</code></pre>
-<p>You can change specific values, ranges of values, or specific sets of values in a vector:</p>
+<p>You can change specific values, ranges of values, or specific sets of values in a vector. Specifying values is done in the same way as when we asked to return specific values:</p>
 <div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a>myVector <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>,<span class="dv">10</span>)</span>
 <span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>myVector[<span class="dv">4</span>] <span class="ot">&lt;-</span> <span class="dv">24</span></span>
 <span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>myVector</span></code></pre></div>
@@ -496,7 +500,7 @@
 <pre><code>## [1] &quot;1.1&quot;       NA          NA          NA          &quot;Some text&quot;</code></pre>
 <div class="sourceCode" id="cb118"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(myVector7)</span></code></pre></div>
 <pre><code>## [1] &quot;character&quot;</code></pre>
-<p>You can also initialise a vector, containing default values (0 for numeric, FALSE for logical or empty strings for character), using the same <em>numeric</em>, <em>integer</em>, <em>character</em> and <em>logical</em> functions:</p>
+<p>You can also initialise a vector, containing default values (0 for numeric, FALSE for logical or empty strings for character), using the same <em>numeric</em>, <em>integer</em>, <em>character</em> and <em>logical</em> functions as before, but this time specifying the number of values you want in your vector:</p>
 <div class="sourceCode" id="cb120"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a>myVector8 <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="dv">10</span>)</span>
 <span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a>myVector8</span></code></pre></div>
 <pre><code>##  [1] 0 0 0 0 0 0 0 0 0 0</code></pre>
@@ -513,7 +517,7 @@
 </div>
 <div id="factors" class="section level2">
 <h2>Factors</h2>
-<p>Factors are a special type of vector, where there a set of specified values (or ‘levels’) that a grouping variable is allowed to take. These ‘levels’ are stored with the variable in R:</p>
+<p>Factors are a special type of vector, where there is a set of specified values (or ‘levels’) that a grouping variable is allowed to take. These ‘levels’ are stored with the variable in R:</p>
 <div class="sourceCode" id="cb128"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a>myFactor <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;Treatment1&quot;</span>,<span class="st">&quot;Treatment2&quot;</span>,<span class="st">&quot;Treatment3&quot;</span>,</span>
 <span id="cb128-2"><a href="#cb128-2" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;Treatment1&quot;</span>,<span class="st">&quot;Treatment2&quot;</span>,<span class="st">&quot;Treatment3&quot;</span>))</span>
 <span id="cb128-3"><a href="#cb128-3" aria-hidden="true" tabindex="-1"></a>myFactor</span></code></pre></div>
@@ -521,7 +525,7 @@
 ## Levels: Treatment1 Treatment2 Treatment3</code></pre>
 <div class="sourceCode" id="cb130"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(myFactor)</span></code></pre></div>
 <pre><code>## [1] &quot;Treatment1&quot; &quot;Treatment2&quot; &quot;Treatment3&quot;</code></pre>
-<p>If you try to add a new value that does not belong to one of the specified levels, an NA value will be inserted (note that NA values are shown as <NA> in factors):</p>
+<p>If you try to add a new value that does not belong to one of the specified levels, an NA value will be inserted (note that NA values are shown as &lt;NA&gt; in factors):</p>
 <div class="sourceCode" id="cb132"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a>myFactor[<span class="dv">7</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Treatment4&quot;</span></span></code></pre></div>
 <pre><code>## Warning in `[&lt;-.factor`(`*tmp*`, 7, value = &quot;Treatment4&quot;): invalid factor level,
 ## NA generated</code></pre>
@@ -562,7 +566,7 @@
 ## 
 ## [[5]]
 ## [1] 5</code></pre>
-<p>The whole list has type ‘list’:</p>
+<p>Unlike with vectors, the class of a list object is ‘list’, rather than corresponding with the type of the individual data values:</p>
 <div class="sourceCode" id="cb142"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(myList)</span></code></pre></div>
 <pre><code>## [1] &quot;list&quot;</code></pre>
 <p>The individual elements within the list have their own class, and can be extracted in a similar way as with vectors, but this time using double rather than single square brackets:</p>
@@ -601,7 +605,7 @@
 <pre><code>## [1] 4</code></pre>
 <div class="sourceCode" id="cb160"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a>myList4<span class="sc">$</span>Item2</span></code></pre></div>
 <pre><code>## [1] 4</code></pre>
-<p>If you want to, you can apply names to the elements of an existing list using the <em>name</em> function:</p>
+<p>If you want to, you can apply names to the elements of an existing list using the <em>names</em> function:</p>
 <div class="sourceCode" id="cb162"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb162-1"><a href="#cb162-1" aria-hidden="true" tabindex="-1"></a>myList3 <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>),<span class="fu">c</span>(<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>,<span class="dv">10</span>))</span>
 <span id="cb162-2"><a href="#cb162-2" aria-hidden="true" tabindex="-1"></a>myList3</span></code></pre></div>
 <pre><code>## [[1]]
@@ -650,7 +654,7 @@
 </div>
 <div id="data-frames" class="section level2">
 <h2>Data frames</h2>
-<p>Data frames are tremendously useful for scientific research. They are a special form of lists, where each element <em>must</em> have the same length. This is good for ensuring that each variable in your dataset has the same number of entries. In a later session, I will show you how to import data from a spreadsheet into an R data frame.</p>
+<p>Data frames are tremendously useful for scientific research. They are a special form of lists, where each element <em>must</em> have the same length. This is good for ensuring that each variable in your dataset has the same number of entries. In a <a href="RDataInputOutput.html">later session</a>, I will show you how to import data from a spreadsheet into an R data frame.</p>
 <div class="sourceCode" id="cb176"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb176-1"><a href="#cb176-1" aria-hidden="true" tabindex="-1"></a>myDataFrame <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb176-2"><a href="#cb176-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Treatment=</span><span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;Treatment1&quot;</span>,<span class="st">&quot;Treatment2&quot;</span>,<span class="st">&quot;Treatment3&quot;</span>,</span>
 <span id="cb176-3"><a href="#cb176-3" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;Treatment1&quot;</span>,<span class="st">&quot;Treatment2&quot;</span>,<span class="st">&quot;Treatment3&quot;</span>)),</span>
@@ -700,9 +704,8 @@
 <pre><code>## Error in data.frame(Component1 = c(1, 2, 3, 4, 5), Component2 = c(6, 7)) : 
 ##   arguments imply differing number of rows: 5, 2</code></pre>
 </div>
-</div>
-<div id="matrices" class="section level1">
-<h1>Matrices</h1>
+<div id="matrices" class="section level2">
+<h2>Matrices</h2>
 <p>Although you may not encounter matrices when running basic statistics in R, you may do if you get into more advanced statistics, and they are useful if you use R for modelling or maths. Like data frames, matrices have a square structure, but unlike data frames can only hold a single data type. You can create a matrix using the <em>matrix</em> function. The <em>byrow</em> option determines whether data are entered along each row (byrow = TRUE) or down each column (byrow = FALSE):</p>
 <div class="sourceCode" id="cb194"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a>myMatrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">data =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>,<span class="at">nrow =</span> <span class="dv">4</span>,<span class="at">ncol =</span> <span class="dv">3</span>,<span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb194-2"><a href="#cb194-2" aria-hidden="true" tabindex="-1"></a>myMatrix</span></code></pre></div>
@@ -718,7 +721,7 @@
 ## [2,]    2    6   10
 ## [3,]    3    7   11
 ## [4,]    4    8   12</code></pre>
-<p>We can convert objects of a different class to a matrix using the <em>as.matrix</em> function. In this case, all values become strings, because matrices can’t handle mixed data types:</p>
+<p>We can convert objects of a different class to a matrix using the <em>as.matrix</em> function. If we convert the data-frame that we created earlier into a matrix, all values become strings, because matrices can’t handle mixed data types:</p>
 <div class="sourceCode" id="cb198"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb198-1"><a href="#cb198-1" aria-hidden="true" tabindex="-1"></a>myMatrix3 <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(myDataFrame)</span>
 <span id="cb198-2"><a href="#cb198-2" aria-hidden="true" tabindex="-1"></a>myMatrix3</span></code></pre></div>
 <pre><code>##      Treatment    Measurement Measurement2
@@ -731,9 +734,10 @@
 <p>There are many mathematical operations that you can perform on matrices. In fact, you can also do the same with data frames so long as all the columns contain numbers. Matrix maths can get very complex, and is beyond the scope of these sessions. If you want a quick introduction to the basics, I recommend this <a href="https://stats.idre.ucla.edu/r/seminars/r-matrix-operations/" target="_blank">webpage</a>.</p>
 <p>There are two main advantages of using matrices: 1) it ensures that all the values are of the same data type; and 2) the amount of memory used up by a matrix tends to be much smaller than that of a data frame, which can be important when working with very large datasets.</p>
 </div>
+</div>
 <div id="next-time" class="section level1">
 <h1>Next Time</h1>
-<p>That’s it for this session. In the next session, I introduce some of the functions that can be used to conduct arithmetic operations in R, including to calculate summary statistics that are indispensible in scientific research.</p>
+<p>That’s it for this session. In the <a href="RArithmetic.html">next session</a>, I introduce some of the functions that can be used to conduct arithmetic operations in R, including to calculate summary statistics that are indispensible in scientific research.</p>
 </div>
 </div>
 
