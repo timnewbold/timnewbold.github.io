@@ -482,7 +482,7 @@ AIC(occMod1$model,occModNull$model)
 anova(occMod1$model,occModNull$model)
 ```
 
-If we look at the pseudo R<sup>2</sup> values of the model, we can see that the random effects explain most of the variation in reptile species presence/absence, while land use explains `r round(StatisticalModels::R2GLMER(m1$model)$marginal*100,1)`%.
+If we look at the pseudo R<sup>2</sup> values of the model, we can see that the random effects explain most of the variation in reptile species presence/absence, while land use explains `r round(StatisticalModels::R2GLMER(occMod1$model)$marginal*100,1)`%.
 
 ```{r,echo=TRUE,results=TRUE}
 StatisticalModels::R2GLMER(occMod1$model)
@@ -533,9 +533,20 @@ richMod1 <- StatisticalModels::GLMER(modelData = sites,
                                      saveVars = c("Longitude","Latitude"))
 ```
 
+If our species richness estimates conform to a true Poisson distribution, then the mean and variance of the values should be equal. Ecological count data are often over-dispersed, whereby the variance of the values is much greater than the mean. This seems very likely to be the case here:
+
+```{r,echo=TRUE,results=TRUE}
+mean(sites$Species_richness)
+var(sites$Species_richness)
+```
+
+We can use the _GLMEROverdispersion_ function to test the model, revealing substantial over-dispersion:
+
 ```{r,echo=TRUE,results=TRUE}
 StatisticalModels::GLMEROverdispersion(model = richMod1$model)
 ```
+
+One way to deal with the issue of over-dispersion in Poisson mixed-effects models is to include an observation-level random effect (i.e., a random effect with one group per data point). Here, this mean fitting site identity as a random effect:
 
 ```{r,echo=TRUE,results=TRUE}
 richMod2 <- StatisticalModels::GLMER(modelData = sites,
@@ -550,9 +561,13 @@ print.LM(richMod2)
 summary.LM(richMod2)
 ```
 
+Testing for over-dispersion in the new model shows that we have dealt with the issue successfully:
+
 ```{r,echo=TRUE,results=TRUE}
 StatisticalModels::GLMEROverdispersion(model = richMod2$model)
 ```
+
+Now that we have settled on a random-effects structure, we will create a null, intercept-only model with which to compare our model of the effect of land use:
 
 ```{r,echo=TRUE,results=TRUE}
 # To compare the models, they need to be fit to the same dataset
@@ -566,20 +581,42 @@ richModNull <- StatisticalModels::GLMER(modelData = sites.with.lu,
                                      randomStruct = "(1|SS)+(1|SSB)+(1|SSBS)",
                                      saveVars = c("Longitude","Latitude"))
 
+```
+
+Comparing the land-use and null models shows that land use has a strong association with species richness at the PREDICTS sites:
+
+```{r,echo=TRUE,results=TRUE}
+
 AIC(richMod2$model,richModNull$model)
 
 anova(richMod2$model,richModNull$model)
 ```
 
+Calculating the pseudo-R<sup>2</sup> values for the land-use model shows that land use alone only explains `r round((R2GLMER(richMod2$model)$marginal)*100,1)`% of the variation in species richness, but that is unsurprising in such a heterogeneous database.
+
 ```{r,echo=TRUE,results=TRUE}
 R2GLMER(richMod2$model)
 ```
 
+Plotting the modelled effects of land use on species richness shows a substantial reduction in species richness in more disturbed land uses:
+
 ```{r,echo=TRUE,results=TRUE}
+PlotGLMERFactor(model = richMod2$model,data = richMod2$data,
+                responseVar = "Species richness",logLink = "e",
+                catEffects = "LandUse",xtext.srt = 45,
+                order = c(1,4,3,2,5,7,6,8),
+                params = list(mar = c(1.2, 3.5, 0.2, 0.2)))
+```
+
+With any analysis of spatial data, there is the possibility for spatial autocorrelation, meaning that data points cannot be assumed to be independent. Because of the hierarchical structure of the PREDICTS analyses, we tend to investigate spatial autocorrelation in the residuals associated with individual ***Studies*** in the original dataset. This can be done using the *SpatialAutocorrelationTest* function:
+
+```{r,echo=TRUE,results=TRUE,fig.cap="Distribution of P values from a series of tests for spatial autocorrelation in the residuals associated with underlying ***Study***. P values < 0.05 indicate significant spatial autocorrelation"}
 sat <- StatisticalModels::SpatialAutocorrelationTest(richMod2,ranefGrouping = "SS")
 
 hist(sat$P,breaks=c(0,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1),freq=FALSE)
 abline(v=0.05,lwd=2,col="#ff0000")
 ```
+
+By chance, we would expect to see significant spatial autocorrelation in 5% of cases. Here the residuals associated with `r round((length(which(sat$P<0.05))/length(which(!is.na(sat$P))))*100,1)`% of studies return a significant spatial autocorrelation test.
 
 # References
