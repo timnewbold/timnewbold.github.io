@@ -92,6 +92,10 @@ sd(x)/sqrt(length(x))
 
 Alternatively, there is a function _std.error_ that will calculate standard error directly (for this we need to load a new package - _plotrix_):
 
+```{r,echo=TRUE,results=FALSE,eval=FALSE}
+install.packages("plotrix")
+```
+
 ```{r,echo=TRUE,results=TRUE}
 library(plotrix)
 std.error(x)
@@ -176,4 +180,4 @@ mean(myDataFrame$x)
 
 # Next Time
 
-In the next session, I will show you how to install R and R Studio, so that you can move onto reading in and saving data (which is not possible in the website we have been using so far).
+In the <a href="InstallingR.html">next session</a>, I will show you how to install R and R Studio, so that you can move onto reading in and saving data (which is not possible in the website we have been using so far).

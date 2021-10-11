@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-08" />
+        <meta name="date" content="2021-10-11" />
     
     <title>R Data Input and Output</title>
 
@@ -227,7 +227,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-08</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-11</p>
            
 
    
@@ -263,10 +263,10 @@
 <h2>Built-in Datasets</h2>
 <p>Firstly, there are built-in datasets in R. For example, the cars dataset, which we will use again in later sessions:</p>
 <blockquote>
-<p>TIP: The <em>head</em> and <em>tail</em> functions allow you to view the first and last lines, respectively, of a large data-frame. You can specify a number of rows to display (here 15). Alternatively, 6 rows will be displayed by default.</p>
+<p>TIP: The <em>head</em> and <em>tail</em> functions allow you to view the first and last lines, respectively, of a large data-frame. You can specify a number of rows to display. Here I have asked for 10 rows. Alternatively, 6 rows will be displayed by default.</p>
 </blockquote>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(mtcars)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(mtcars,<span class="dv">10</span>)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(mtcars,<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div>
 <pre><code>##                    mpg cyl  disp  hp drat    wt  qsec vs am gear carb
 ## Mazda RX4         21.0   6 160.0 110 3.90 2.620 16.46  0  1    4    4
 ## Mazda RX4 Wag     21.0   6 160.0 110 3.90 2.875 17.02  0  1    4    4
@@ -360,7 +360,7 @@
 <p>Another format you may come across is the R proprietorial RDS format. This can be handy for very large datasets, because it is much more efficient than text files, such as CSVs and tab-delimited text files.</p>
 <p>We will read here the PREDICTS database <span class="citation">(Hudson et al. 2017)</span>, which is a very large dataset (3.2 million rows). The CSV version of this database is huge, so it is convenient to use the RDS format. We will come across the PREDICTS database again in later sessions.</p>
 <blockquote>
-<p>TIP: For some reason, with RDS files we have to use a 2-stage process to load an RDS from an online repository. Alternatively, you can just plug the path to an RDS file on your local machine directly into the <em>readRDS</em> function.</p>
+<p>TIP: For some reason, with RDS files we have to use a 2-stage process to load an RDS from an online repository. Alternatively, you can just point to a local RDS file on your computer.</p>
 </blockquote>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>myFile <span class="ot">&lt;-</span> <span class="fu">url</span>(<span class="st">&quot;https://www.dropbox.com/s/pb1mdiel8o22186/database.rds?dl=1&quot;</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>predicts <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(myFile)</span>
@@ -400,7 +400,7 @@
 ## Valiant                   30.34682</code></pre>
 <div id="csv-format-1" class="section level2">
 <h2>CSV Format</h2>
-<p>You can write data to a CSV file using the <em>write.csv</em> function. I prefer to specify not to include row names (<em>row.names = FALSE</em>). Specifying <em>quote = FALSE</em> prevents the inclusion of quotation marks around character strings (you may need to use <em>quote = TRUE</em> if any of your characters themselves contain commas!):</p>
+<p>You can write data to a CSV file using the <em>write.csv</em> function. I prefer to specify not to include row names (<em>row.names = FALSE</em>). Specifying <em>quote = FALSE</em> prevents the inclusion of quotation marks around character strings (you may need to use <em>quote = TRUE</em> if any of your character strings contain commas):</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(<span class="at">x =</span> mtcars,<span class="at">file =</span> <span class="st">&quot;CarData.csv&quot;</span>,<span class="at">quote =</span> <span class="cn">FALSE</span>,<span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 </div>
 <div id="other-table-formats-1" class="section level2">
@@ -416,7 +416,7 @@
 </div>
 <div id="next-time" class="section level1">
 <h1>Next Time</h1>
-<p>In the next session, I will give a very brief and rather superficial introduction to the vast plotting capabilities in R.</p>
+<p>In the <a href="RPlotting.html">next session</a>, I will give a very brief and rather superficial introduction to the vast plotting capabilities in R.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>

@@ -134,11 +134,11 @@ There are a few ways that you can read data into R.
 
 Firstly, there are built-in datasets in R. For example, the cars dataset, which we will use again in later sessions:
 
-> TIP: The _head_ and _tail_ functions allow you to view the first and last lines, respectively, of a large data-frame. You can specify a number of rows to display (here 15). Alternatively, 6 rows will be displayed by default.
+> TIP: The _head_ and _tail_ functions allow you to view the first and last lines, respectively, of a large data-frame. You can specify a number of rows to display. Here I have asked for 10 rows. Alternatively, 6 rows will be displayed by default.
 
 ```{r,echo=TRUE,results=TRUE}
 data(mtcars)
-head(mtcars,10)
+head(mtcars,n = 10)
 ```
 
 ## CSV Format
@@ -177,7 +177,7 @@ Another format you may come across is the R proprietorial RDS format. This can b
 
 We will read here the PREDICTS database [@PREDICTS], which is a very large dataset (3.2 million rows). The CSV version of this database is huge, so it is convenient to use the RDS format. We will come across the PREDICTS database again in later sessions.
 
-> TIP: For some reason, with RDS files we have to use a 2-stage process to load an RDS from an online repository. Alternatively, you can just plug the path to an RDS file on your local machine directly into the _readRDS_ function.
+> TIP: For some reason, with RDS files we have to use a 2-stage process to load an RDS from an online repository. Alternatively, you can just point to a local RDS file on your computer.
 
 ```{r,echo=TRUE,results=TRUE}
 myFile <- url("https://www.dropbox.com/s/pb1mdiel8o22186/database.rds?dl=1")
@@ -196,7 +196,7 @@ head(mtcars)
 
 ## CSV Format
 
-You can write data to a CSV file using the _write.csv_ function. I prefer to specify not to include row names (_row.names = FALSE_). Specifying _quote = FALSE_ prevents the inclusion of quotation marks around character strings (you may need to use _quote = TRUE_ if any of your characters themselves contain commas!):
+You can write data to a CSV file using the _write.csv_ function. I prefer to specify not to include row names (_row.names = FALSE_). Specifying _quote = FALSE_ prevents the inclusion of quotation marks around character strings (you may need to use _quote = TRUE_ if any of your character strings contain commas):
 
 ```{r,echo=TRUE,eval=FALSE}
 write.csv(x = mtcars,file = "CarData.csv",quote = FALSE,row.names = FALSE)
@@ -220,6 +220,6 @@ saveRDS(object = mtcars,file = "CarData.rds")
 
 # Next Time
 
-In the next session, I will give a very brief and rather superficial introduction to the vast plotting capabilities in R.
+In the <a href="RPlotting.html">next session</a>, I will give a very brief and rather superficial introduction to the vast plotting capabilities in R.
 
 # References

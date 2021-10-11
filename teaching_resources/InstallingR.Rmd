@@ -52,6 +52,6 @@ For now, just have a play around and get familiar with R and RStudio&reg;.
 
 # Next Time
 
-In the next session, I will cover inputting data to and outputting data from R.
+In the <a href="RDataInputOutput.html">next session</a>, I will cover inputting and outputting data.
 
 # Footnotes
