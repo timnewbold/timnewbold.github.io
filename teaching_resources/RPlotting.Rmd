@@ -12,24 +12,18 @@ output:
 
 # Overview
 
-In this session, I will give you a very brief introduction to some of the basic plotting options in R. Mastering R graphics would take at least a whole course on its own. Here, we will just scratch the surface. We will cover three basic types of graphs that you will commonly encounter in science (scatter plots, histograms and boxplots), how you output R graphs to a file, and a very brief introduction to a plotting package that many people now use.
-
-* Scatter plots
-* Histograms and density plots
-* Boxplots
-* Exporting graphs to file
-* ggplot
+In this session, I will give you a very brief introduction to some of the basic plotting options in R. Mastering R graphics would take at least a whole course on its own. Here, we will just scratch the surface. We will cover three basic types of graphs that you will commonly encounter in science (scatter plots, histograms and boxplots), how you output R graphs to a file, and a very brief introduction to a plotting package that many people now use (*ggplot*).
 
 # Scatter Plots
 
-To illustrate scatter plots, we will use data on international airline passenger numbers between 1949 and 1960:
+To illustrate scatter plots, we will use data on international airline passenger numbers between 1949 and 1960.
 
 ```{r,echo=TRUE,results=TRUE}
 data(AirPassengers)
 head(AirPassengers)
 ```
 
-These data contain just numbers of airline passengers (in 1000s) for each month between 1949 and 1960. Therefore, we also need to create our own vector to capture the months (from 1 to the length of the time-series):
+These data contain just numbers of airline passengers (in 1000s) for each month between 1949 and 1960. Therefore, we also need to create our own vector to capture the months (from 1 to the length of the time-series). If you are unsure what a vector is, see the earlier session on <a href="./RDataTypes.html">data types</a>.
 
 ```{r,echo=TRUE}
 months <- 1:length(AirPassengers)
@@ -74,7 +68,7 @@ Our x-axis isn't very informative, because it is just our vector of months from 
 plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",xlab="Year")
 ```
 
-We can add our own axis using the _axis_ function. Specifying _side=1_ says that we want the x axis (_side=2_ for a y axis). The _at_ parameter specifies the position of the labels (the sequence specified here using the _seq_ function says that we want a label every 12 months along the 144 months in the time series). Finally, the _labels_ parameter specifies the labels to add to the axis, here the years from 1949 to 1960.
+We can add our own axis using the _axis_ function. Specifying _side=1_ says that we want the x axis (_side=2_ for the y axis). The _at_ parameter specifies the position of the labels (the sequence specified here using the _seq_ function says that we want a label every 12 months along the 144 months in the time series). Finally, the _labels_ parameter specifies the labels to add to the axis, here the years from 1949 to 1960.
 
 ```{r,echo=TRUE,results=TRUE}
 plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",xlab="Year")
@@ -119,7 +113,7 @@ plot(months,AirPassengers,type="b",pch=16,col="#581845",bty="l",xaxt="n",
 axis(side = 1,at = seq(from=1,to=144,by=12),labels = 1949:1960)
 ```
 
-The final result is a reasonably aesthetically pleasing plot.
+The final result is reasonably aesthetically pleasing.
 
 # Histograms and Density Plots
 
@@ -198,13 +192,13 @@ boxplot(mtcars$mpg~mtcars$cyl,frame=FALSE,
 box(bty="l")
 ```
 
-> TIP: I will not go into full detail about the many options you can change in the different plot types I have introduced. Remember to use the _help_ function to see details of how the different plotting functions work, and the options you can set.
+> TIP: I will not go into full detail about the many options you can change in the different plot types I have introduced. Remember to use the **help** function to see details of how the different plotting functions work. You can use **help(par)** to see a list of all graphical options.
 
 # Exporting Graphs to File
 
-For writing reports and papers, you often need to export graphics from R as a image file. You can do this directly from RStudio, but it is difficult to the resolution and aspect ratio right. Therefore, I strongly recommend invoking a proper graphics device to write out your plots. There are a number of functions that allow you to do this.
+For writing reports and papers, you often need to export graphics from R as a image file. You can do this directly from RStudio, but then it is difficult to get the resolution and aspect ratio right. Therefore, I strongly recommend invoking a proper graphics device to write out your plots. There are a number of functions that allow you to do this.
 
-The most straightforward are those that produce bitmap files (BMP, JPEG, PNG or TIFF): the corresponding functions are _bmp_, _jpeg_, _png_ and _tiff_. These all allow you to specify a filename to write to (you can include a full directory path if necessary), a height and width, the units of your dimensions (_"px"_ for pixels, _"in"_ for inches, _"cm"_ for centimetres, and _"mm"_ for millimetres), and the pixel-resolution to use (the _res_ parameter). There are some other options, but they are not important enough to deal with right now. As ever, you can use the _help_ function if you need to explore all the options. The _dev.off_ function closes the device when you have finished plotting (if you don't do this, your file image will look blank until you close R).
+The most straightforward are those that produce bitmap files (BMP, JPEG, PNG or TIFF): the corresponding functions are _bmp_, _jpeg_, _png_ and _tiff_. These all allow you to specify a filename to write to (by default files will output to your current working directory, but you can include a full directory path if necessary), a height and width, the units of your dimensions (_"px"_ for pixels, _"in"_ for inches, _"cm"_ for centimetres, and _"mm"_ for millimetres), and the pixel-resolution to use (the _res_ parameter). There are some other options, but they are not important enough to deal with right now. As ever, you can use the _help_ function if you need to explore all the options. The _dev.off_ function closes the device when you have finished plotting (if you don't do this, your file image will look blank until you close R).
 
 For example, let's write our original scatterplot out as a PNG file:
 
@@ -225,7 +219,7 @@ dev.off()
 
 # ggplot
 
-So far, we have been using R's built-in plotting functionality. A lot of people use the package _ggplot_ for most of their R graphics. ggplot is great for quickly producing graphs, especially where your data are multi-dimensional (ggplot allows you quickly to break dimensions into different point colours, panels etc.).
+So far, we have been using R's built-in plotting functionality. A lot of people use the package _ggplot_ for their R graphics. ggplot is great for quickly producing graphs, especially where your data are multi-dimensional (ggplot allows you quickly to break dimensions into different point colours, panels etc.).
 
 First, we will load the _ggplot2_ package:
 
@@ -233,7 +227,7 @@ First, we will load the _ggplot2_ package:
 library(ggplot2)
 ```
 
-We will work with the cars dataset again for this illustration. Let's first convert the variable giving the number of cylinders of the car models to a factor (look back at the Data Types session if you are not sure what this means):
+We will work with the cars dataset again for this illustration. Let's first convert the variable giving the number of cylinders of the car models to a factor (look back at the <a href="RDataTypes.html">session on data types</a> if you are not sure what this means):
 
 ```{r,echo=TRUE,results=FALSE}
 mtcars$cyl <- as.factor(mtcars$cyl)
@@ -245,7 +239,7 @@ Now we will construct a simple scatter plot of car fuel economy against car weig
 ggplot(data = mtcars,mapping = aes(x=wt, y=mpg)) + geom_point()
 ```
 
-A nice feature of ggplot is that we can very quickly add a trendline to our data. This is done by appending the _geom_smooth_ function at the end (the _method=lm_ option tells R that we want to fit a trendline using a linear model - more on linear models in a later session!):
+A nice feature of ggplot is that we can very quickly add a trendline to our data. This is done by appending the _geom_smooth_ function at the end (the _method=lm_ option tells R that we want to fit a trendline using a linear model - more on linear models in a <a href="ANCOVA.html">later session</a>!):
 
 ```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 ggplot(mtcars, aes(x=wt, y=mpg)) + 
@@ -260,7 +254,7 @@ ggplot(mtcars, aes(x=wt, y=mpg, shape=cyl)) +
   geom_point()
 ```
 
-It is perhaps easier to see the different groupings if we also use different colours, which we can do by adding a _col_ option:
+It is perhaps easier to see the different groupings if we also use different colours, which we can do by adding a _color_ option:
 
 ```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 ggplot(mtcars, aes(x=wt, y=mpg, shape=cyl, color=cyl)) +
@@ -314,6 +308,6 @@ ggplot(mtcars, aes(x=wt, y=mpg)) +
 
 # Next Time
 
-That's all I will cover in terms of plotting in R. There are thousands of ways you can make graphs and visualisations in R. You will only get familiar with some of these possibilities by experience. You might want to look at these cheatsheets for <a href="http://publish.illinois.edu/johnrgallagher/files/2015/10/BaseGraphicsCheatsheet.pdf" target="_blank">base graphics</a> and <a href="https://raw.githubusercontent.com/rstudio/cheatsheets/master/data-visualization.pdf" target="_blank">ggplot</a>.
+That's all I will cover in terms of plotting in R. There are thousands of ways you can make graphs and visualisations in R. With experience, you will start to encounter graphics that work for you and your datasets. You might want to look at these cheatsheets for <a href="http://publish.illinois.edu/johnrgallagher/files/2015/10/BaseGraphicsCheatsheet.pdf" target="_blank">base graphics</a> and <a href="https://raw.githubusercontent.com/rstudio/cheatsheets/master/data-visualization.pdf" target="_blank">ggplot</a>.
 
-This is the final session in my Introduction to R. In the next set of sessions, I will introduce how to do some of the statistical tests commonly used in ecology (and other scientific fields).
+This is the final session in my Introduction to R. In the next set of sessions, I will introduce how to do some of the statistical tests commonly used in ecology (and other scientific fields), starting with a <a href="./ANOVA.html">session on analysis of variance</a>.
