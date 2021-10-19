@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-14" />
+        <meta name="date" content="2021-10-19" />
     
     <title>Assessing Statistical Models</title>
 
@@ -216,7 +216,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-14</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-19</p>
            
 
    
@@ -240,7 +240,7 @@
 </div>
 <div id="model-selection" class="section level1">
 <h1>Model Selection</h1>
-<p>In classical statistics, we want to discard any candidate explanatory variables that turn out not to have a significant effect on our response variable. This is referred to as <strong><em>frequentist statistics</em></strong>. In a later session, we will investigate alternative approaches to model selection that don’t involve a binary inclusion or exclusion of explanatory variables. This allows us to select the <strong><em>most parsimonious</em></strong> model for explaining our study system (as long as we considered all potentially important variables in the first place!).</p>
+<p>In classical statistics, we want to discard any candidate explanatory variables that turn out not to have a significant effect on our response variable. This is referred to as a <strong><em>frequentist</em></strong> approach. In a <a href="./MultimodelSelection.html">later session</a>, we will investigate alternative approaches to model selection that don’t involve a binary inclusion or exclusion of explanatory variables. A frequentist approach allows us to select the <strong><em>most parsimonious</em></strong> model for explaining our study system (as long as we considered all potentially important variables in the first place!).</p>
 <p>There are a number of different approaches that are used to select the most parsimonious statistical model. Here, we will follow the most commonly used of these approaches, which is to start with the most complex model, and see which explanatory variables can be dropped from the model because they don’t have a significant effect. This approach tends to be referred to as <strong><em>backward stepwise model selection</em></strong>.</p>
 <p>Following on from the session on analysis of covariance, we will start with the most complex interactive model of car fuel efficiency as a function of power and number of cylinders:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First, we need to create log-transformed versions of our response and continuous</span></span>
@@ -249,9 +249,14 @@
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>mtcars<span class="sc">$</span>LogMPG <span class="ot">&lt;-</span> <span class="fu">log</span>(mtcars<span class="sc">$</span>mpg)</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>mtcars<span class="sc">$</span>LogHP <span class="ot">&lt;-</span> <span class="fu">log</span>(mtcars<span class="sc">$</span>hp)</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>mFull <span class="ot">&lt;-</span> <span class="fu">lm</span>(mtcars<span class="sc">$</span>LogMPG<span class="sc">~</span>mtcars<span class="sc">$</span>LogHP<span class="sc">*</span>mtcars<span class="sc">$</span>cyl)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mFull)</span></code></pre></div>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># We also need to make sure that the number of cylinders is treated </span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># as a grouping variable</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>mtcars<span class="sc">$</span>cyl <span class="ot">&lt;-</span> <span class="fu">factor</span>(mtcars<span class="sc">$</span>cyl)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Now we can build the model</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>mFull <span class="ot">&lt;-</span> <span class="fu">lm</span>(mtcars<span class="sc">$</span>LogMPG<span class="sc">~</span>mtcars<span class="sc">$</span>LogHP<span class="sc">*</span>mtcars<span class="sc">$</span>cyl)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mFull)</span></code></pre></div>
 <pre><code>## 
 ## Call:
 ## lm(formula = mtcars$LogMPG ~ mtcars$LogHP * mtcars$cyl)
@@ -323,7 +328,8 @@
 ##   Res.Df     RSS Df Sum of Sq      F Pr(&gt;F)
 ## 1     26 0.61763                           
 ## 2     28 0.63190 -2 -0.014267 0.3003 0.7431</code></pre>
-<p>The analysis of variance to compare two models is based on the reduction in the model sum of squares in the simpler model compared to the more complex model. In other words, this tells us how much less well the simpler model explains the response variable compared to the more complex model. Just as will a classic analysis of variance test, we can use this sum of squares to calculate an F ratio and P value. This P value tells us the probability that the more complex model would be as much better fitting than the simpler model as we observe given the null hypothesis that the extra term in the more complex model is in fact unimportant. Here, a P value substantially greater than 0.05 tells us that the interaction term does not significantly improve the fit of the model to the data.</p>
+<p>The analysis of variance to compare two models is based on the reduction in the model sum of squares in the simpler model compared to the more complex model. In other words, this tells us how much less well the simpler model explains the response variable compared to the more complex model.</p>
+<p>Just as with a classic analysis of variance test, we can use this sum of squares to calculate an F ratio and P value. This P value tells us the probability that the more complex model would be as much better fitting than the simpler model as we observe given the null hypothesis that the extra term in the more complex model is in fact unimportant. Here, a P value substantially greater than 0.05 tells us that the interaction term does not significantly improve the fit of the model to the data.</p>
 <p>Once we have tested the significance of the interaction terms in our model, we then remove these and test the main effect (i.e., non-interaction) terms. Here we have two main effects, so we would simultaneously try dropping each of these, and assessing the effect on the fit of the model to the data (by comparison with the additive model that contains both terms):</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>mR2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(mtcars<span class="sc">$</span>LogMPG<span class="sc">~</span>mtcars<span class="sc">$</span>LogHP)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>mR3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(mtcars<span class="sc">$</span>LogMPG<span class="sc">~</span>mtcars<span class="sc">$</span>cyl)</span>
@@ -388,7 +394,7 @@
 </div>
 <div id="effect-sizes" class="section level1">
 <h1>Effect Sizes</h1>
-<p>P values tell us how likely it is that we would have observed a given effect by chance given the null hypothesis that there is no relationship between variables. However, this doesn’t on its own tell us how strong an effect is in real terms. A weak effect of an explanatory variable on a response variable could be identified as a significant effect given a large enough sample size. To understand how strong an effect of an explanatory variable is, we need to consider <em><em>effect sizes</em></em>. That is, how much a response variable changes for a given change in an explanatory variable.</p>
+<p>P values tell us how likely it is that we would have observed a given effect by chance given the null hypothesis that there is no relationship between variables. However, this doesn’t on its own tell us how strong an effect is in real terms. A weak effect of an explanatory variable on a response variable could be identified as a significant effect given a large enough sample size. To understand how strong an effect an explanatory variable has on a response variable, we need to consider <strong><em><em>effect sizes</em></em></strong>. That is, how much a response variable changes for a given change in an explanatory variable.</p>
 <p>Let’s consider here the difference in fuel economy between a car with the lowest power among those in the dataset (52 horsepower, or 3.95 in log-transformed terms) and the car with the highest power (335 horsepower, 5.81 in log-transformed values).</p>
 <p>We can use our model to make some predictions. From the coefficient table, we can extract the intercept and slope of the fitted relationship in our final model:</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mFinal)</span></code></pre></div>
@@ -440,7 +446,7 @@
 <div id="model-explanatory-power" class="section level1">
 <h1>Model Explanatory Power</h1>
 <p>The final piece of information we are likely to be interested in for assessing the quality of our models is explanatory power. Model explanatory power tells us how much of the variation in our response variable is explained by the combination of explanatory variables in our model. The most commonly used measure of explanatory power for basic statistical approaches is the coefficient of determination, or R<sup>2</sup>. We can calculate R<sup>2</sup> manually, based on the sums of squares, using the following equation: <span class="math display">\[R^2=1-\frac{SS_{residual}}{SS_{total}}\]</span>.</p>
-<p>See the session on linear regression for a refresher on the basis for the different sums of squares values.</p>
+<p>See the <a href="./LinearRegression.html">session on linear regression</a> for a refresher on the basis for the different sums of squares values.</p>
 <p>From this equation, we can easily calculate the R<sup>2</sup> value of our final model from earlier:</p>
 <div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(mFinal)</span></code></pre></div>
 <pre><code>## Analysis of Variance Table
@@ -478,12 +484,12 @@
 ## Residual standard error: 0.1614 on 30 degrees of freedom
 ## Multiple R-squared:  0.7157, Adjusted R-squared:  0.7062 
 ## F-statistic: 75.53 on 1 and 30 DF,  p-value: 1.08e-09</code></pre>
-<p>The R<sup>2&lt;/2&gt; of our final model tells us that just over 70% of the variability in car fuel efficiency is explained by the power of the car. This is a very good value - you will be very lucky to get such high R<sup>2</sup> values with real biological datasets, especially ecological datasets.</p>
+<p>The R<sup>2</sup> of our final model tells us that just over 70% of the variability in car fuel efficiency is explained by the power of the car. This is a very good value - you will be very lucky to get such high R<sup>2</sup> values with real biological datasets, especially ecological datasets.</p>
 <p>We may also be interested in the adjusted R<sup>2</sup> value, which is penalized according to the complexity (number of parameters) of the model.</p>
 </div>
 <div id="next-time" class="section level1">
 <h1>Next Time</h1>
-<p>That’s it for this session. In the next session, we will look at how to deal with types of data for which we wouldn’t expect the assumptions of standard statistical tests to be met.</p>
+<p>That’s it for this session. In the <a href="./GLMs.html">next session</a>, we will look at how to deal with types of data for which we wouldn’t expect the assumptions of standard statistical tests to be met.</p>
 </div>
 </div>
 

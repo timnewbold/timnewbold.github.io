@@ -87,7 +87,7 @@ This session will require the use of my _MResModelling_ R package, which you can
 remotes::install_github("timnewbold/MResEcologicalModelling",subdir="MResModelling")
 ```
 
-```{r,echo=TRUE,results=FALSE,message=FALSE}
+```{r,echo=TRUE,results=FALSE,message=FALSE,warning=FALSE}
 library(MResModelling)
 ```
 
@@ -140,7 +140,7 @@ srMod1 <- glm(Species_richness~Predominant_land_use+ForestCover,family=poisson,
 summary(srMod1)
 ```
  
-Incidentally, if you run a GLM but specify a Gaussian family (*family=gaussian*), the result will be the same as for a linear model, since a linear model is a special case of a GLM.
+Incidentally, if you run a GLM but specify a Gaussian family (*family=gaussian*), the result will be the same as for a linear model.
 
 You will see that the coefficient table produced by a GLM is the same as for a linear model. The intercept tells us the estimated value of the response variable when the continuous explanatory variables (here just forest cover) have a value of 0, and for reference groups in our grouping (categorical) variables (here for primary vegetation). We then also have coefficients describing the slope of the relationship with our continuous explanatory variables, and coefficients giving the estimated difference in the response variable for non-reference groupings. We can see here that species richness appears to show a negative relationship with forest cover, and appears to be lower in pasture than in primary vegetation.
 
@@ -156,7 +156,7 @@ srMod3 <- glm(Species_richness~ForestCover,family=poisson,data=hhs2)
 anova(srMod1,srMod3)
 ```
 
-The key difference for GLMs is that we no longer obtain an F ratio when we compare two models using analysis of variance. This is because you cannot calculate sums of squares from a generalized linear model. Instead GLMs are assessed in terms of changes in the deviance explained. Deviance values are calculated based on the (log) likelihoods of three models: the proposed model, a null model (an intercept-only model, as we encountered in the last session), and a saturated model (which has one parameter per data point).
+The key difference for GLMs is that we no longer obtain an F ratio when we compare two models using analysis of variance. This is because you cannot calculate sums of squares from a generalized linear model. Instead GLMs are assessed in terms of changes in the deviance explained. Deviance values are calculated based on the (log) likelihoods of three models: the proposed model, a null model (an intercept-only model, as we encountered in the <a href="./AssessingModels.html">last session</a>), and a saturated model (which has one parameter per data point).
 
 A generalized linear model can then be characterized in terms of two types of deviance:
 
@@ -417,7 +417,7 @@ anova(abundMod3,abundMod3a)
 anova(abundMod3,abundMod3b)
 ```
 
-Again, we find that forest cover has a (marginally) non-significant effect on the abundance of *Pimpla punicipes*. It appears that land use has a highly significant effect. If we doing a proper analysis, we would now move on to a second round of model selection to ensure that this is definitely the case, but in the interests of time here we will accept the model with just land use as our parsimonious model.
+Again, we find that forest cover has a (marginally) non-significant effect on the abundance of *Pimpla punicipes*. It appears that land use has a highly significant effect. If we doing a proper analysis, we would now move on to a second round of model selection to ensure that this is definitely the case, but in the interests of time here we will accept the model with just land use as our most parsimonious model.
 
 ```{r,echo=TRUE,results=TRUE}
 abundModFinal <- glm.nb(Measurement~LandUse,data=hh.sp)
@@ -478,7 +478,7 @@ hh.sp$PresAbs <- ifelse(hh.sp$Measurement>0,1,0)
 We will fit a model of the presence/absence of *P. punicipes* as a function of land use and forest cover. The principle of fitting a binomial GLM is the same as for other GLMs. In this case, we have to specify *family=binomial*:
 
 ```{r,echo=TRUE,results=TRUE}
-occMod1 <- glm(PresAbs~LandUse+ForestCover,data=hh.sp)
+occMod1 <- glm(PresAbs~LandUse+ForestCover,data=hh.sp,family="binomial")
 
 occMod1
 ```
@@ -488,8 +488,8 @@ occMod1
 As before, we will test the effect of removing each explanatory variable in turn:
 
 ```{r,echo=TRUE,results=TRUE}
-occMod1a <- glm(PresAbs~LandUse,data=hh.sp)
-occMod1b <- glm(PresAbs~ForestCover,data=hh.sp)
+occMod1a <- glm(PresAbs~LandUse,data=hh.sp,family="binomial")
+occMod1b <- glm(PresAbs~ForestCover,data=hh.sp,family="binomial")
 
 anova(occMod1,occMod1a,test="Chi")
 anova(occMod1,occMod1b,test="Chi")
@@ -498,7 +498,8 @@ anova(occMod1,occMod1b,test="Chi")
 In this case, we find that both land use and forest cover have a significant effect on the occupancy of *P. punicipes* at the sampled sites in Hawai'i.
 
 ```{r,echo=TRUE,results=TRUE}
-occModFinal <- glm(PresAbs~LandUse+ForestCover,data=hh.sp)
+occModFinal <- glm(PresAbs~LandUse+ForestCover,data=hh.sp,
+                   family="binomial")
 ```
 
 ## Checking Model Assumptions
@@ -511,7 +512,7 @@ simResids4 <- simulateResiduals(occModFinal)
 plot(simResids4)
 ```
 
-This model is behaving strangely. If this were a real analysis, we would need to investigate further the issues with this model, but such an investigation is beyond the scope of this session.
+Again, all looks good.
 
 ## Effect Sizes
 
@@ -537,7 +538,7 @@ prob.pres.primary <- 1/(1+exp(-intercept))
 # compared to primary vegetation
 coef.pasture <- occModFinal$coefficients['LandUsePasture']
 
-# Calculte the probability of presence in pasture
+# Calculate the probability of presence in pasture
 prob.pres.pasture <- 1/(1+exp(-(intercept+coef.pasture)))
 
 # Express the probability of presence in pasture as a percentage change compared
@@ -547,7 +548,8 @@ percent.diff.pasture <- ((prob.pres.pasture/prob.pres.primary)*100)-100
 percent.diff.pasture
 
 # Second, the effect size for forest cover
-# Calculate probability of presence where forest cover is zero (i.e., the intercept value)
+# Calculate probability of presence where forest cover is zero 
+# (i.e., the intercept value)
 prob.pres.fc0 <- 1/(1+exp(-intercept))
 
 # Get the coefficient describing the slope of the relationship with forest cover
@@ -563,7 +565,7 @@ percent.diff.fc <- ((prob.pres.fc0/prob.pres.fc100)*100)-100
 percent.diff.fc
 ```
 
-The probability of presence of *P. punicipes* is therefore `r -round(percent.diff.pasture,1)`% lower in pasture than in primary vegetation, a much smaller reduction than we saw for the abundance of this species. Probability of presence is also `r -round(percent.diff.fc,1)`% lower when there is no forest cover compared to when there is 100% forest cover.
+The probability of presence of *P. punicipes* is therefore `r -round(percent.diff.pasture,1)`% lower in pasture than in primary vegetation, and `r -round(percent.diff.fc,1)`% lower when there is no forest cover compared to when there is 100% forest cover. Both are large effect sizes.
 
 ## Explanatory Power
 
@@ -578,10 +580,10 @@ dev.explained <- (dev.null-dev.resid)/dev.null
 dev.explained
 ```
 
-Our model thus explains `r round(dev.explained*100,1)``% of the variation in the presence/absence of *P. punicipes*.
+Our model thus explains `r round(dev.explained*100,1)``% of the variation in the presence/absence of *P. punicipes*, not bad for a very simple model.
 
 # Next Time
 
-That's it for this session on Generalized Linear Models. In the next session, we will look at an alternative to backward stepwise model selection, which avoids the need to somewhat arbitrarily designate terms as significant or not.
+That's it for this session on Generalized Linear Models. In the <a href="./MultimodelSelection.html">next session</a>, we will look at an alternative to backward stepwise model selection, which avoids the need to somewhat arbitrarily designate terms as significant or not.
 
 # References
