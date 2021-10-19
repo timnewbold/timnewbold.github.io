@@ -75,14 +75,14 @@ We will not actually run a manual linear regression here. There is in additional
 
 ## Basic Operation
 
-In R, we can run a linear regression very simply using the _lm_ function. Here we will test whether the % of people with post-primary education in Swiss cantons in the late 19th Century had a significant effect on their fertility. So, we ask R to fit a linear regression of fertility as a function of (_~_) education:
+In R, we can run a linear regression very simply using the _lm_ function. Here we will test whether the % of people with post-primary education in Swiss cantons in the late 19th Century had a significant effect on their fertility. First, we must ask R to fit a linear regression of fertility as a function of (_~_) education:
 
 ```{r,echo=TRUE,results=TRUE}
 m1 <- lm(swiss$Fertility~swiss$Education)
 summary(m1)
 ```
 
-The summary of the model gives us the slope and intercept of the best-fitting regression line (i.e. by minimizing the error sums of squares). It also gives us a P value (i.e., the probability of observing this relationship given the null hypothesis that there is no relationship between the variables). The P value here is much smaller than the typically accepted threshold of 0.05, and so we can conclude that education had a significant effect on fertility in 19th-Century Switzerland.
+The summary of the model gives us the slope and intercept of the best-fitting regression line (i.e., by minimizing the error sums of squares). The slope and intercept are shown under "Coefficients", in the "Estimate" column (see below for more detail on the model output). The model summary also gives us a P value (i.e., the probability of observing this relationship given the null hypothesis that there is no relationship between the variables). The P value here is much smaller than the typically accepted threshold of 0.05, and so we can conclude that education had a significant effect on fertility in 19<sup>th</sup>-Century Switzerland.
 
 We can also obtain our sums of squares by running the _anova_ function. Note that, confusingly, this is not the same as the _aov_ function, which we used to run an actual ANOVA in the previous session. The _anova_ function calculates the sums of squares, F ratio and a P value from any basic statistical model:
 
@@ -92,7 +92,7 @@ anova(m1)
 
 ## Interpreting Model Coefficients
 
-Let's inspect the model coefficient table in a bit more detail. As I said earlier, this table gives us the slope and intercept of the best-fitting (least-squares-minimizing) regression line. The intercept is the value of the response variable when our explanatory variable has a value of zero. The slope tells us how much (and in what direction) the response variable changes for each unit increase in our explanatory variable.
+Let's inspect the model coefficient table in a bit more detail. As I said earlier, this table gives us the slope and intercept of the best-fitting regression line. The intercept is the value of the response variable when our explanatory variable has a value of zero. The slope tells us how much (and in what direction) the response variable changes for each unit increase in our explanatory variable.
 
 An important difference compared with the coefficient table for a simple ANOVA is that this table also gives us the uncertainty (specifically the standard error) associated with the coefficients. This is the measure of our confidence in the estimates of the coefficient values. If we were to repeat our experiment a sufficiently large number of times, collecting new datasets each time, and running a linear regression on these datasets, we would expect to obtain normal distributions of intercept and slope parameters with standard deviation equal to the estimated standard errors of the coefficients. In other words, these uncertainty estimates don't tell us how much variation in our response variable there is in the underlying population we sampled, but rather how accurately we are able to estimate the mean values of the coefficients. Up to a point, if we increase our sample size, we expect to see a decrease in the standard error of our coefficient estimates. If you want a nice introduction to the distinction between the standard deviation describing variability in the underlying population, and the standard error of mean estimates, see <a href="https://www.khanacademy.org/math/ap-statistics/sampling-distribution-ap/sampling-distribution-mean/v/standard-error-of-the-mean" target="_blank">this video</a>. 
 
@@ -148,7 +148,7 @@ summary(m2)
 anova(m2)
 ```
 
-Let's check the assumptions of equality of variance and normal distribution of residuals again:
+We still have a highly significant negative relationship between education and fertility. Let's check the assumptions of equality of variance and normal distribution of residuals again:
 
 ```{r,echo=TRUE,results=TRUE}
 plot(fitted(m2),residuals(m2))
@@ -170,4 +170,4 @@ In fact, it looks as though the relationship between education and fertility is 
 
 # Next Time
 
-In the next session, we will look at analysis of covariance (ANCOVA), which allows us to fit models with a mixture of continuous and categorical (grouping) explanatory variables.
+In the <a href="./ANCOVA.html">next session</a>, we will look at analysis of covariance (ANCOVA), which allows us to fit models with a mixture of continuous and categorical (grouping) explanatory variables.

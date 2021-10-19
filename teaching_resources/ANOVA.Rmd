@@ -73,22 +73,21 @@ grand.mean
 
 Next, we will use the _tapply_ function to calculate the means of values within each group:
 
+> TIP: The _tapply_ function allows us to perform some operation _FUN_ on a variable _X_ grouped by another variable _INDEX_.
+
 ```{r,echo=TRUE,results=TRUE}
-group.means <- tapply(mtcars$hp,mtcars$cyl,mean)
+group.means <- tapply(X = mtcars$hp,INDEX = mtcars$cyl,FUN = mean)
 group.means
 ```
 
-To help with our later calculations, we will now add these group means as a new column in the original data table. We can do this using the new match function (matching based on the number of cylinders):
+To help with our later calculations, we will now add these group means as a new column in the original data table. We can do this using the _match_ function, matching based on the number of cylinders (don't worry if it is not yet clear to you how this function works):
 
 ```{r,echo=TRUE,results=TRUE}
 mtcars$group.means <- group.means[match(mtcars$cyl,names(group.means))]
 head(mtcars)
 ```
 
-> TIP: If you want to read more about the _match_ function:
-```{r,echo=TRUE,results=FALSE,eval=FALSE}
-help(match)
-```
+> TIP: If you want to read more about the _match_ function use help(match)
 
 Now, let's calculate the total sum of squares (the sum of the squared differences between each data value and the grand mean value across the whole dataset). To do so, we will first create a column to hold the individual squared differences:
 
@@ -219,7 +218,7 @@ Next, we will test for equality of variance, in this case we are interested in e
 boxplot(mtcars$hp~mtcars$cyl)
 ```
 
-Most important, though, for the model assumptions is whether the model residuals show equality of variance among groups. A boxplot of the residuals against the number of cylinders shows that this assumption is clearly violated:
+Most important, though, for the model assumptions is whether the model residuals show equality of variance among groups. A boxplot of the residuals against the number of cylinders shows that this assumption is clearly violated, since there is a much greater spread of residuals for cars with 8 cylinders:
 
 ```{r,echo=TRUE,results=TRUE}
 boxplot(residuals(a1)~mtcars$cyl)
@@ -263,4 +262,4 @@ The model seems to be behaving much better now. We would probably be happy with 
 
 # Next Time
 
-That's it for this session. The next session covers linear regression, where we test for an effect of a continuous (rather than grouping) variable on our response variable.
+That's it for this session. The <a href="./LinearRegression.html">next session</a> covers linear regression, where we test for an effect of a continuous (rather than grouping) variable on our response variable.

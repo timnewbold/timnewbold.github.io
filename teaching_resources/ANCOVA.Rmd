@@ -14,7 +14,7 @@ output:
 
 This session will cover Analysis of covariance (ANCOVA).
 
-ANCOVAs are used to test for an effect of both continuous and categorical variables on our measured response variable.
+ANCOVAs are used to test for an effect of a mixture of both continuous and categorical variables on a measured response variable.
 
 If you are not familiar with basic statistical concepts (hypotheses, null hypotheses, P values, degrees of freedom etc.), I recommend taking a look at <a href="https://www.khanacademy.org/math/statistics-probability/significance-tests-one-sample#idea-of-significance-tests" target="_blank">these videos</a>.
 
@@ -34,23 +34,25 @@ mtcars$cyl <- factor(mtcars$cyl)
 
 In this session, we will investigate the effects of car power and fuel efficiency. Let's begin by plotting this relationship:
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 library(ggplot2)
 
 ggplot(data = mtcars,mapping = aes(x=hp,y=mpg))+geom_point()+
-  scale_x_continuous(name = "Power (HP)")+scale_y_continuous(name = "Fuel Efficiency (MPG)")+
+  scale_x_continuous(name = "Power (HP)")+
+  scale_y_continuous(name = "Fuel Efficiency (MPG)")+
   geom_smooth(method = "lm")+theme_classic()
 ```
 
 We will also additionally consider the effect of the number of cylinders on this relationship, so let's plot the relationship again, but separating car models based on their number of cylinders:
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 ggplot(data = mtcars,mapping = aes(x=hp,y=mpg,col=cyl,shape=cyl))+geom_point()+
-  scale_x_continuous(name = "Power (HP)")+scale_y_continuous(name = "Fuel Efficiency (MPG)")+
+  scale_x_continuous(name = "Power (HP)")+
+  scale_y_continuous(name = "Fuel Efficiency (MPG)")+
   geom_smooth(method = "lm")+theme_classic()
 ```
 
-To begin with, we will fit a model to test whether both power and number of cylinders affect fuel economy. To do this, we use the _lm_ function. This is the same function that we used when we fit a linear regression, but here we can add extra terms into our model:
+To begin with, we will fit a model to test whether both power and number of cylinders affect fuel economy. To do this, we use the _lm_ function. This is the same function that we used when we fit a linear regression, but here by adding also a categoraical (grouping) variable into our model we have fit an analysis of covariance:
 
 ```{r,echo=TRUE,results=TRUE}
 m1 <- lm(mtcars$mpg~mtcars$hp+mtcars$cyl)
@@ -59,7 +61,7 @@ summary(m1)
 anova(m1)
 ```
 
-If we look at the ANOVA table, both power and number of cylinders have F ratios with a significant P value, suggesting that both might be important in explaining fuel economy (but more on statistical significance in models with multiple explanatory variables in the next session!). 
+If we look at the ANOVA table, both power and number of cylinders have F ratios with a significant P value, suggesting that both might be important in explaining fuel economy (but more on statistical significance in models with multiple explanatory variables in the <a href="./AssessingModels.html">next session</a>). 
 
 ## Checking Model Assumptions
 
@@ -73,7 +75,7 @@ hist(residuals(m1))
 
 It looks as though there is a higher spread of residuals for higher fitted values in the model. The  residuals appear to conform fairly well to a normal distribution, although it seems there might be some slight skew. 
 
-As in previous sessions, the first thing might try in order to diagnose these issues is to investigate the distributions of values in our two continuous variables in our model (the response variable and the continuous explanatory variable):
+As in the <a href="./LinearRegression.html">session on linear regression</a>, the first thing we might try in order to diagnose these issues is to investigate the distributions of values in the two continuous variables in our model (the response variable and the continuous explanatory variable):
 
 ```{r,echo=TRUE,results=TRUE}
 hist(mtcars$mpg)
@@ -110,9 +112,10 @@ This model conforms to the assumptions of parametric statistical tests better th
 
 Let's re-plot our original relationship between car power and fuel economy, separating cars with different numbers of cylinders:
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 ggplot(data = mtcars,mapping = aes(x=hp,y=mpg,col=cyl,shape=cyl))+geom_point()+
-  scale_x_continuous(name = "Power (HP)")+scale_y_continuous(name = "Fuel Efficiency (MPG)")+
+  scale_x_continuous(name = "Power (HP)")+
+  scale_y_continuous(name = "Fuel Efficiency (MPG)")+
   geom_smooth(method = "lm")+theme_classic()
 ```
 
@@ -133,7 +136,7 @@ anova(m3)
 
 The second of these two approaches is useful if you have more than two terms in the model. If you put asterisks between all variables in your model, as in the first approach, you will get a model with every possible combination of interactions (including higher-order interactions) between your explanatory variables. This quickly leads to _very_ complex models with increasing numbers of explanatory variables.
 
-Looking at the model summary and P values, it doesn't look as though the interaction between power and number of cylinders if very helpful in explaining the fuel efficiency of cars (we will return to this in the next session).
+Looking at the model summary and P values, it doesn't look as though the interaction between power and number of cylinders if very helpful in explaining the fuel efficiency of cars (we will return to this in the <a href="./AssessingModels.html">next session</a>).
 
 ## Checking Model Assumptions
 
@@ -144,7 +147,7 @@ plot(fitted(m3),residuals(m3))
 qqnorm(residuals(m3)); qqline(residuals(m3))
 ```
 
-It looks as though this interactive model is conforming better to the assumptions of equal variance and normal distribution of residuals. Missing important variables in your model is another common cause for violation of model assumptions.
+It looks as though this interactive model is conforming better to the assumptions of equal variance and normal distribution of residuals. Missing important variables in your model is another common cause for violation of model assumptions. The only apparent issue remaining is that there are two data points with large negative residuals. The next step in improving this model would probably be to investigate these data points.
 
 ## Interpreting Model Coefficients
 
@@ -158,4 +161,4 @@ Things are a little more complicated for analyses of covariance where we have an
 
 # Next Time
 
-In the next session, we will look at how you can assess how well your model describes your study system.
+In the <a href="./AssessingModels.html">next session</a>, we will look at how you can assess how well your model describes your study system.
