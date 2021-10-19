@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-09-23" />
+        <meta name="date" content="2021-10-19" />
     
     <title>Multi-model Selection</title>
 
@@ -220,7 +220,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-09-23</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-19</p>
            
 
    
@@ -230,14 +230,14 @@
 <div class="page-content has-page-title">
 <div id="overview" class="section level1">
 <h1>Overview</h1>
-<p>In this session, I will introduce multi-model selection as an alternative to backward stepwise model selection. Classical frequentist statistics is based on P values, which give the probability of obtaining an observed dataset given the null hypothesis of no relationship between explanatory and response variables. If the P value is below a certain threshold, <span class="math inline">\(\alpha\)</span> (often 0.05), then an explanatory variable is deemed to have a significant effect on the response variable. Explanatory variables with a P value above this threshold are deemed not to have a significant effect, and are therefore discarded. The problem with this approach is that the P value is rather arbitrary, and the quest to find significant results can lead to some rather dubious behaviours (collectively often referred to as ‘P hacking’).</p>
+<p>In this session, I will introduce multi-model selection as an alternative to backward stepwise model selection. Classical frequentist statistics is based on P values, which give the probability of obtaining an observed result given the null hypothesis of no relationship between explanatory and response variables. If the P value is below a certain threshold, <span class="math inline">\(\alpha\)</span> (often 0.05), then an explanatory variable is deemed to have a significant effect on the response variable. Explanatory variables with a P value above this threshold are deemed not to have a significant effect, and are therefore discarded. The problem with this approach is that the threshold P value used to determine whether an effect is significant is rather arbitrary, and the quest to find significant results can lead to some rather dubious behaviours (collectively often referred to as <a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.1002106" target="_blank">‘P hacking’</a>).</p>
 <p>An alternative approach, so-called ‘multi-model selection’ was proposed by <span class="citation">(Burnham and Anderson 2002)</span>. The idea of this approach is to assess the relative support for each model in a candidate set of models. Models are compared using Information Criteria, the most widely used of which is the Akaike Information Criterion (AIC).</p>
 </div>
 <div id="akaike-information-criterion-aic" class="section level1">
 <h1>Akaike Information Criterion (AIC)</h1>
 <p>Information criteria measure how well a model fits the data (measured using the likelihood of the model), with some penalty applied for model complexity. The AIC is calculated as: <span class="math display">\[AIC=-2\times LL_{model}+2\times DF\]</span></p>
 <p>Where <span class="math inline">\(LL_{model}\)</span> is the log-likelihood of the model, and <span class="math inline">\(DF\)</span> is the model degrees of freedom. Lower AIC values indicate a better-fitting model.</p>
-<p>As in the last session, you will need my <em>MResModelling</em> R package:</p>
+<p>As in the last session, you will need my <em>MResModelling</em> R package to run the code presented here:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;timnewbold/MResEcologicalModelling&quot;</span>,<span class="at">subdir=</span><span class="st">&quot;MResModelling&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MResModelling)</span></code></pre></div>
 </div>
@@ -276,7 +276,7 @@
 ##  $ Taxon_name_entered: Factor w/ 1 level &quot;Pimpla punicipes&quot;: 1 1 1 1 1 1 1 1 1 1 ...
 ##  $ Measurement       : num  0 3 1 1 1 0 0 0 0 0 ...
 ##  $ ForestCover       : int  41 41 41 41 41 0 0 0 0 0 ...</code></pre>
-<p>In the session on GLMs, we discovered that land use had a significant effect on the abundance of <em>P. punicipes</em>, but that the effect of forest cover was marginally non-significant. Here, we will investigate the same relatioonships, but using a multi-model rather than frequentist approach.</p>
+<p>In the <a href="./GLMs.html">session on GLMs</a>, we discovered that land use had a significant effect on the abundance of <em>P. punicipes</em>, but that the effect of forest cover was marginally non-significant. Here, we will investigate the same relationships, but using a multi-model rather than frequentist approach.</p>
 </div>
 <div id="candidate-models" class="section level1">
 <h1>Candidate Models</h1>
@@ -287,7 +287,7 @@
 <li>A model with only forest cover</li>
 <li>A model with both land use and forest cover</li>
 </ol>
-<p>We know from the session on GLMs that the data describing the abundance of <em>P. punicipes</em> are over-dispersed, so we will start straight away by fitting negative binomial GLMs:</p>
+<p>We know from the <a href="./GLMs.html">session on GLMs</a> that the data describing the abundance of <em>P. punicipes</em> are over-dispersed, so we will start straight away by fitting negative binomial GLMs:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mNull <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(Measurement<span class="sc">~</span><span class="dv">1</span>,<span class="at">data=</span>hh.sp)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mLU <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(Measurement<span class="sc">~</span>LandUse,<span class="at">data=</span>hh.sp)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mFC <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(Measurement<span class="sc">~</span>ForestCover,<span class="at">data=</span>hh.sp)</span>
@@ -314,19 +314,20 @@
 ## mLU        3 401.8646  1.732422
 ## mFC        3 420.6416 20.509448
 ## mCombined  4 400.1322  0.000000</code></pre>
-<p>Here we find that the model with only land use as an explanatory variable has substantial support, consistent with the findings of our backward stepwise selection in the session on Generalized Linear Models.</p>
+<p>Here we find that the model with only land use as an explanatory variable has substantial support, consistent with the findings of our backward stepwise selection in the <a href="./GLMs.html">session on GLMs</a>.</p>
 </div>
 <div id="aic-weights" class="section level1">
 <h1>AIC Weights</h1>
 <p>In multi-model selection, the AIC difference for each model <span class="math inline">\(i\)</span> in candidate set <span class="math inline">\(I\)</span> are converted into an AIC weight, <span class="math inline">\(W_i\)</span> using the following formula: <span class="math display">\[W_i=\frac{e^{-\frac{1}{2}\times\Delta AIC_i}}{\sum_{i=1}^I{e^{-\frac{1}{2}\times \Delta AIC_i}}}\]</span></p>
 <p>These weights give the probability that the model is the most appropriate one from among those considered.</p>
-<p>Let’s calcualte the weights for the set of candidate models of <em>P. punicipes</em> abundance that we fitted earlier:</p>
+<p>Let’s calculate the weights for the set of candidate models of <em>P. punicipes</em> abundance that we fitted earlier:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>aics<span class="sc">$</span>AIC.Wt <span class="ot">&lt;-</span> (<span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.5</span><span class="sc">*</span>aics<span class="sc">$</span>AIC.Diff))<span class="sc">/</span>(<span class="fu">sum</span>(<span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.5</span><span class="sc">*</span>aics<span class="sc">$</span>AIC.Diff)))</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># This makes sure that numbers are not given in standard form, and so are easier to interpret</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen=</span><span class="dv">5</span>)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>aics</span></code></pre></div>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># This makes sure that numbers are not given in standard form, </span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># and so are easier to interpret</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen=</span><span class="dv">5</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>aics</span></code></pre></div>
 <pre><code>##           df      AIC  AIC.Diff            AIC.Wt
 ## mNull      2 436.8199 36.687739 0.000000007601403
 ## mLU        3 401.8646  1.732422 0.296036036881013
@@ -349,7 +350,7 @@
 </div>
 <div id="next-time" class="section level1">
 <h1>Next Time</h1>
-<p>In the next session, we will look at mixed-effects models for dealing with datasets that have a hierarchical structure, and thus where the assumption that data points are independent of one another is violated.</p>
+<p>In the <a href="./MixedEffectsModels.html">next session</a>, we will look at mixed-effects models for dealing with datasets that have a hierarchical structure, and thus where the assumption that data points are independent of one another is violated.</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>

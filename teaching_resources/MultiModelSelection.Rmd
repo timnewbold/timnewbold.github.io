@@ -105,7 +105,7 @@ references:
 
 # Overview
 
-In this session, I will introduce multi-model selection as an alternative to backward stepwise model selection. Classical frequentist statistics is based on P values, which give the probability of obtaining an observed dataset given the null hypothesis of no relationship between explanatory and response variables. If the P value is below a certain threshold, $\alpha$ (often 0.05), then an explanatory variable is deemed to have a significant effect on the response variable. Explanatory variables with a P value above this threshold are deemed not to have a significant effect, and are therefore discarded. The problem with this approach is that the P value is rather arbitrary, and the quest to find significant results can lead to some rather dubious behaviours (collectively often referred to as 'P hacking').
+In this session, I will introduce multi-model selection as an alternative to backward stepwise model selection. Classical frequentist statistics is based on P values, which give the probability of obtaining an observed result given the null hypothesis of no relationship between explanatory and response variables. If the P value is below a certain threshold, $\alpha$ (often 0.05), then an explanatory variable is deemed to have a significant effect on the response variable. Explanatory variables with a P value above this threshold are deemed not to have a significant effect, and are therefore discarded. The problem with this approach is that the threshold P value used to determine whether an effect is significant is rather arbitrary, and the quest to find significant results can lead to some rather dubious behaviours (collectively often referred to as <a href="https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.1002106" target="_blank">'P hacking'</a>).
 
 An alternative approach, so-called 'multi-model selection' was proposed by [@Burnham2002]. The idea of this approach is to assess the relative support for each model in a candidate set of models. Models are compared using Information Criteria, the most widely used of which is the Akaike Information Criterion (AIC). 
 
@@ -116,7 +116,7 @@ $$AIC=-2\times LL_{model}+2\times DF$$
 
 Where $LL_{model}$ is the log-likelihood of the model, and $DF$ is the model degrees of freedom. Lower AIC values indicate a better-fitting model.
 
-As in the last session, you will need my _MResModelling_ R package:
+As in the last session, you will need my _MResModelling_ R package to run the code presented here:
 
 ```{r,echo=TRUE,results=FALSE,eval=FALSE}
 remotes::install_github("timnewbold/MResEcologicalModelling",subdir="MResModelling")
@@ -159,7 +159,7 @@ hh.sp <- droplevels(hh.sp[!is.na(hh.sp$ForestCover),])
 str(hh.sp)
 ```
 
-In the session on GLMs, we discovered that land use had a significant effect on the abundance of *P. punicipes*, but that the effect of forest cover was marginally non-significant. Here, we will investigate the same relatioonships, but using a multi-model rather than frequentist approach.
+In the <a href="./GLMs.html">session on GLMs</a>, we discovered that land use had a significant effect on the abundance of *P. punicipes*, but that the effect of forest cover was marginally non-significant. Here, we will investigate the same relationships, but using a multi-model rather than frequentist approach.
 
 # Candidate Models
 
@@ -170,7 +170,7 @@ The first stage in a multi-model approach is to select a suitable set of candida
 3. A model with only forest cover
 4. A model with both land use and forest cover
 
-We know from the session on GLMs that the data describing the abundance of *P. punicipes* are over-dispersed, so we will start straight away by fitting negative binomial GLMs:
+We know from the <a href="./GLMs.html">session on GLMs</a> that the data describing the abundance of *P. punicipes* are over-dispersed, so we will start straight away by fitting negative binomial GLMs:
 
 ```{r,echo=TRUE,results=TRUE}
 mNull <- glm.nb(Measurement~1,data=hh.sp)
@@ -199,7 +199,7 @@ aics$AIC.Diff <- aics$AIC - min(aics$AIC)
 aics
 ```
 
-Here we find that the model with only land use as an explanatory variable has substantial support, consistent with the findings of our backward stepwise selection in the session on Generalized Linear Models.
+Here we find that the model with only land use as an explanatory variable has substantial support, consistent with the findings of our backward stepwise selection in the <a href="./GLMs.html">session on GLMs</a>.
 
 # AIC Weights
 
@@ -208,12 +208,13 @@ $$W_i=\frac{e^{-\frac{1}{2}\times\Delta AIC_i}}{\sum_{i=1}^I{e^{-\frac{1}{2}\tim
 
 These weights give the probability that the model is the most appropriate one from among those considered.
 
-Let's calcualte the weights for the set of candidate models of *P. punicipes* abundance that we fitted earlier:
+Let's calculate the weights for the set of candidate models of *P. punicipes* abundance that we fitted earlier:
 
 ```{r,echo=TRUE,results=TRUE}
 aics$AIC.Wt <- (exp(-0.5*aics$AIC.Diff))/(sum(exp(-0.5*aics$AIC.Diff)))
 
-# This makes sure that numbers are not given in standard form, and so are easier to interpret
+# This makes sure that numbers are not given in standard form, 
+# and so are easier to interpret
 options(scipen=5)
 
 aics
@@ -239,6 +240,6 @@ In the case of our models of *P. punicipes* abundance, land use almost certainly
 
 # Next Time
 
-In the next session, we will look at mixed-effects models for dealing with datasets that have a hierarchical structure, and thus where the assumption that data points are independent of one another is violated.
+In the <a href="./MixedEffectsModels.html">next session</a>, we will look at mixed-effects models for dealing with datasets that have a hierarchical structure, and thus where the assumption that data points are independent of one another is violated.
 
 # References

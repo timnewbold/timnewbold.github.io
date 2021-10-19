@@ -28,14 +28,14 @@ references:
 
 # Overview
 
-Many ecological datasets, especially those collected in the field, have some sort of hierarchical structure. Often, there is some sort of spatial structuring in the locations sampled. Furthermore, an increasing number of ecological studies are conducted by collating data from many separate previous studies. In these cases, the assumption of independence of data points is not met. The most commonly used solution to this non-independence issue is to use mixed models, so called because they consist of two classes of independent variables:
+Many ecological datasets, especially those collected in the field, have some sort of hierarchical structure. Often, there is some sort of spatial structuring in the locations sampled. Furthermore, an increasing number of ecological studies are conducted by collating data from many separate previous studies. In these cases, the assumption of independence of data points is not met. The most commonly used solution to this non-independence issue is to use mixed-effects models, so called because they consist of two classes of independent variables:
 
 1. Fixed effects, which are variables that we control in our experimental design.
 2. Random effects, which are variables that describe groups that are representative of the wider population.
 
 Let's say that we sample the species richness of lake-shore versus lake-centre habitats in a series of lakes. Clearly we can't assume that the samples from different lakes are independent of one another, because the measured species richness may depend not only on which habitat we sampled, but also on properties of the lakes. In this case, we controlled the sampling of lake-shore versus lake-centre habitats in our experimental design, and so this would be a fixed effect. In contrast, we would probably assume that the lakes were a random sample of the wider population of lakes in the study system, and so we would treat lake idenity as a random variable.
 
-For this session, you will need the _lme4_ R package, as well as the _StatisticalModels_ package that I wrote, and also the _ggplot2_ package, which you will have already installed if you completed the previous sessions:
+For this session, you will need the _lme4_ R package, as well as my _StatisticalModels_ package, and also the _ggplot2_ package, which you will have already installed if you completed the previous sessions:
 
 ```{r,echo=TRUE,results=FALSE,eval=FALSE}
 install.packages("lme4")
@@ -100,23 +100,23 @@ summary(m2)
 
 # Effect Sizes
 
-The model summary gives a coefficient table for the fixed effects very similar to that produced by standard linear or generalized linear models. Effect sizes can be calculated in exactly the same way as for linear models (see ANCOVA session). The slope of the relationship fitted here shows us that trunk circumference grows by approximately 0.1 mm each day, on average. We also get a table describing the variation in our response variable that is explained by variation among random-effect groups (in this case tree individuals, which unsurprisingly accounts for a large proportion of the variation in tree growth) and the residual, unexplained variation.
+The model summary gives a coefficient table for the fixed effects very similar to that produced by standard linear or generalized linear models. Effect sizes can be calculated in exactly the same way as for linear models (see <a href="./ANCOVA.html">ANCOVA session</a>). The slope of the relationship fitted here shows us that trunk circumference grows by approximately 0.1 mm each day, on average. We also get a table describing the variation in our response variable that is explained by variation among random-effect groups (in this case tree individuals, which unsurprisingly accounts for a large proportion of the variation in tree growth), as well as the residual, unexplained variation.
 
-By inspecting the random effect values, we can see the variation in trunk circumference of each individual tree (these random intercepts are centered around 0):
+By inspecting the random-effect values, we can see the variation in trunk circumference of each individual tree (these random intercepts are centered around 0):
 
 ```{r,echo=TRUE,results=TRUE}
 ranef(m2)
 ```
 
-These random intercepts show, consistent with the graph we plotted earlier, that trees 2 and 4 are particularly large, while trees 1 and 3 are small.
+These random intercepts show, consistent with the graph we plotted earlier, that trees 2 and 4 grew particularly rapidly, while trees 1 and 3 grew slowly.
 
 # Model Selection
 
-Model selection can be performed in exactly the same way as for linear or generalized linear models. Here we will use simple backward stepwise selection, but you could also use multi-model inference.
+Model selection can be performed in exactly the same way as for <a href="./AssessingModels.html">linear</a> or <a href="GLMs.html">generalized linear models</a>. Here we will use simple backward stepwise selection, but you could also use <a href="MultimodelSelection.html">multi-model inference</a>.
 
 In this case, we will compare our model with age as a single explanatory variable with the simpler, intercept-only, null model:
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 m3 <- lmer(circumference~1+(1|Tree),data=Orange)
 
 anova(m2,m3)
@@ -144,5 +144,13 @@ plot(fitted(m2),residuals(m2))
 ```
 
 By accounting for variation in growth among individual trees, our mixed-effects model seems to be behaving much better in terms of equality of variance compared to the simple linear model we fitted earlier. This in addition to dealing with the issue of non-independence of data points caused by sampling repeated measures on the same individual trees.
+
+# Generalized Linear Mixed-effects Models
+
+So far in this session, we have been using ***linear mixed-effects models***. If you have data drawn from a Poisson or binomial distribution, you can use ***generalized linear mixed-effects models***. Just as with generalized *linear* models, you simply specify *family="poisson"*.
+
+# Further Information
+
+If you are interested to do some further exploration of applying mixed-effects models (including generalized linear mixed-effects models), you might want to have a look at <a href="../PREDICTSIntroduction.html">this tutorial on working with the PREDICTS database</a>.
 
 # References
