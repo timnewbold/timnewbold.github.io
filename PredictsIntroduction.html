@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2021-10-08" />
+        <meta name="date" content="2022-06-08" />
     
     <title>Modelling Land-use Impacts on Biodiversity with the PREDICTS Database</title>
 
@@ -221,7 +221,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-10-08</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-06-08</p>
            
 
    
@@ -234,8 +234,7 @@
 <p>The PREDICTS database <span class="citation">(Hudson et al. 2017)</span> is a fully open-access database containing spatial comparisons of biodiversity in different land uses worldwide.</p>
 <p>You can get started quickly by downloading the PREDICTS database from my website, but if you intend to use the database in your research, I would ask you please to download the database (freely) from the <a href="http://doi.org/10.5519/0066354" target="_blank">Natural History Museum data portal</a>, so that appropriate credit is given.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>webFile <span class="ot">&lt;-</span> <span class="fu">url</span>(<span class="st">&quot;https://timnewbold.github.io/predicts_database.rds?dl=1&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># predicts &lt;- readRDS(webFile)</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>predicts <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;predicts_database.rds&quot;</span>)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>predicts <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(webFile)</span></code></pre></div>
 <p>To work with the database, you should install a package that contains some basic data-manipulation functions:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;timnewbold/predicts-demo&quot;</span>,<span class="at">subdir=</span><span class="st">&quot;predictsFunctions&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(predictsFunctions)</span></code></pre></div>
