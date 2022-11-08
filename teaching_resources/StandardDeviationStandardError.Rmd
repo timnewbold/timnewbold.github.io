@@ -1,0 +1,158 @@
+---
+title: Standard Deviation and Standard Error
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+---
+
+# Introduction
+
+This short tutorial will illustrate the concepts of standard deviation and standard error.
+
+We will illustrate these concepts with some public data describing rates of change in population sizes from the Living Planet Database. You don't need to fully understand the details of these data, but in case you are interested, the average &lambda; value for each vertebrate population describes the log<sub>10</sub>-transformed average rate across years of changes in the size of the populations, as described by the following equation:
+
+$\overline{\lambda} = \frac{1}{Y}\sum_{y=0}^{Y} (log_{10}(\frac{n_{y}}{n_{y-1}}))$
+
+Where $n$ is the population size in any year, $y$, and $Y$ represents all years in the time series.
+
+These data were compiled by my colleague, Jessica Williams. DOI: <a href="https://doi.org/10.6084/m9.figshare.16895851" target="_blank">10.6084/m9.figshare.16895851</a>
+
+You can read in these average rates of population change using the following code:
+
+```{r,echo=TRUE,eval=TRUE}
+webFile <- url("https://liveuclac-my.sharepoint.com/:u:/g/personal/ucbttne_ucl_ac_uk/EYhMGmtzqWBAjwqU3jdy90MBZRuUICRJ8YGuoWfF9FTrFg?download=1")
+lpd.lambdas <- readRDS(webFile)
+```
+
+# Standard Deviation
+
+Let's first look at the spread of data across the whole dataset:
+
+```{r, echo=TRUE, eval=TRUE}
+plot(density(lpd.lambdas$lambda_mean))
+```
+
+You can see that the rates of population change are centered roughly around zero, with a few populations showing extremely negative trends.
+
+We can summarize the variation in average rates of population change by calculating the standard deviation among populations. There are two calculations of standard deviation: the population standard deviation $\sigma$, if we have sampled the whole population, or the sample standard deviation $s$, for a sample of some members of the population.
+
+$\sigma = \sqrt{\frac{\sum_{i=1}^{N}(x_{i} - \overline{x})^2}{N}}$
+
+$s = \sqrt{\frac{\sum_{i=1}^{N}(x_{i} - \overline{x})^2}{N-1}}$
+
+The Living Planet Database contains only a tiny sample of all vertebrate populations in the world, so we will use the sample standard deviation. There is a built-in function in R for calculating standard deviation, <i>sd</i>:
+
+```{r, echo=TRUE, eval=TRUE}
+sd(lpd.lambdas$lambda_mean)
+```
+
+# Standard Deviation in a Sample
+
+```{r, echo=FALSE, results=FALSE, eval=TRUE}
+set.seed(1234)
+```
+
+Now, let's imagine that we have taken a sub-sample of 100 vertebrate populations.
+
+```{r,echo=TRUE, eval=TRUE}
+lpd.samp.100 <- sample(x = lpd.lambdas$lambda_mean,size = 100,replace = FALSE)
+```
+
+The spread of data is broadly similar to that of the full dataset:
+
+```{r, echo=TRUE, eval=TRUE}
+plot(density(lpd.samp.100))
+```
+
+Thus, the standard deviation is similar (the standard deviation is independent of sample size, although estimates of standard deviation are often more variable if we have very small samples):
+
+```{r, echo=TRUE, eval=TRUE}
+sd(lpd.samp.100)
+```
+
+# Standard Error
+
+The standard error is a measure in how certain we are in an estimate of a mean value based on a sample of data. Therefore, it decreases with increasing sample size, and is given by the following formula:
+
+$SE = \frac{s}{\sqrt{N}}$
+
+```{r, echo=TRUE, eval=TRUE}
+sd(lpd.samp.100)/sqrt(length(lpd.samp.100))
+```
+
+If we take a smaller sample, the standard error is correspondingly greater:
+
+```{r, echo=TRUE, eval=TRUE}
+lpd.samp.20 <- sample(x = lpd.lambdas$lambda_mean,size = 20,replace = FALSE)
+
+sd(lpd.samp.20)/sqrt(length(lpd.samp.20))
+```
+
+# Illustrating the Concepts by Repeated Sampling
+
+Let's illustrate the distinction between standard deviation and standard error by taking repeated samples from the complete dataset.
+
+We will take 100 repeated samples of the dataset, with each sample initially containing 100 estimates of population trends. From these samples, we will extract the estimated mean population trend:
+
+```{r, echo=TRUE, eval=TRUE}
+# Set the sample size
+N <- 100
+
+# Now draw 100 separate samples of the data with this sample size
+lpd.sample.means.100 <- sapply(X = 1:100,function(...){
+  
+  samp <- sample(x = lpd.lambdas$lambda_mean,size = N,replace = FALSE)
+  
+  return(mean(samp))
+  
+})
+```
+
+Now let's explore the spread of these estimates of the mean:
+
+```{r, echo=TRUE, eval=TRUE}
+plot(density(lpd.sample.means.100))
+
+sd(lpd.sample.means.100)
+```
+
+If we now take a smaller sample, we get a wider spread of estimates of the mean:
+
+```{r, echo=TRUE, eval=TRUE}
+# Set the sample size
+N <- 20
+
+# Now draw 100 separate samples of the data with this sample size
+lpd.sample.means.20 <- sapply(X = 1:100,function(...){
+  
+  samp <- sample(x = lpd.lambdas$lambda_mean,size = N,replace = FALSE)
+  
+  return(mean(samp))
+  
+})
+
+plot(density(lpd.sample.means.20))
+
+sd(lpd.sample.means.20)
+```
+
+# Standard Deviation vs. Standard Error
+
+And here's the important bit!
+
+If we take repeated samples of the whole dataset, the spread (i.e., standard deviation) of our estimates of the mean are approximately equal to the standard error that we calculated from a single sample of the data (note that they are not precisely equal because they are both estimates of certainty in the true mean). In other words, the standard error from a single sample of data tells us how certain we are in our estimate of the true mean value of the global set of values. If we repeat an experiment or sampling exercise many times, this would be the spread of estimates of the mean that we would obtain. These are important concepts in statistics, so it is worth taking a few moments to think about this.
+
+```{r, echo=TRUE, eval=TRUE}
+sd(lpd.sample.means.100)
+
+sd(lpd.samp.100)/sqrt(length(lpd.samp.100))
+
+sd(lpd.sample.means.20)
+
+sd(lpd.samp.20)/sqrt(length(lpd.samp.20))
+```
