@@ -21,7 +21,7 @@ moth.data <- read.csv("TimNewboldMothDataPublicRelease.csv")
 
 total.individs <- sum(moth.data$NumberCaught,na.rm=TRUE)
 
-total.species <- length(unique(moth.data$Species))
+total.species <- length(unique(na.omit(moth.data)$Species))
 
 total.traps <- length(unique(moth.data$TrapNumber))
 
@@ -33,6 +33,8 @@ all.yrs <- seq(from=min(moth.data$Year),to=max(moth.data$Year))
 I have been trapping moths in Cambridgeshire since 8th August 2020.
 
 Since, then I have run `r total.traps` traps, and caught `r total.individs` individual moths, of `r total.species` different species.
+
+You can download my data <a href="https://timnewbold.github.io/TimNewboldMothDataPublicRelease.csv">here</a>.
 
 ```{r,echo=FALSE,results=TRUE}
 
@@ -141,6 +143,19 @@ invisible(mapply(FUN = function(yr.data,colour){
 legend(x = 1,y = ymax,legend = unique(trap.sums$Year),bty="n",lty=1,col=colour.pal)
 ```
 
+```{r,echo=FALSE,results=TRUE}
+suppressWarnings(suppressMessages(library(treemap)))
+
+species.sums <- tapply(X = moth.data$NumberCaught,
+                       INDEX = moth.data$Species,
+                       FUN = sum)
+
+species.sums <- data.frame(Sp=names(species.sums),
+                           N=species.sums)
+
+treemap(dtf = species.sums,index = "Sp",vSize = "N")
+```
+
 \n
 ')
 
@@ -159,7 +174,55 @@ cat('
 cat(paste0('month.data <- moth.data[(moth.data$Month==',mo,'),]'))
 
 cat('
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 ')
 
@@ -175,6 +238,61 @@ invisible(sapply(X = years,FUN = function(yr){
 
 cat(paste0('\n## ',yr,'\n'))
   
+
+
+cat('
+```{r,echo=FALSE,results=TRUE}
+')
+
+cat(paste0('yr.data <- moth.data[(moth.data$Year==',yr,'),]'))
+
+cat('
+total.individs <- sum(yr.data$NumberCaught,na.rm=TRUE)
+
+total.species <- length(unique(na.omit(yr.data)$Species))
+
+total.traps <- length(unique(yr.data$TrapNumber))
+
+```
+
+I ran a total of `r total.traps` traps this year, catching `r total.individs` of `r total.species` species
+
+```{r,echo=FALSE,results=TRUE}
+traps <- unique(yr.data$TrapNumber)
+
+sp.accum <- sapply(X = 1:length(traps),
+                   FUN = function(i){
+                     sub.data <- yr.data[(yr.data$TrapNumber<=traps[i]),]
+                     
+                     cum.sp <- length(unique(tolower(na.omit(sub.data$Species))))
+                     
+                   })
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(1:length(sp.accum),sp.accum,type="l",bty="l",col="#A40122",
+     lwd=3,xlab="Trap number",ylab="Cumulative species count",
+     xaxt="n")
+axis(side = 1,at = 1:length(sp.accum))
+```
+
+```{r,echo=FALSE,results=TRUE}
+
+species.sums <- tapply(X = yr.data$NumberCaught,
+                       INDEX = yr.data$Species,
+                       FUN = sum)
+
+species.sums <- data.frame(Sp=names(species.sums),
+                           N=species.sums)
+
+treemap(dtf = species.sums,index = "Sp",vSize = "N")
+```
+    
+')
+
 }))
 
 cat('\n')

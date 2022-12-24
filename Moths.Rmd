@@ -17,7 +17,7 @@ moth.data <- read.csv("TimNewboldMothDataPublicRelease.csv")
 
 total.individs <- sum(moth.data$NumberCaught,na.rm=TRUE)
 
-total.species <- length(unique(moth.data$Species))
+total.species <- length(unique(na.omit(moth.data)$Species))
 
 total.traps <- length(unique(moth.data$TrapNumber))
 
@@ -29,6 +29,8 @@ all.yrs <- seq(from=min(moth.data$Year),to=max(moth.data$Year))
 I have been trapping moths in Cambridgeshire since 8th August 2020.
 
 Since, then I have run `r total.traps` traps, and caught `r total.individs` individual moths, of `r total.species` different species.
+
+You can download my data <a href="https://timnewbold.github.io/TimNewboldMothDataPublicRelease.csv">here</a>.
 
 ```{r,echo=FALSE,results=TRUE}
 
@@ -140,6 +142,19 @@ invisible(mapply(FUN = function(yr.data,colour){
 legend(x = 1,y = ymax,legend = unique(trap.sums$Year),bty="n",lty=1,col=colour.pal)
 ```
 
+```{r,echo=FALSE,results=TRUE}
+suppressWarnings(suppressMessages(library(treemap)))
+
+species.sums <- tapply(X = moth.data$NumberCaught,
+                       INDEX = moth.data$Species,
+                       FUN = sum)
+
+species.sums <- data.frame(Sp=names(species.sums),
+                           N=species.sums)
+
+treemap(dtf = species.sums,index = "Sp",vSize = "N")
+```
+
 
 
 # By Month
@@ -148,91 +163,810 @@ legend(x = 1,y = ymax,legend = unique(trap.sums$Year),bty="n",lty=1,col=colour.p
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==1),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## February
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==2),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## March
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==3),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## April
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==4),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## May
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==5),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## June
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==6),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## July
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==7),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## August
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==8),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## September
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==9),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## October
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==10),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## November
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==11),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 ## December
 
 ```{r,echo=FALSE,results=TRUE}
 month.data <- moth.data[(moth.data$Month==12),]
-head(month.data)
+trap.sums <- tapply(X = month.data$NumberCaught,
+                    INDEX = month.data$TrapNumber,
+                    FUN = sum)
+
+trap.sums <- data.frame(AvgCatch=trap.sums,
+                        Year=month.data$Year[
+                          match(names(trap.sums),
+                                month.data$TrapNumber)])
+
+yr.avg.month.catch <- tapply(X = trap.sums$AvgCatch,
+                             INDEX = trap.sums$Year,
+                             FUN = mean,na.rm=TRUE)
+
+yr.avg.month.catch[is.na(yr.avg.month.catch)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(yr.avg.month.catch),yr.avg.month.catch,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Average Catch",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.sp.counts.by.year <- tapply(X = month.data$Species,
+                                  INDEX = month.data$Year,
+                                  FUN = function(x) 
+                                    return(length(unique(x[!is.na(x)]))))
+
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(names(month.sp.counts.by.year),month.sp.counts.by.year,
+     xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),
+     xlab="Year",ylab="Total Number of Species",
+     pch=16,type="b",col="#A40122",bty="l")
+
+month.species.counts <- tapply(X = month.data$NumberCaught,
+                               INDEX = month.data$Species,
+                               FUN = sum)
+
+month.species.counts <- data.frame(Sp=names(month.species.counts),
+                                   N=month.species.counts)
+
+treemap(dtf = month.species.counts,index = "Sp",vSize = "N")
 ```
 
 # By Year
 
 ## 2020
 
+```{r,echo=FALSE,results=TRUE}
+yr.data <- moth.data[(moth.data$Year==2020),]
+total.individs <- sum(yr.data$NumberCaught,na.rm=TRUE)
+
+total.species <- length(unique(na.omit(yr.data)$Species))
+
+total.traps <- length(unique(yr.data$TrapNumber))
+
+```
+
+I ran a total of `r total.traps` traps this year, catching `r total.individs` of `r total.species` species
+
+```{r,echo=FALSE,results=TRUE}
+traps <- unique(yr.data$TrapNumber)
+
+sp.accum <- sapply(X = 1:length(traps),
+                   FUN = function(i){
+                     sub.data <- yr.data[(yr.data$TrapNumber<=traps[i]),]
+                     
+                     cum.sp <- length(unique(tolower(na.omit(sub.data$Species))))
+                     
+                   })
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(1:length(sp.accum),sp.accum,type="l",bty="l",col="#A40122",
+     lwd=3,xlab="Trap number",ylab="Cumulative species count",
+     xaxt="n")
+axis(side = 1,at = 1:length(sp.accum))
+```
+
+```{r,echo=FALSE,results=TRUE}
+
+species.sums <- tapply(X = yr.data$NumberCaught,
+                       INDEX = yr.data$Species,
+                       FUN = sum)
+
+species.sums <- data.frame(Sp=names(species.sums),
+                           N=species.sums)
+
+treemap(dtf = species.sums,index = "Sp",vSize = "N")
+```
+    
+
 ## 2021
+
+```{r,echo=FALSE,results=TRUE}
+yr.data <- moth.data[(moth.data$Year==2021),]
+total.individs <- sum(yr.data$NumberCaught,na.rm=TRUE)
+
+total.species <- length(unique(na.omit(yr.data)$Species))
+
+total.traps <- length(unique(yr.data$TrapNumber))
+
+```
+
+I ran a total of `r total.traps` traps this year, catching `r total.individs` of `r total.species` species
+
+```{r,echo=FALSE,results=TRUE}
+traps <- unique(yr.data$TrapNumber)
+
+sp.accum <- sapply(X = 1:length(traps),
+                   FUN = function(i){
+                     sub.data <- yr.data[(yr.data$TrapNumber<=traps[i]),]
+                     
+                     cum.sp <- length(unique(tolower(na.omit(sub.data$Species))))
+                     
+                   })
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(1:length(sp.accum),sp.accum,type="l",bty="l",col="#A40122",
+     lwd=3,xlab="Trap number",ylab="Cumulative species count",
+     xaxt="n")
+axis(side = 1,at = 1:length(sp.accum))
+```
+
+```{r,echo=FALSE,results=TRUE}
+
+species.sums <- tapply(X = yr.data$NumberCaught,
+                       INDEX = yr.data$Species,
+                       FUN = sum)
+
+species.sums <- data.frame(Sp=names(species.sums),
+                           N=species.sums)
+
+treemap(dtf = species.sums,index = "Sp",vSize = "N")
+```
+    
+
+## 2022
+
+```{r,echo=FALSE,results=TRUE}
+yr.data <- moth.data[(moth.data$Year==2022),]
+total.individs <- sum(yr.data$NumberCaught,na.rm=TRUE)
+
+total.species <- length(unique(na.omit(yr.data)$Species))
+
+total.traps <- length(unique(yr.data$TrapNumber))
+
+```
+
+I ran a total of `r total.traps` traps this year, catching `r total.individs` of `r total.species` species
+
+```{r,echo=FALSE,results=TRUE}
+traps <- unique(yr.data$TrapNumber)
+
+sp.accum <- sapply(X = 1:length(traps),
+                   FUN = function(i){
+                     sub.data <- yr.data[(yr.data$TrapNumber<=traps[i]),]
+                     
+                     cum.sp <- length(unique(tolower(na.omit(sub.data$Species))))
+                     
+                   })
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(1:length(sp.accum),sp.accum,type="l",bty="l",col="#A40122",
+     lwd=3,xlab="Trap number",ylab="Cumulative species count",
+     xaxt="n")
+axis(side = 1,at = 1:length(sp.accum))
+```
+
+```{r,echo=FALSE,results=TRUE}
+
+species.sums <- tapply(X = yr.data$NumberCaught,
+                       INDEX = yr.data$Species,
+                       FUN = sum)
+
+species.sums <- data.frame(Sp=names(species.sums),
+                           N=species.sums)
+
+treemap(dtf = species.sums,index = "Sp",vSize = "N")
+```
+    
 
 # By Species
 
@@ -492,6 +1226,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Blue-bordered carpet
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Blue-bordered carpet"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Blue-bordered carpet, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Brick
 
 ```{r,echo=FALSE,results=TRUE}
@@ -588,6 +1354,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Brindled pug
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Brindled pug"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Brindled pug, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Broad-bordered yellow underwing
 
 ```{r,echo=FALSE,results=TRUE}
@@ -632,6 +1430,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Brown-line bright-eye, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Brown-spot pinion
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Brown-spot pinion"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Brown-spot pinion, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -972,6 +1802,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Canary-shouldered thorn
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Canary-shouldered thorn"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Canary-shouldered thorn, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Centre-barred sallow
 
 ```{r,echo=FALSE,results=TRUE}
@@ -1068,6 +1930,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Chocolate-tip
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Chocolate-tip"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Chocolate-tip, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Cinnabar
 
 ```{r,echo=FALSE,results=TRUE}
@@ -1132,6 +2026,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Clifden non-pareil
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Clifden non-pareil"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Clifden non-pareil, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Cloaked minor
 
 ```{r,echo=FALSE,results=TRUE}
@@ -1144,6 +2070,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Cloaked minor, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Clouded border
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Clouded border"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Clouded border, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -1208,6 +2166,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Common carpet, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Common emerald
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Common emerald"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Common emerald, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -1516,6 +2506,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Currant pug
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Currant pug"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Currant pug, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Cypress pug
 
 ```{r,echo=FALSE,results=TRUE}
@@ -1644,6 +2666,70 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Dark spectacle
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Dark spectacle"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Dark spectacle, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Dark sword-grass
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Dark sword-grass"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Dark sword-grass, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## December moth
 
 ```{r,echo=FALSE,results=TRUE}
@@ -1656,6 +2742,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of December moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Delicate
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Delicate"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Delicate, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -1720,6 +2838,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Dingy footman, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Dog's tooth
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Dog's tooth"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Dog's tooth, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -1836,6 +2986,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Drinker
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Drinker"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Drinker, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Dun-bar
 
 ```{r,echo=FALSE,results=TRUE}
@@ -1912,6 +3094,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Dusky sallow, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Dusky thorn
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Dusky thorn"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Dusky thorn, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -2316,6 +3530,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Fox moth
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Fox moth"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Fox moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Foxglove pug
 
 ```{r,echo=FALSE,results=TRUE}
@@ -2392,6 +3638,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Garden carpet, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Garden dart
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Garden dart"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Garden dart, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -2604,6 +3882,70 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Hornet moth
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Hornet moth"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Hornet moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Ingrailed clay
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Ingrailed clay"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Ingrailed clay, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Knot-grass
 
 ```{r,echo=FALSE,results=TRUE}
@@ -2616,6 +3958,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Knot-grass, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Lackey
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Lackey"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Lackey, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -2680,6 +4054,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Large thorn, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Large twin-spot carpet
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Large twin-spot carpet"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Large twin-spot carpet, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -2860,6 +4266,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Lesser common rustic
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Lesser common rustic"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Lesser common rustic, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Lesser yellow underwing
 
 ```{r,echo=FALSE,results=TRUE}
@@ -2872,6 +4310,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Lesser yellow underwing, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Light arches
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Light arches"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Light arches, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -2924,6 +4394,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Lilac beauty
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Lilac beauty"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Lilac beauty, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Lime-speck pug
 
 ```{r,echo=FALSE,results=TRUE}
@@ -2936,6 +4438,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Lime-speck pug, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Lunar hornet moth
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Lunar hornet moth"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Lunar hornet moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -3276,6 +4810,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Mottled pug
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Mottled pug"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Mottled pug, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Mottled rustic
 
 ```{r,echo=FALSE,results=TRUE}
@@ -3416,6 +4982,70 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of November moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Nutmeg
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Nutmeg"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Nutmeg, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Oak-tree pug
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Oak-tree pug"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Oak-tree pug, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -3596,6 +5226,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Pebble hook-tip
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Pebble hook-tip"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Pebble hook-tip, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Pebble prominent
 
 ```{r,echo=FALSE,results=TRUE}
@@ -3640,6 +5302,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Peppered moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Pine hawkmoth
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Pine hawkmoth"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Pine hawkmoth, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -3896,6 +5590,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Red chestnut, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Red twin-spot carpet
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Red twin-spot carpet"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Red twin-spot carpet, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -4204,6 +5930,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Scarlet tiger
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Scarlet tiger"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Scarlet tiger, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Scorched carpet
 
 ```{r,echo=FALSE,results=TRUE}
@@ -4280,6 +6038,70 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Shaded broad-bar, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Shark
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Shark"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Shark, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Short-cloaked moth
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Short-cloaked moth"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Short-cloaked moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -4588,6 +6410,38 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Small fan-footed wave
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Small fan-footed wave"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Small fan-footed wave, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Small Quaker
 
 ```{r,echo=FALSE,results=TRUE}
@@ -4620,6 +6474,70 @@ title(xlab="Month")
 box(bty="l")
 ```
 
+## Small ranunculus
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Small ranunculus"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Small ranunculus, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Small scallop
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Small scallop"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Small scallop, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
 ## Small square-spot
 
 ```{r,echo=FALSE,results=TRUE}
@@ -4632,6 +6550,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Small square-spot, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Smoky wainscot
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Smoky wainscot"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Smoky wainscot, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -4940,10 +6890,10 @@ title(xlab="Month")
 box(bty="l")
 ```
 
-## Swallowtail
+## Swallow-tailed
 
 ```{r,echo=FALSE,results=TRUE}
-species.data <- moth.data[which(moth.data$Species=="Swallowtail"),]
+species.data <- moth.data[which(moth.data$Species=="Swallow-tailed"),]
 total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
 n.traps <- length(unique(species.data$TrapNumber))
 first.year <- min(species.data$Year,na.rm=TRUE)
@@ -4951,7 +6901,7 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
-In total, I have caught `r total.caught` individuals of Swallowtail, in `r n.traps` traps, between `r first.year` and `r last.year`.
+In total, I have caught `r total.caught` individuals of Swallow-tailed, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -5016,6 +6966,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Treble bar, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Treble brown spot
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Treble brown spot"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Treble brown spot, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
@@ -5432,6 +7414,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Winter moth, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Wormwood pug
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Wormwood pug"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Wormwood pug, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
