@@ -107,13 +107,25 @@ invisible(mapply(FUN = function(yr.data,colour){
   
 },split(x = trap.sums,f = trap.sums$Year),as.list(colour.pal)))
 
-legend(x = 1,y = sqrt(ymax),legend = unique(trap.sums$Year),
-bty="n",lty=1,col=colour.pal)
+month.avgs <- tapply(X = trap.sums$TotalCaught,INDEX = trap.sums$Month,FUN = median)
+
+points(names(month.avgs),sqrt(month.avgs),type="b",pch=16,col="#00000099")
+
+legend(x = 1,y = sqrt(ymax),legend = c(unique(trap.sums$Year),"All Years"),
+bty="n",lty=1,col=c(colour.pal,"#00000099"))
 
 ```
 
 
 ```{r,echo=FALSE,results=TRUE}
+
+species.counts.allyrs <- data.frame(SpeciesNumber=tapply(
+  X = na.omit(moth.data)$Species,
+  INDEX = na.omit(moth.data)$Month,
+  FUN = function(spp){
+    length(unique(spp))}))
+
+species.counts.allyrs$Month <- row.names(species.counts.allyrs)  
 
 species.counts <- data.frame(SpeciesNumber=tapply(
   X = na.omit(moth.data)$Species,
@@ -129,10 +141,7 @@ species.counts$Month <- as.integer(sapply(
   X = row.names(species.counts),
   FUN = function(x) return(strsplit(x,"_")[[1]][2])))
 
-ymax <- max(tapply(
-  X = species.counts$SpeciesNumber,
-  INDEX = paste(species.counts$Month,species.counts$Year),
-  FUN = median))
+ymax <- max(species.counts.allyrs$SpeciesNumber)
 
 par(mar=c(3.2,3.2,0.5,0.2))
 par(mgp=c(2.0,0.2,0))
@@ -152,8 +161,11 @@ invisible(mapply(FUN = function(yr.data,colour){
   
 },split(x = species.counts,f = species.counts$Year),as.list(colour.pal)))
 
-legend(x = 1,y = sqrt(ymax),legend = unique(trap.sums$Year),
-bty="n",lty=1,col=colour.pal)
+points(species.counts.allyrs$Month,sqrt(species.counts.allyrs$SpeciesNumber),
+       type="b",pch=16,col="#00000099")
+
+legend(x = 1,y = sqrt(ymax),legend = c(unique(trap.sums$Year),"All years"),
+bty="n",lty=1,col=c(colour.pal,"#00000099"))
 ```
 
 ```{r,echo=FALSE,results=TRUE}
@@ -1269,6 +1281,38 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
 In total, I have caught `r total.caught` individuals of Blood-vein, in `r n.traps` traps, between `r first.year` and `r last.year`.
+
+```{r,echo=FALSE,results=TRUE}
+yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
+yr.avg.catches[is.na(yr.avg.catches)] <- 0
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(all.yrs,yr.avg.catches,xaxp=c(min(all.yrs),max(all.yrs),length(all.yrs)-1),xlab="Year",ylab="Average Catch",pch=16,type="b",col="#A40122",bty="l")
+
+dens <- hist(species.data$Month,breaks=seq(from=0.5,to=12.5,by=1),plot=FALSE)
+      
+barplot(dens$density,space = 0,border=NA,col="#A40122",ylab="Density")
+axis(side = 1,at = seq(from=0.5,to=11.5,length.out=12),labels = month.abb)
+title(xlab="Month")
+box(bty="l")
+```
+
+## Blossom underwing
+
+```{r,echo=FALSE,results=TRUE}
+species.data <- moth.data[which(moth.data$Species=="Blossom underwing"),]
+total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
+n.traps <- length(unique(species.data$TrapNumber))
+first.year <- min(species.data$Year,na.rm=TRUE)
+last.year <- max(species.data$Year,na.rm=TRUE)
+
+species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
+```
+In total, I have caught `r total.caught` individuals of Blossom underwing, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)

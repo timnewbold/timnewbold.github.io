@@ -109,12 +109,24 @@ invisible(mapply(FUN = function(yr.data,colour){
   
 },split(x = trap.sums,f = trap.sums$Year),as.list(colour.pal)))
 
-legend(x = 1,y = sqrt(ymax),legend = unique(trap.sums$Year),
-bty="n",lty=1,col=colour.pal)
+month.avgs <- tapply(X = trap.sums$TotalCaught,INDEX = trap.sums$Month,FUN = median)
+
+points(names(month.avgs),sqrt(month.avgs),type="b",pch=16,col="#00000099")
+
+legend(x = 1,y = sqrt(ymax),legend = c(unique(trap.sums$Year),"All Years"),
+bty="n",lty=1,col=c(colour.pal,"#00000099"))
 
 ```
 \n
 ```{r,echo=FALSE,results=TRUE}
+
+species.counts.allyrs <- data.frame(SpeciesNumber=tapply(
+  X = na.omit(moth.data)$Species,
+  INDEX = na.omit(moth.data)$Month,
+  FUN = function(spp){
+    length(unique(spp))}))
+
+species.counts.allyrs$Month <- row.names(species.counts.allyrs)  
 
 species.counts <- data.frame(SpeciesNumber=tapply(
   X = na.omit(moth.data)$Species,
@@ -130,10 +142,7 @@ species.counts$Month <- as.integer(sapply(
   X = row.names(species.counts),
   FUN = function(x) return(strsplit(x,"_")[[1]][2])))
 
-ymax <- max(tapply(
-  X = species.counts$SpeciesNumber,
-  INDEX = paste(species.counts$Month,species.counts$Year),
-  FUN = median))
+ymax <- max(species.counts.allyrs$SpeciesNumber)
 
 par(mar=c(3.2,3.2,0.5,0.2))
 par(mgp=c(2.0,0.2,0))
@@ -153,8 +162,11 @@ invisible(mapply(FUN = function(yr.data,colour){
   
 },split(x = species.counts,f = species.counts$Year),as.list(colour.pal)))
 
-legend(x = 1,y = sqrt(ymax),legend = unique(trap.sums$Year),
-bty="n",lty=1,col=colour.pal)
+points(species.counts.allyrs$Month,sqrt(species.counts.allyrs$SpeciesNumber),
+       type="b",pch=16,col="#00000099")
+
+legend(x = 1,y = sqrt(ymax),legend = c(unique(trap.sums$Year),"All years"),
+bty="n",lty=1,col=c(colour.pal,"#00000099"))
 ```
 
 ```{r,echo=FALSE,results=TRUE}
