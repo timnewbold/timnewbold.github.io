@@ -281,7 +281,7 @@ total.traps <- length(unique(yr.data$TrapNumber))
 
 ```
 
-I ran a total of `r total.traps` traps this year, catching `r total.individs` of `r total.species` species
+I ran a total of `r total.traps` traps this year, catching `r total.individs` individuals of `r total.species` species
 
 ```{r,echo=FALSE,results=TRUE}
 traps <- unique(yr.data$TrapNumber)
