@@ -16,7 +16,8 @@ body
 #header
 {
   min-height: 213px;
-  background: url('./images/header.jpg') white;
+  background: url('./images/Logo_transparent.png') white;
+  background-size: 50%;
   background-repeat: no-repeat;
   background-position: center;
   display: block;
