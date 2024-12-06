@@ -84,6 +84,7 @@ I will cover here only the practicalities of running Generalized Linear Models i
 This session will require the use of my _MResModelling_ R package, which you can install from Github:
 
 ```{r,echo=TRUE,results=FALSE,eval=FALSE}
+remotes::install_github("timnewbold/StatisticalModels")
 remotes::install_github("timnewbold/MResEcologicalModelling",subdir="MResModelling")
 ```
 
