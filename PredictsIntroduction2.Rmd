@@ -161,7 +161,11 @@ library(kableExtra)
 library(ggplot2)
 library(ggwordcloud)
 library(dplyr)
+library(tidyverse)
+library(tidyr)
 library(stringr)
+library(terra)
+library(tidyterra)
 ```
 
 # Introduction
@@ -171,8 +175,7 @@ The PREDICTS database [@Hudson2017] is a fully open-access database containing s
 You can get started quickly by downloading the PREDICTS database from my website, but if you intend to use the database in your research, I would ask you please to download the database (freely) from the <a href="http://doi.org/10.5519/0066354" target="_blank">Natural History Museum data portal</a>, so that appropriate credit is given.
 
 ```{r,echo=TRUE,results=TRUE}
-webFile <- url("https://timnewbold.github.io/predicts_database.rds?dl=1")
-predicts <- readRDS(webFile)
+predicts <- url("https://timnewbold.github.io/predicts_database.rds?dl=1") %>% readRDS()
 ```
 
 To work with the database, you should install a package that contains some basic data-manipulation functions:
@@ -302,8 +305,10 @@ p <- ggplot() +
   geom_density(data = sites2,mapping = aes(x = Max_linear_extent_metres),
                col = "#2F67B1",fill = "#2F67B133") + 
   geom_errorbarh(mapping = aes(y = 1, xmin = MLE_quantiles$q[1],
-                               xmax = MLE_quantiles$q[2], height = 0.02), col = "#1065AB") +
-  scale_x_continuous(name = "Maximum linear extent (m)",transform = 'log10') +
+                               xmax = MLE_quantiles$q[2], height = 0.02), 
+                 size = 1.5,col = "#1065AB") +
+  scale_x_continuous(name = "Maximum linear extent (m)",transform = 'log10',
+                     breaks = c(0.1,1,10,100,1000,10000),labels = scales::comma) +
   scale_y_continuous(name = "Site Density") +
   theme_classic(base_size = 25)
 
@@ -358,6 +363,25 @@ colsSpatial <- data.frame(Field=c('Longitude',
 The vast majority of sampled sites in the PREDICTS database (`r round((length(which(!is.na(sites$Longitude)))/nrow(sites))*100,1)`%) are associated with geographical coordinates (longitude and latitude).
 
 These geographical coordinates are then used to assign the site within various geographic schemes: biogeographic realms [@Ladle2011; @Olson2001], biomes [@Olson2001], ecoregions [@Olson2001], UN regions and sub-regions (<a href="https://unstats.un.org/unsd/methodology/m49/" target="_blank">United Nations, 1999</a>), biodiversity hotspots [@Myers2000] and high-biodiversity wilderness areas [@Brooks2006].
+
+```{r, echo=FALSE,eval=TRUE, fig.cap="Map of sites with biodiversity samples in the PREDICTS database"}
+
+sites3 <- predicts %>%
+  select(c('SSS','Latitude','Longitude','Biome')) %>%
+  distinct()
+
+world <- "C:/Users/tim_n/Downloads/outline_clip2.shp" %>% 
+  vect()#  %>% geom_sf() %>% fortify()
+
+p <- ggplot() + 
+  geom_spatvector(data = world) + 
+  geom_point(data = sites3,mapping = aes(x = Longitude,y = Latitude)) +
+  scale_x_continuous(name = "") + 
+  scale_y_continuous(name = "") + 
+  theme_classic()
+
+p
+```
 
 ```{r,echo=FALSE,eval=TRUE}
 knitr::kable(colsSpatial,caption="Key fields in the PREDICTS database describing the spatial location of biodiversity sampling")
