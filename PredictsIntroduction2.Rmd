@@ -516,7 +516,102 @@ The names of the sampled taxa, as given in the original source publications, are
 
 A total of `r format(n_distinct(predicts$Taxon_name_entered),big.mark=",")` taxonomic names are given in the original publications that underpin the PREDICTS database. After taxonomic resolution, a total of `r format(n_distinct(predicts$Best_guess_binomial),big.mark=",")` accepted Latin binomials are identified (many taxa are identified to a higher level than species, or are identified only as morpho-species).
 
+```{r figtaxa, echo=FALSE,eval=TRUE, warning=FALSE,fig.cap="Tree map representing the number of species sampled in different phyla"}
+
+TaxonCounts <- predicts %>% 
+  subset(Phylum!="") %>%
+  select(Kingdom,Phylum,Class,Order,Family,Best_guess_binomial) %>% 
+  distinct() %>%
+  count(Phylum)
+
+p <- ggplot(data = TaxonCounts,
+            mapping = aes(area = n,
+                          fill = Phylum,
+                          label = Phylum)) + 
+  geom_treemap() + 
+  geom_treemap_text(colour = "#000000", grow=TRUE,min.size = 10,reflow = TRUE) + 
+  guides(fill = guide_legend(title = "Phylum"))
+
+p
+
+```
+
 ```{r tabletaxonomic,echo=FALSE,eval=TRUE}
 knitr::kable(colsTax,caption="Key fields in the PREDICTS database relating to the taxonomy of sampled taxa")
 ```
 
+# Data Pre-processing
+
+Before modelling with the PREDICTS data, there are a few basic pre-processing steps that must be carried out. First, for the `r round((as.integer(summary(predicts$Measurement==predicts$Effort_corrected_measurement)['FALSE'][[1]])/nrow(predicts))*100,1)`% of records that are of an effort-sensitive metric, and where sampling effort differs among sampled sites within the study, we need to correct sampling effort. This is done by rescaling sampling effort within each study, such that the most-sampled site gets a relative effort value of 1, and the sampling effort for all other sites is scaled linearly relative to this maximum value. The _CorrectSamplingEffort_ function in the _predictsFunctions_ package carries out these operations:
+
+```{r,echo=TRUE,results=TRUE}
+# Correct effort-sensitive abundance measures (assumes linear relationship between effort and recorded abundance)
+predicts <- predicts %>% CorrectSamplingEffort()
+```
+
+Next, some samples in PREDICTS were entered such that a sampled 'Site' consisted of very finely divided samples. For example, samples may have been entered as individual traps. This is not in keeping with the strict definition of a 'Site' in the PREDICTS database. To get around this issue, we combine sites with identical coordinates, belonging to the same study and spatial block of sites, sampled on the same dates, sampled with the same methods and recorded using the same diversity metric, and situated within the same land-use type and human land-use intensity. This merging of sites is carried out by the _MergeSites_ function in the _predictsFunctions_ package (warning, this operation can take a few minutes to run, so you might want to go and make a cup of tea!):
+
+```{r,echo=TRUE,results=TRUE}
+predicts <- predicts %>% MergeSites(silent=TRUE)
+```
+
+There are two main ways that you can now analyze the PREDICTS data:
+
+1. Using the raw species-level data, modelling the presence/absence or abundance of individual species; or
+2. Using site-level biodiversity summaries, such as species richness, total community abundance or other aggregate biodiversity measures
+
+We are now ready to build some simple models using the PREDICTS database. For the modelling, we will use the brms package.
+
+```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+library(brms)
+```
+
+# Basic Species-level Models
+
+One way we can use the PREDICTS data is to build models based on the raw data for individual species. 
+
+So that the models run in a reasonably short amount of time, we will focus here on data for nymphalid butterflies. We need to select records only of abundance or occurrence. We will then create a variable called "*Occurence*" that represents the presence or absence of the species. Before we build a model, we need to rearrange the land-use classification a bit. Any sites where the land-use type was entered as 'Cannot decide' need to be set as NA values. We will also group together secondary vegetation sites at all stages of recovery, and remove sites in urban areas, owing to the relatively limited number of sites for nymphalid butterflies in these land-use types.
+
+```{r,echo=TRUE,results=TRUE}
+nymphals <- predicts %>%
+  subset(Family == "Nymphalidae") %>% 
+  subset(Diversity_metric_type %in% c("Abundance","Occurrence")) %>%
+  mutate(Occurrence = ifelse(Measurement>0,1,0)) %>%
+  mutate(LandUse = recode(Predominant_land_use,
+    'Primary vegetation' = 'Primary',
+                                 'Young secondary vegetation' = 'Secondary',
+                                 'Intermediate secondary vegetation' = 'Secondary',
+                                 'Mature secondary vegetation' = 'Secondary',
+                                 'Secondary vegetation (indeterminate age)' = "Secondary",
+                                 'Plantation forest' = 'Plantation',
+                                 'Cropland' = 'Cropland',
+                                 'Pasture' = 'Pasture',
+                                 'Urban' = 'Urban',
+                                 'Cannot decide' = NA_character_)) %>%
+  subset(LandUse != "Urban")
+  droplevels()
+```
+
+Let's try a very simple model fitting just land use.
+
+```{r,echo=TRUE,results=TRUE}
+occMod <- nymphals %>% brm(formula = Occurrence ~ 
+                          LandUse+(1|SS)+(1|SSBS)+(1|Taxon_name_entered), 
+                        family = "bernoulli",iter = 2000,chains = 4,cores = 4)
+
+
+
+
+```
+
+If we look at the pseudo R<sup>2</sup> values of the model, we can see that the random effects explain most of the variation in reptile species presence/absence, while land use explains `r round(StatisticalModels::R2GLMER(occMod1$model)$marginal*100,1)`%.
+
+```{r,echo=TRUE,results=TRUE}
+StatisticalModels::R2GLMER(occMod1$model)
+```
+
+Plotting this model shows significant declines in the probability of occurrence of reptile species in secondary vegetation, plantation forests and pastures.
+
+```{r,echo=TRUE,results=TRUE}
+PlotGLMERFactor(model = occMod1$model,data = occMod1$data,responseVar = "Prob. occurrence",logLink = "b",catEffects = "LandUse")
+```
