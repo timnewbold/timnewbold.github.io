@@ -156,7 +156,7 @@ references:
       year: 2006
 ---
 
-```{r, echo=FALSE, eval=TRUE, warning=FALSE, message=FALSE}
+```{r loadpackages, echo=FALSE, eval=TRUE, warning=FALSE, message=FALSE}
 library(kableExtra)
 library(ggplot2)
 library(ggwordcloud)
@@ -166,6 +166,7 @@ library(tidyr)
 library(stringr)
 library(terra)
 library(tidyterra)
+library(treemapify)
 ```
 
 # Introduction
@@ -174,23 +175,23 @@ The PREDICTS database [@Hudson2017] is a fully open-access database containing s
 
 You can get started quickly by downloading the PREDICTS database from my website, but if you intend to use the database in your research, I would ask you please to download the database (freely) from the <a href="http://doi.org/10.5519/0066354" target="_blank">Natural History Museum data portal</a>, so that appropriate credit is given.
 
-```{r,echo=TRUE,results=TRUE}
+```{r readdatabase,echo=TRUE,results=TRUE}
 predicts <- url("https://timnewbold.github.io/predicts_database.rds?dl=1") %>% readRDS()
 ```
 
 To work with the database, you should install a package that contains some basic data-manipulation functions:
 
-```{r,echo=TRUE,results=FALSE,eval=FALSE}
+```{r installpredictsfunctions,echo=TRUE,results=FALSE,eval=FALSE}
 remotes::install_github("timnewbold/predicts-demo",subdir="predictsFunctions")
 ```
 
-```{r,echo=TRUE,results=TRUE}
+```{r loadpredictsfunctions,echo=TRUE,results=TRUE}
 library(predictsFunctions)
 ```
 
 # Database Structure
 
-```{r,echo=FALSE,eval=TRUE}
+```{r structurefields,echo=FALSE,eval=TRUE}
 colsStruct <- data.frame(Field=c('Source_ID',
                            'Study_number',
                            'Study_name',
@@ -217,7 +218,7 @@ colsStruct <- data.frame(Field=c('Source_ID',
 
 The PREDICTS database has a hierarchical structure.
 
-At the highest level, data are drawn from `r length(unique(predicts$Source_ID))` published papers (***Sources***) comparing biodiversity in different land uses. 
+At the highest level, the data in the 2016 release of the PREDICTS database are drawn from `r format(n_distinct(predicts$Source_ID),big.mark=",")` published papers (***Sources***) comparing biodiversity in different land uses. 
 
 Each data Source consists of one or more ***Studies***. Sometimes, a published paper will contain biodiversity samples collected using more than one fundamental approach. For example, a paper may contain data for different taxonomic groups that would not appropriately have been sampled using the same methods. In such cases, because data are not directly comparable if collected using different methods, data Sources were split into multiple Studies. Otherwise, each Source contained a single Study.
 
@@ -225,15 +226,35 @@ Each Study consists of data sampled in one or more spatial ***Blocks***. A Study
 
 Each ***Block*** contains two or more ***Sites***, which are the specific locations at which biodiversity was sampled.
 
+The complete 2016 version of the PREDICTS database contains data from `r format(n_distinct(predicts$SS),big.mark=",")` ***Studies***, which together sample a total of `r format(n_distinct(predicts$SSBS),big.mark=",")` ***Sites***.
+
 Within each ***Site***, there are a series of ***Measurements*** - of species abundance (`r format(table(predicts$Diversity_metric_type)["Abundance"],big.mark=",")` records), species occurrence (`r format(table(predicts$Diversity_metric_type)["Occurrence"],big.mark=",")` records), or species richness (`r format(table(predicts$Diversity_metric_type)["Species richness"],big.mark=",")` records) - for each of the sampled taxa.
 
-```{r,echo=FALSE,eval=TRUE}
+```{r figdiversitymetrics, echo=FALSE,eval=TRUE, fig.cap="Tree map showing the frequency of different biodiversity metric types across the PREDICTS database. Note that counts of metrics were square-root transformed to counter the strong dominance of abundance measures"}
+
+MetricCounts <- predicts %>% count(Diversity_metric_type) %>%
+  mutate(Diversity_metric = str_to_title(Diversity_metric_type))
+
+p <- ggplot(data = MetricCounts,
+            mapping = aes(area = sqrt(n),
+                          fill = Diversity_metric_type,
+                          label = Diversity_metric_type)) + 
+  geom_treemap() + 
+  guides(fill = guide_legend(title = "Diversity Metric Type"))
+  # geom_treemap_text(colour = "#000000", grow=TRUE,min.size = 1,reflow = TRUE)# + 
+  # theme(legend.position = "none")
+
+p
+
+```
+
+```{r structuretable,echo=FALSE,eval=TRUE}
 knitr::kable(colsStruct,caption="Key fields in the PREDICTS database relating to the hierarchical structure of the database")
 ```
 
 # Key Sampling Information
 
-```{r,echo=FALSE,eval=TRUE}
+```{r samplingfields,echo=FALSE,eval=TRUE}
 colsSampling <- data.frame(Field=c('Measurement',
                                    'Diversity_metric_type',
                                    'Diversity_metric',
@@ -267,11 +288,29 @@ colsSampling <- data.frame(Field=c('Measurement',
 
 Measurements in PREDICTS consist of three broad types: species abundance, species occurrence (i.e., presence or absence), or species richness (the number of species sampled). Within these categories, there are lots of different specific metrics. Some measures of diversity are inherently sensitive to sampling effort, which has important implications for processing the data (see below).
 
-The different underlying ***Studies*** in PREDICTS consist of data sampled using a whole host of different methods, and with widely differing levels of sampling effort. When analysing the PREDICTS data, it is important that diversity ***Measurements*** are comparable within ***Studies***, whereas differences among ***Studies*** are handled by the hierarchical design of the models (see below). Therefore, it is a requirement of the PREDICTS database that sampling *methods* are constant within studies. Nevertheless, for `r round((length(which(tapply(X = predicts$Sampling_effort,INDEX = predicts$SS,FUN = function(s) return(diff(range(s))))>0))/length(unique(predicts$SS)))*100,0)`% of studies, sampling effort differs among the sampled sites.
+```{r figmetrictypes, echo=FALSE,eval=TRUE, fig.cap="Tree map showing the frequency of different biodiversity metric types across the PREDICTS database. Note that counts of metrics were square-root transformed to counter the strong dominance of abundance measures"}
+
+MetricCounts <- predicts %>% count(Diversity_metric_type) %>%
+  mutate(Diversity_metric = str_to_title(Diversity_metric_type))
+
+p <- ggplot(data = MetricCounts,
+            mapping = aes(area = sqrt(n),
+                          fill = Diversity_metric_type,
+                          label = Diversity_metric_type)) + 
+  geom_treemap() + 
+  guides(fill = guide_legend(title = "Diversity Metric Type"))
+  # geom_treemap_text(colour = "#000000", grow=TRUE,min.size = 1,reflow = TRUE)# + 
+  # theme(legend.position = "none")
+
+p
+
+```
+
+The different underlying ***Studies*** in PREDICTS consist of data sampled using a whole host of different methods, and with widely differing levels of sampling effort. When analysing the PREDICTS data, it is important that diversity ***Measurements*** are comparable within ***Studies***, whereas differences among ***Studies*** are handled by the hierarchical design of the models (see below). Therefore, it is a requirement of the PREDICTS database that sampling *methods* are constant within studies. Nevertheless, for `r round((length(which(tapply(X = predicts$Sampling_effort,INDEX = predicts$SS,FUN = function(s) return(diff(range(s))))>0))/length(unique(predicts$SS)))*100,0)`% of studies, sampling effort differs among the sampled sites. We will see how we deal with this later.
 
 Most of the original biodiversity sampling in the studies contained within the PREDICTS database took place between 2000 and 2013.
 
-```{r,echo=FALSE,eval=TRUE,fig.cap="Temporal density of mid-point sampling dates for the PREDICTS sites",message=FALSE,warning=FALSE,fig.width=12,fig.height=8}
+```{r figsampleyears,echo=FALSE,eval=TRUE,fig.cap="Temporal density of mid-point sampling dates for the PREDICTS sites",message=FALSE,warning=FALSE,fig.width=12,fig.height=8}
 
 sites <- predicts %>%
   select(c('SSS','Sample_midpoint','Max_linear_extent_metres',
@@ -291,7 +330,7 @@ p
 
 Sampling at the sites in PREDICTS can span a range of different spatial extents. The maximum linear span of sampling for three-quarters of sites in the PREDICTS database falls between `r round(quantile(sites$Max_linear_extent_metres,probs=0.125,na.rm=TRUE),0)` and `r round(quantile(sites$Max_linear_extent_metres,probs=0.875,na.rm=TRUE),0)` metres.
 
-```{r,echo=FALSE,eval=TRUE,fig.cap="Density distribution of maximum linear spans sampled at the PREDICTS sites. The error bar represents the central 75% of values in the distribution",message=FALSE,warning=FALSE,fig.width=12,fig.height=8}
+```{r figsampleextents,echo=FALSE,eval=TRUE,fig.cap="Density distribution of maximum linear spans sampled at the PREDICTS sites. The error bar represents the central 75% of values in the distribution",message=FALSE,warning=FALSE,fig.width=12,fig.height=8}
 
 sites2 <- sites %>%
   subset(!is.na(Max_linear_extent_metres))
@@ -316,30 +355,13 @@ p
 
 ```
 
-```{r,echo=FALSE,eval=TRUE}
+```{r samplingtable,echo=FALSE,eval=TRUE}
 knitr::kable(colsSampling,caption="Key fields in the PREDICTS database describing biodiversity sampling")
-```
-
-```{r, echo=FALSE,eval=TRUE, fig.cap="Word cloud showing the frequence of different biodiversity metrics across the PREDICTS database. Note that counts of metrics were square-root transformed"}
-
-MetricCounts <- predicts %>% count(Diversity_metric) %>%
-  mutate(Diversity_metric = str_to_title(Diversity_metric))
-
-p <- ggplot() + 
-  geom_text_wordcloud(
-    data = MetricCounts,
-    mapping = aes(label = Diversity_metric,
-                  size = sqrt(n))) + 
-  scale_size_area(max_size = 20) + 
-  theme_minimal()
-
-p
-
 ```
 
 # Spatial Information
 
-```{r,echo=FALSE,eval=TRUE}
+```{r spatialfields,echo=FALSE,eval=TRUE}
 colsSpatial <- data.frame(Field=c('Longitude',
                                   'Latitude',
                                   'Realm',
@@ -364,18 +386,30 @@ The vast majority of sampled sites in the PREDICTS database (`r round((length(wh
 
 These geographical coordinates are then used to assign the site within various geographic schemes: biogeographic realms [@Ladle2011; @Olson2001], biomes [@Olson2001], ecoregions [@Olson2001], UN regions and sub-regions (<a href="https://unstats.un.org/unsd/methodology/m49/" target="_blank">United Nations, 1999</a>), biodiversity hotspots [@Myers2000] and high-biodiversity wilderness areas [@Brooks2006].
 
-```{r, echo=FALSE,eval=TRUE, fig.cap="Map of sites with biodiversity samples in the PREDICTS database"}
+```{r, echo=FALSE,eval=TRUE, warning=FALSE}
 
-sites3 <- predicts %>%
-  select(c('SSS','Latitude','Longitude','Biome')) %>%
-  distinct()
+studies <- predicts %>% group_by(SS) %>% 
+  summarise(n_spp = n_distinct(Taxon_name_entered),
+            Longitude = mean(Longitude),
+            Latitude = mean(Latitude))
+
+n.studies <- nrow(studies)
+n.sites <- nrow(sites)
+
+```
+
+The sites in PREDICTS are distributed across all of the world's 14 terrestrial biomes, `r n_distinct(predicts$Ecoregion)` ecoregions, and `r n_distinct(predicts$Country)` countries.
+
+```{r figsitesmap, echo=FALSE,eval=TRUE, warning=FALSE, fig.cap="Map of sites with biodiversity samples in the PREDICTS database"}
 
 world <- "C:/Users/tim_n/Downloads/outline_clip2.shp" %>% 
   vect()#  %>% geom_sf() %>% fortify()
 
 p <- ggplot() + 
   geom_spatvector(data = world) + 
-  geom_point(data = sites3,mapping = aes(x = Longitude,y = Latitude)) +
+  geom_point(data = studies,
+             mapping = aes(x = Longitude,y = Latitude,size=n_spp),
+             col = "#2E258566") +
   scale_x_continuous(name = "") + 
   scale_y_continuous(name = "") + 
   theme_classic()
@@ -383,7 +417,7 @@ p <- ggplot() +
 p
 ```
 
-```{r,echo=FALSE,eval=TRUE}
+```{r spatialtable,echo=FALSE,eval=TRUE}
 knitr::kable(colsSpatial,caption="Key fields in the PREDICTS database describing the spatial location of biodiversity sampling")
 ```
 
@@ -408,13 +442,46 @@ Land-use type is classified as one of: primary vegetation (apparently pristine h
 
 Land-use intensity is classified at one of three levels (minimal, light or intense), with the criteria for classification depending on land-use type (see [@Hudson2017] for more details)
 
-```{r,echo=FALSE,eval=TRUE}
+```{r figlanduses, echo=FALSE,eval=TRUE, warning=FALSE,fig.cap="Distribution of sites among major land uses (note that all stages of recovery of secondary vegetation have been combined in this figure"}
+
+sites3 <- predicts %>%
+  select(c('SSS','Latitude','Longitude','Predominant_land_use')) %>%
+  mutate(LandUse = recode(Predominant_land_use,
+                          'Mature secondary vegetation' = 'Secondary vegetation',
+                          'Intermediate secondary vegetation' = 'Secondary vegetation',
+                          'Young secondary vegetation' = 'Secondary vegetation',
+                          'Secondary vegetation (indeterminate age)' = 'Secondary vegetation',
+                          'Cannot decide' = NA_character_)) %>%
+  mutate(LandUse = fct_relevel(LandUse,
+                               c("Primary vegetation","Secondary vegetation",
+                                 "Plantation forest","Cropland","Pasture","Urban"))) %>%
+  distinct()
+
+LUCounts <- sites3 %>% count(LandUse) %>%
+  mutate(LandUse = str_to_title(LandUse)) %>%
+  mutate(LandUse = factor(LandUse,
+                          levels=c("Primary Vegetation","Secondary Vegetation",
+                                   "Plantation Forest","Cropland",
+                                   "Pasture","Urban")))
+
+p <- ggplot(data = LUCounts,
+            mapping = aes(area = n,
+                          fill = LandUse,
+                          label = LandUse)) + 
+  geom_treemap() + 
+  guides(fill = guide_legend(title = "Land Use"))
+
+p
+
+```
+
+```{r tablepressure,echo=FALSE,eval=TRUE}
 knitr::kable(colsPressure,caption="Key fields in the PREDICTS database describing human land-use pressures")
 ```
 
 # Taxonomic Information
 
-```{r,echo=FALSE,eval=TRUE}
+```{r taxonomicfields,echo=FALSE,eval=TRUE}
 colsTax <- data.frame(Field=c('Taxon_name_entered',
                               'Parsed_name',
                               'Taxon',
@@ -445,237 +512,11 @@ colsTax <- data.frame(Field=c('Taxon_name_entered',
                                  'The taxonomic group within which all taxa sampled in a particular study belong'))
 ```
 
-The names of the sampled taxa, as given in the original source publications, are entered directly into the database. These names were passed through a taxonomic names resolver to attempt to correct any typographical errors from the original papers. Parsed names were then compared to the Catalogue of Life or manually checked, to try to find the accepted name for the species (successfully in the vast majority - `r round((length(which(predicts$Name_status=="accepted name"))/nrow(predicts))*100,1)` - of cases).
+The names of the sampled taxa, as given in the original source publications, are entered directly into the database. These names were passed through a taxonomic names resolver to attempt to correct any typographical errors from the original papers. Parsed names were then compared to the Catalogue of Life or manually checked, to try to find the accepted name for the species.
 
-```{r,echo=FALSE,eval=TRUE}
+A total of `r format(n_distinct(predicts$Taxon_name_entered),big.mark=",")` taxonomic names are given in the original publications that underpin the PREDICTS database. After taxonomic resolution, a total of `r format(n_distinct(predicts$Best_guess_binomial),big.mark=",")` accepted Latin binomials are identified (many taxa are identified to a higher level than species, or are identified only as morpho-species).
+
+```{r tabletaxonomic,echo=FALSE,eval=TRUE}
 knitr::kable(colsTax,caption="Key fields in the PREDICTS database relating to the taxonomy of sampled taxa")
 ```
 
-# Data Pre-processing
-
-Before modelling with the PREDICTS data, there are a few basic pre-processing steps that must be carried out. First, for the `r round((as.integer(summary(predicts$Measurement==predicts$Effort_corrected_measurement)['FALSE'][[1]])/nrow(predicts))*100,1)`% of records that are of an effort-sensitive metric, and where sampling effort differs among sampled sites within the study, we need to correct sampling effort. This is done by rescaling sampling effort within each study, such that the most-sampled site gets a relative effort value of 1, and the sampling effort for all other sites is scaled linearly relative to this maximum value. The _CorrectSamplingEffort_ function in the _predictsFunctions_ package carries out these operations:
-
-```{r,echo=TRUE,results=TRUE}
-# Correct effort-sensitive abundance measures (assumes linear relationship between effort and recorded abundance)
-predicts <- predictsFunctions::CorrectSamplingEffort(diversity = predicts)
-```
-
-Next, some samples in PREDICTS were entered such that a sampled 'Site' consisted of very finely divided samples. For example, samples may have been entered as individual traps. This is not in keeping with the strict definition of a 'Site' in the PREDICTS database. To get around this issue, we combine sites with identical coordinates, belonging to the same study and spatial block of sites, sampled on the same dates, sampled with the same methods and recorded using the same diversity metric, and situated within the same land-use type and human land-use intensity. This merging of sites is carried out by the _MergeSites_ function in the _predictsFunctions_ package (warning, this operation can take a few minutes to run, so you might want to go and make a cup of tea!):
-
-```{r,echo=TRUE,results=TRUE}
-predicts <- predictsFunctions::MergeSites(diversity = predicts,silent = TRUE)
-```
-
-There are two main ways that you can now analyze the PREDICTS data:
-
-1. Using the raw species-level data, modelling the presence/absence or abundance of individual species; or
-2. Using site-level biodiversity summaries, such as species richness, total community abundance or other aggregate biodiversity measures
-
-We are now ready to build some simple models using the PREDICTS database. For the modelling, we will use my _StatisticalModels_ package, and we will use the _DHARMa_ package for model diagnostics:
-
-```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-library(StatisticalModels)
-library(DHARMa)
-```
-
-# Basic Species-level Models
-
-One way we can use the PREDICTS data is to build models based on the raw data for individual species. 
-
-So that the models run in a reasonably short amount of time, we will focus here on data for reptiles:
-
-```{r,echo=TRUE,results=TRUE}
-reptiles <- droplevels(predicts[(predicts$Class=="Reptilia"),])
-```
-
-We will create a variable called "*Occur*" that represents the presence or absence of reptile species:
-
-```{r,echo=TRUE,results=TRUE}
-# First, make sure that all records are of abundance or occurrence
-reptiles <- reptiles[(reptiles$Diversity_metric_type %in% c("Abundance","Occurrence")),]
-
-# Now, create the occurrence variable, where all values > 0 are treated as
-# presence records
-reptiles$Occur <- ifelse(reptiles$Measurement>0,1,0)
-```
-
-Before we build a model, we need to rearrange the land-use classification a bit. Any sites where the land-use type was entered as 'Cannot decide' need to be set as NA values. We will also group together secondary vegetation sites at all stages of recovery, since there are a relatively limited number of sites for reptiles.
-
-```{r,echo=TRUE,results=TRUE}
-reptiles$LandUse <- dplyr::recode(reptiles$Predominant_land_use,
-                                 'Primary vegetation' = 'Primary',
-                                 'Young secondary vegetation' = 'Secondary',
-                                 'Intermediate secondary vegetation' = 'Secondary',
-                                 'Mature secondary vegetation' = 'Secondary',
-                                 'Secondary vegetation (indeterminate age)' = "Secondary",
-                                 'Plantation forest' = 'Plantation',
-                                 'Cropland' = 'Cropland',
-                                 'Pasture' = 'Pasture',
-                                 'Urban' = 'Urban',
-                                 'Cannot decide' = NA_character_)
-```
-
-Let's try a very simple model fitting just land use. We will also build a null model for comparison.
-
-```{r,echo=TRUE,results=TRUE}
-occMod1 <- StatisticalModels::GLMER(modelData = reptiles,responseVar = "Occur",
-                               fitFamily = "binomial",fixedStruct = "LandUse",
-                               randomStruct = "(1|SS)+(1|SSB)+(1|SSBS)+(1|Taxon_name_entered)",
-                               saveVars = c("Longitude","Latitude"))
-
-# To compare the models, they need to be fit to the same dataset
-# Therefore, we first need to drop records with unknown land-use type
-reptiles.with.lu <- reptiles[(!is.na(reptiles$LandUse)),]
-
-occModNull <- StatisticalModels::GLMER(modelData = reptiles.with.lu,responseVar = "Occur",
-                                  fitFamily = "binomial",fixedStruct = "1",
-                                  randomStruct = "(1|SS)+(1|SSB)+(1|SSBS)+(1|Taxon_name_entered)",
-                                  saveVars = c("Longitude","Latitude"))
-
-print.LM(occMod1)
-
-summary.LM(occMod1)
-
-AIC(occMod1$model,occModNull$model)
-
-anova(occMod1$model,occModNull$model)
-```
-
-If we look at the pseudo R<sup>2</sup> values of the model, we can see that the random effects explain most of the variation in reptile species presence/absence, while land use explains `r round(StatisticalModels::R2GLMER(occMod1$model)$marginal*100,1)`%.
-
-```{r,echo=TRUE,results=TRUE}
-StatisticalModels::R2GLMER(occMod1$model)
-```
-
-Plotting this model shows significant declines in the probability of occurrence of reptile species in secondary vegetation, plantation forests and pastures.
-
-```{r,echo=TRUE,results=TRUE}
-PlotGLMERFactor(model = occMod1$model,data = occMod1$data,responseVar = "Prob. occurrence",logLink = "b",catEffects = "LandUse")
-```
-
-# Basic Assemblage-Level Models
-
-To use the site-level approach, you need to use the _SiteMetrics_ function to create a site-level data-frame. You can use the _extra.cols_ argument to include non-standard columns from the original PREDICTS database into the site-level data-frame. For now, we will save the land-use type, the block and site-within-block unique identifiers, *SSB* and *SSBS* (which aren't saved by default, and will be important in the modelling), and the Longitude and Latitude fields (as you will see, these will come in handy later for model checking):
-
-```{r,echo=TRUE,results=TRUE}
-sites <- predictsFunctions::SiteMetrics(diversity = predicts,
-                                           extra.cols = c("Longitude","Latitude",
-                                                          "Predominant_land_use",
-                                                          "SSB","SSBS"),
-                                           srEstimators = NULL)
-```
-
-As when we ran the species-level models, we need to rearrange the land-use classification. This time we have a lot of data available, so we will treat the secondary vegetation classes separately:
-
-```{r,echo=TRUE,results=TRUE}
-sites$LandUse <- dplyr::recode(sites$Predominant_land_use,
-                               'Primary vegetation'='Primary',
-                               'Mature secondary vegetation'='Secondary_Mature',
-                               'Intermediate secondary vegetation'='Secondary_Intermediate',
-                               'Young secondary vegetation'='Secondary_Young',
-                               'Plantation forest'='Plantation',
-                               'Cropland'='Cropland',
-                               'Pasture'='Pasture',
-                               'Urban'='Urban',
-                               'Secondary vegetation (indeterminate age)'=NA_character_,
-                               'Cannot decide'=NA_character_)
-```
-
-We will start by running a very simple model of species richness as a function just of land use.
-
-```{r,echo=TRUE,results=TRUE}
-richMod1 <- StatisticalModels::GLMER(modelData = sites,
-                                     responseVar = "Species_richness",
-                                     fitFamily = "poisson",
-                                     fixedStruct = "LandUse",
-                                     randomStruct = "(1|SS)+(1|SSB)",
-                                     saveVars = c("Longitude","Latitude"))
-```
-
-If our species richness estimates conform to a true Poisson distribution, then the mean and variance of the values should be equal. Ecological count data are often over-dispersed, whereby the variance of the values is much greater than the mean. This seems very likely to be the case here:
-
-```{r,echo=TRUE,results=TRUE}
-mean(sites$Species_richness)
-var(sites$Species_richness)
-```
-
-We can use the _GLMEROverdispersion_ function to test the model, revealing substantial over-dispersion:
-
-```{r,echo=TRUE,results=TRUE}
-StatisticalModels::GLMEROverdispersion(model = richMod1$model)
-```
-
-One way to deal with the issue of over-dispersion in Poisson mixed-effects models is to include an observation-level random effect (i.e., a random effect with one group per data point). Here, this mean fitting site identity as a random effect:
-
-```{r,echo=TRUE,results=TRUE}
-richMod2 <- StatisticalModels::GLMER(modelData = sites,
-                                     responseVar = "Species_richness",
-                                     fitFamily = "poisson",
-                                     fixedStruct = "LandUse",
-                                     randomStruct = "(1|SS)+(1|SSB)+(1|SSBS)",
-                                     saveVars = c("Longitude","Latitude"))
-
-print.LM(richMod2)
-
-summary.LM(richMod2)
-```
-
-Testing for over-dispersion in the new model shows that we have dealt with the issue successfully:
-
-```{r,echo=TRUE,results=TRUE}
-StatisticalModels::GLMEROverdispersion(model = richMod2$model)
-```
-
-Now that we have settled on a random-effects structure, we will create a null, intercept-only model with which to compare our model of the effect of land use:
-
-```{r,echo=TRUE,results=TRUE}
-# To compare the models, they need to be fit to the same dataset
-# Therefore, we first need to drop records with unknown land-use type
-sites.with.lu <- sites[!is.na(sites$LandUse),]
-
-richModNull <- StatisticalModels::GLMER(modelData = sites.with.lu,
-                                     responseVar = "Species_richness",
-                                     fitFamily = "poisson",
-                                     fixedStruct = "1",
-                                     randomStruct = "(1|SS)+(1|SSB)+(1|SSBS)",
-                                     saveVars = c("Longitude","Latitude"))
-
-```
-
-Comparing the land-use and null models shows that land use has a strong association with species richness at the PREDICTS sites:
-
-```{r,echo=TRUE,results=TRUE}
-
-AIC(richMod2$model,richModNull$model)
-
-anova(richMod2$model,richModNull$model)
-```
-
-Calculating the pseudo-R<sup>2</sup> values for the land-use model shows that land use alone only explains `r round((R2GLMER(richMod2$model)$marginal)*100,1)`% of the variation in species richness, but that is unsurprising in such a heterogeneous database.
-
-```{r,echo=TRUE,results=TRUE}
-R2GLMER(richMod2$model)
-```
-
-Plotting the modelled effects of land use on species richness shows a substantial reduction in species richness in more disturbed land uses:
-
-```{r,echo=TRUE,results=TRUE}
-PlotGLMERFactor(model = richMod2$model,data = richMod2$data,
-                responseVar = "Species richness",logLink = "e",
-                catEffects = "LandUse",xtext.srt = 45,
-                order = c(1,4,3,2,5,7,6,8),
-                params = list(mar = c(1.2, 3.5, 0.2, 0.2)))
-```
-
-With any analysis of spatial data, there is the possibility for spatial autocorrelation, meaning that data points cannot be assumed to be independent. Because of the hierarchical structure of the PREDICTS analyses, we tend to investigate spatial autocorrelation in the residuals associated with individual ***Studies*** in the original dataset. This can be done using the *SpatialAutocorrelationTest* function:
-
-```{r,echo=TRUE,results=TRUE,fig.cap="Distribution of P values from a series of tests for spatial autocorrelation in the residuals associated with underlying ***Study***. P values < 0.05 indicate significant spatial autocorrelation"}
-sat <- StatisticalModels::SpatialAutocorrelationTest(richMod2,ranefGrouping = "SS")
-
-hist(sat$P,breaks=c(0,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1),freq=FALSE)
-abline(v=0.05,lwd=2,col="#ff0000")
-```
-
-By chance, we would expect to see significant spatial autocorrelation in 5% of cases. Here the residuals associated with `r round((length(which(sat$P<0.05))/length(which(!is.na(sat$P))))*100,1)`% of studies return a significant spatial autocorrelation test.
-
-# References
