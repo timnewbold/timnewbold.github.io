@@ -1,0 +1,29 @@
+---
+title: Working with Spatial Data in R
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: true
+---
+
+# Overview
+
+This session will cover the basics of working with spatial data in R. We will work mostly with the terra package, which is very versatile.
+
+```{r echo=TRUE, results=TRUE}
+library(terra)
+```
+
+# Types of Spatial Data
+
+There are two major classes of spatial data that you will encounter: vector data, which consist of points, lines or polygons, or raster data, which describe values across a grid (typically with square grid cells, but sometimes hexagonal).
+
+## Vector Data
+
+### Points
+
+
