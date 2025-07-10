@@ -18,12 +18,162 @@ This session will cover the basics of working with spatial data in R. We will wo
 library(terra)
 ```
 
+We will also use a number of other packages:
+
+```{r echo=TRUE, results=TRUE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyterra)
+library(osmdata)
+library(rnaturalearth)
+```
+
+If you don't have any of the aforementioned packages already, you can install them using the _install.packages_ function.
+
+You will also need my _predictsFunctions_ package for working with the PREDICTS database. You can install this by running: _remotes::install_github("timnewbold/predicts-demo",subdir="predictsFunctions")_
+
+```{r echo=TRUE, results=TRUE}
+library(predictsFunctions)
+```
+
 # Types of Spatial Data
 
 There are two major classes of spatial data that you will encounter: vector data, which consist of points, lines or polygons, or raster data, which describe values across a grid (typically with square grid cells, but sometimes hexagonal).
 
 ## Vector Data
 
+There are lots of ways to load vector data in R. Ultimately, it is useful to convert vector data into the *SpatVector* data class used in the _terra_ package, as this package provides lots of functionality for working with and combining different types of spatial data. You can create a *SpatVector* object, or convert another spatial data type to this format, using the _vect_ function in _terra_
+
+There are three main ways that we can load spatial data (and indeed all types of data) in R. First, there may be packages that allow us to read data automatically from a web location. Second, we can read data from a local file stored on your computer. Third, we can create a spatial data object from within R. We will cover all of these three methods, to some extent, during the course of this tutorial.
+
+### Lines
+
+Lines are a type of vector data describing linear features. For example, in ecology we might consider data on roads or hedgerows.
+
+We will use the _osmdata_ package to query road data from Open Street Map. We will here obtain data on major roads (motorways, primary and secondary roads) in a region of New Zealand
+
+```{r echo=TRUE, results=TRUE}
+# Define bounding box for roads query
+opq(bbox = c(171.5,-43.6,172.9,-42.3)) %>%
+  # Obtain data for major highways (motorways, primary and secondary roads)
+  add_osm_feature(key = "highway", 
+                  value = c("motorway", "primary", "secondary")) %>%
+  # Convert to simple features class
+  osmdata_sf() -> 
+  nz_major
+
+# Convert to terra SpatVector object
+nz_major$osm_lines %>% vect() -> nz_major_sv
+```
+We will plot the roads map using ggplot and the geom_spatvector function from the _tidyterra_ package.
+
+```{r echo=TRUE, results=TRUE}
+p <- ggplot() + 
+  geom_spatvector(data = nz_major_sv) + 
+  scale_x_continuous(name = "",limits = c(171.5,172.9)) + 
+  scale_y_continuous(name = "",limits = c(-43.6,-42.3)) + 
+  theme_classic()
+
+p
+```
+
+Each line in a spatial vector lines dataset is described by a series of coordinates that form the vertices of each line. We can inspect these using the _geom_ function in _terra_:
+
+```{r echo=TRUE, results=TRUE}
+# Show the geometry for the first road in the dataset
+head(geom(nz_major_sv[1,]))
+```
+
+### Polygons
+
+Polygon data are very similar to vector line data, but the lines connect at the ends to form polygons.
+
+Polygons are often used to describe the boundaries of regions. In ecological studies, we might be interested in administrative regions, such as countries, or ecological regions, such as biogeographic realms, biomes or ecoregions, or many other spatial regions.
+
+Here, we will use the _rnaturalearth_ package to read in country borders, here the border of New Zealand.
+
+```{r echo=TRUE, results=TRUE}
+# Obtain polygon data describing the border of New Zealand
+ne_countries(scale = 50,returnclass = 'sv',country = "New Zealand") -> nz
+```
+
+We can plot this polygon map using the same approach we used for the roads data.
+
+```{r echo=TRUE, results=TRUE}
+p <- ggplot() + 
+  geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
+  # Limit the span of the plot because one part of New Zealand (the Chatham
+  # Islands) falls in the Western Hemisphere
+  scale_x_continuous(name = "",limits = c(165,180)) + 
+  scale_y_continuous(name = "",limits = c(-50,-30)) + 
+  theme_classic()
+
+p
+```
+
+We can then combine the plots for the polygons (New Zealand border) and lines (major roads).
+
+```{r echo=TRUE, results=TRUE}
+p <- ggplot() + 
+  geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
+  geom_spatvector(data = nz_major_sv,col="#2E2585") +
+  # Limit the span of the plot because one part of New Zealand (the Chatham
+  # Islands) falls in the Western Hemisphere
+  scale_x_continuous(name = "",limits = c(171.5,172.9)) + 
+  scale_y_continuous(name = "",limits = c(-43.6,-42.3)) + 
+  theme_classic()
+
+p
+```
+
+As with line data, polygons data are described a series of coordinates forming the vertices of each polygon, which we can see using the _geom_ function again.
+
+```{r echo=TRUE, results=TRUE}
+head(geom(nz))
+```
+
 ### Points
 
+The final type of vector data you will encounter describe single points in space.
 
+```{r echo=TRUE, results=TRUE}
+url("https://www.dropbox.com/scl/fi/0mqoacviqiiurrtplby2m/predicts.rds?rlkey=m5ijge7w1dthkvm5gbp652uel&dl=1") %>% readRDS() %>% droplevels() -> predicts_2016
+url("https://www.dropbox.com/scl/fi/3dqv4ptkqkuswxx350xbx/predicts_2022.rds?rlkey=20g6v43l0vjdh3k8e7p533hri&dl=1") %>% readRDS() %>% droplevels() -> predicts_2022
+full_join(predicts_2016,predicts_2022) -> predicts
+
+ewers2007 <- droplevels(predicts[(predicts$SS=="CC1_2007__Ewers 1"),])
+
+ewers2007 <- ewers2007 %>% CorrectSamplingEffort()
+
+ewers2007 <- ewers2007 %>% MergeSites(silent=FALSE)
+
+ewers2007 %>%
+  droplevels() %>%
+  SiteMetrics(extra.cols = c("Longitude","Latitude",
+                             "Predominant_land_use",
+                             "SSB","SSBS","Study_common_taxon","Country"),
+              srEstimators = NULL) %>%
+  mutate(LandUse = Predominant_land_use) %>% droplevels() -> sites
+
+sitesMap <- vect(sites,geom=c('Longitude','Latitude'))
+crs(sitesMap) <- "epsg:4326"
+
+p <- ggplot() + 
+  geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
+  geom_spatvector(data = sitesMap,size=1,col="#7E2954") + 
+  scale_x_continuous(name = "",limits = c(171.5,172.9)) + 
+  scale_y_continuous(name = "",limits = c(-43.6,-42.3)) + 
+  theme_classic()
+
+p
+
+p <- ggplot() + 
+  geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
+  geom_spatvector(data = nz_major_sv,col="#2E2585") +
+  geom_spatvector(data = sitesMap,size=1,col="#7E2954") + 
+  scale_x_continuous(name = "",limits = c(171.5,172.9)) + 
+  scale_y_continuous(name = "",limits = c(-43.6,-42.3)) + 
+  theme_classic()
+
+p
+```
