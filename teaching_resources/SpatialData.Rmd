@@ -14,13 +14,13 @@ output:
 
 This session will cover the basics of working with spatial data in R. We will work mostly with the terra package, which is very versatile.
 
-```{r echo=TRUE, results=TRUE}
+```{r LoadTerra, echo=TRUE, results=TRUE}
 library(terra)
 ```
 
 We will also use a number of other packages:
 
-```{r echo=TRUE, results=TRUE, message=FALSE, warning=FALSE}
+```{r LoadPackages, echo=TRUE, results=TRUE, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
 library(tidyterra)
@@ -29,12 +29,6 @@ library(rnaturalearth)
 ```
 
 If you don't have any of the aforementioned packages already, you can install them using the _install.packages_ function.
-
-You will also need my _predictsFunctions_ package for working with the PREDICTS database. You can install this by running: _remotes::install_github("timnewbold/predicts-demo",subdir="predictsFunctions")_
-
-```{r echo=TRUE, results=TRUE}
-library(predictsFunctions)
-```
 
 # Types of Spatial Data
 
@@ -50,9 +44,9 @@ There are three main ways that we can load spatial data (and indeed all types of
 
 Lines are a type of vector data describing linear features. For example, in ecology we might consider data on roads or hedgerows.
 
-We will use the _osmdata_ package to query road data from Open Street Map. We will here obtain data on major roads (motorways, primary and secondary roads) in a region of New Zealand
+We will use the _osmdata_ package to query road data from Open Street Map. We will here obtain data on major roads (motorways, primary and secondary roads) in a region of New Zealand. This package reads in roads data in a bespoke format. We will first convert the data to a 'simple features' format using the _osmdata_sf_ function. Then, we can convert to a _terra_ package SpatVector format using the _vect_ function.
 
-```{r echo=TRUE, results=TRUE}
+```{r GetRoadsData, echo=TRUE, results=TRUE}
 # Define bounding box for roads query
 opq(bbox = c(171.5,-43.6,172.9,-42.3)) %>%
   # Obtain data for major highways (motorways, primary and secondary roads)
@@ -62,12 +56,13 @@ opq(bbox = c(171.5,-43.6,172.9,-42.3)) %>%
   osmdata_sf() -> 
   nz_major
 
-# Convert to terra SpatVector object
+# Convert to terra SpatVector object (the osm_lines part of the original object
+# contains the actual roads data we are interested in)
 nz_major$osm_lines %>% vect() -> nz_major_sv
 ```
 We will plot the roads map using ggplot and the geom_spatvector function from the _tidyterra_ package.
 
-```{r echo=TRUE, results=TRUE}
+```{r PlotRoads, echo=TRUE, results=TRUE}
 p <- ggplot() + 
   geom_spatvector(data = nz_major_sv) + 
   scale_x_continuous(name = "",limits = c(171.5,172.9)) + 
@@ -79,10 +74,12 @@ p
 
 Each line in a spatial vector lines dataset is described by a series of coordinates that form the vertices of each line. We can inspect these using the _geom_ function in _terra_:
 
-```{r echo=TRUE, results=TRUE}
+```{r InspectRoadsData, echo=TRUE, results=TRUE}
 # Show the geometry for the first road in the dataset
 head(geom(nz_major_sv[1,]))
 ```
+
+The first six rows here all refer to the same geometry, _(geom = 1)_, because the coordinates of these rows are all vertices of the first road in the dataset. In total, there are 3668 different roads (geometries) in this dataset.
 
 ### Polygons
 
@@ -90,16 +87,16 @@ Polygon data are very similar to vector line data, but the lines connect at the 
 
 Polygons are often used to describe the boundaries of regions. In ecological studies, we might be interested in administrative regions, such as countries, or ecological regions, such as biogeographic realms, biomes or ecoregions, or many other spatial regions.
 
-Here, we will use the _rnaturalearth_ package to read in country borders, here the border of New Zealand.
+Here, we will use the _rnaturalearth_ package to read in country borders, here the border of New Zealand. This package has the option to return the data directly as a _terra_ package 'SpatVector' object: _returnClass='sv'_.
 
-```{r echo=TRUE, results=TRUE}
+```{r GetCountriesData, echo=TRUE, results=TRUE}
 # Obtain polygon data describing the border of New Zealand
 ne_countries(scale = 50,returnclass = 'sv',country = "New Zealand") -> nz
 ```
 
 We can plot this polygon map using the same approach we used for the roads data.
 
-```{r echo=TRUE, results=TRUE}
+```{r PlotCountries1, echo=TRUE, results=TRUE}
 p <- ggplot() + 
   geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
   # Limit the span of the plot because one part of New Zealand (the Chatham
@@ -113,7 +110,7 @@ p
 
 We can then combine the plots for the polygons (New Zealand border) and lines (major roads).
 
-```{r echo=TRUE, results=TRUE}
+```{r PlotCountries2, echo=TRUE, results=TRUE}
 p <- ggplot() + 
   geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
   geom_spatvector(data = nz_major_sv,col="#2E2585") +
@@ -128,15 +125,27 @@ p
 
 As with line data, polygons data are described a series of coordinates forming the vertices of each polygon, which we can see using the _geom_ function again.
 
-```{r echo=TRUE, results=TRUE}
+```{r InspectCountriesData, echo=TRUE, results=TRUE}
 head(geom(nz))
 ```
+
+Here, all rows belong to the same geometry, _(geom = 1)_ (New Zealand), but the data are separated into 13 different polygons (parts). Here, the first six rows that we see are all vertices for the first polygon/'part'. With polygon data, the final column, _hole_ tells us whether a vertex belongs to an inner hole rather than the outer boundary (although there aren't any holes in the New Zealand map). 
 
 ### Points
 
 The final type of vector data you will encounter describe single points in space.
 
-```{r echo=TRUE, results=TRUE}
+To illustrate point data, we will use a dataset from within the PREDICTS database, which you will encounter later.
+
+For this, you will need my _predictsFunctions_ package for working with the PREDICTS database. You can install this by running: _remotes::install_github("timnewbold/predicts-demo",subdir="predictsFunctions")_
+
+```{r LoadPREDICTSPackage, echo=TRUE, results=TRUE}
+library(predictsFunctions)
+```
+
+For now, don't worry about the details of this code. It just obtains the PREDICTS database, selects data from a single study on beetles in New Zealand, and calculates species richness for the locations sampled.
+
+```{r GetPREDICTSData, echo=TRUE, results=TRUE, message=FALSE}
 url("https://www.dropbox.com/scl/fi/0mqoacviqiiurrtplby2m/predicts.rds?rlkey=m5ijge7w1dthkvm5gbp652uel&dl=1") %>% readRDS() %>% droplevels() -> predicts_2016
 url("https://www.dropbox.com/scl/fi/3dqv4ptkqkuswxx350xbx/predicts_2022.rds?rlkey=20g6v43l0vjdh3k8e7p533hri&dl=1") %>% readRDS() %>% droplevels() -> predicts_2022
 full_join(predicts_2016,predicts_2022) -> predicts
@@ -155,25 +164,122 @@ ewers2007 %>%
               srEstimators = NULL) %>%
   mutate(LandUse = Predominant_land_use) %>% droplevels() -> sites
 
+```
+
+At the moment, we just have a data frame that contains the sampled locations, with their latitude and longitude coordinates. To work with these data as spatial data, we need to convert them into a proper spatial object. To do this, we can use the _vect_ function to create a vector spatial object from our data, specifying the 'Longitude' and 'Latitude' columns as the geometry (the spatial coordinates).
+
+Because we are creating these data from scratch, we need to specify the coordinate and projection system. Much more on this later, but for now we will simply specify the coordinate system using the _crs_ function. We will use a simple geographical projection based on the World Geodetic System 1984 (WGS84) coordinate system (this is projection number 4326 in the EPSG list).
+
+```{r MakePREDICTSSitesMap, echo=TRUE, eval=TRUE}
+
 sitesMap <- vect(sites,geom=c('Longitude','Latitude'))
 crs(sitesMap) <- "epsg:4326"
 
+```
+
+As before, we can plot the vector data using the _geom_spatvector_ function with _ggplot_. Again, we will add the map of New Zealand as background.
+
+```{r PlotPREDICTSSites1, echo=TRUE, eval=TRUE}
 p <- ggplot() + 
   geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
   geom_spatvector(data = sitesMap,size=1,col="#7E2954") + 
-  scale_x_continuous(name = "",limits = c(171.5,172.9)) + 
-  scale_y_continuous(name = "",limits = c(-43.6,-42.3)) + 
-  theme_classic()
-
-p
-
-p <- ggplot() + 
-  geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
-  geom_spatvector(data = nz_major_sv,col="#2E2585") +
-  geom_spatvector(data = sitesMap,size=1,col="#7E2954") + 
-  scale_x_continuous(name = "",limits = c(171.5,172.9)) + 
-  scale_y_continuous(name = "",limits = c(-43.6,-42.3)) + 
+  scale_x_continuous(name = "",limits = c(165,180)) + 
+  scale_y_continuous(name = "",limits = c(-50,-30)) + 
   theme_classic()
 
 p
 ```
+
+Zooming in to just the region where sampled locations lie, we can see the spatial arrangement of the points a bit better.
+
+```{r PlotPREDICTSSites2, echo=TRUE, eval=TRUE}
+p <- ggplot() + 
+  geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
+  geom_spatvector(data = sitesMap,size=1,col="#7E2954") + 
+  scale_x_continuous(name = "",limits = c(172.3,172.5)) + 
+  scale_y_continuous(name = "",limits = c(-42.65,-42.45)) + 
+  theme_classic()
+
+p
+```
+
+We could also add the roads data (here we only see one road becuase we are looking at a remote region in New Zealand)
+
+```{r PlotPREDICTSSites3, echo=TRUE, eval=TRUE}
+p <- ggplot() + 
+  geom_spatvector(data = nz,fill="#5DA89955",col="#00000000") + 
+  geom_spatvector(data = nz_major_sv,col="#2E2585") +
+  geom_spatvector(data = sitesMap,size=1,col="#7E2954") + 
+  scale_x_continuous(name = "",limits = c(172.3,172.5)) + 
+  scale_y_continuous(name = "",limits = c(-42.65,-42.45)) + 
+  theme_classic()
+
+p
+```
+
+The full original dataset is still contained within the map object:
+
+```{r InspectPREDICTSSitesData, echo=TRUE, eval=TRUE}
+head(sitesMap)
+```
+
+Just as we did before with the other vector data types, we can inspect the geometry of the points map:
+
+```{r InspectPREDICTSSitesMap, echo=TRUE, eval=TRUE}
+head(geom(sitesMap))
+```
+
+Here, each row belongs to a different geometry (point) with specific (point) coordinates.
+
+## Raster Data
+
+We have now covered the three vector spatial data types. Now, we will move onto raster data, which have a different structure. In raster data, we have data values for each cell within a spatial grid. Generally this grid consists of square cells, but you may sometimes come across rasters with rectangular or even hexagonal grid cells.
+
+Whereas before we read in vector spatial data using the _vect_ function in the *_terra_* package, now we will use the _rast_ function (also from the *_terra_* package) to read and create raster data.
+
+We will first read in an example raster dataset from file. This dataset describes the proportion of natural habitat globally at a 30-arc-second resolution, although for a lighter-weight download here we will work with a subset of these data just for New Zealand.
+
+<div style="background-color: #f0f0f0; color: black; padding: 15px; border: none;">
+  <strong style="font-size: 1.1em;">A Note on Spatial Resolution</strong><br>
+  This is a light grey text box with black writing and no border.
+</div>
+
+```{r ReadNaturalHabitatData, echo=TRUE, eval=TRUE}
+
+rast("https://www.dropbox.com/scl/fi/y8jr7uawyp1c4zcrscgiy/ProportionNaturalHabitatNewZealand.tif?rlkey=e4ecfbapcaf934et3l93if7sb&dl=1") ->
+  propn_natural
+
+```
+```{r PlotNaturalHabitat1, echo=TRUE, eval=TRUE}
+p <- ggplot() + 
+  geom_spatraster(data = propn_natural) + 
+  scale_fill_grass_c(palette = 'forest_cover') + 
+  theme_classic()
+
+p
+```
+
+```{r, echo=TRUE, eval=TRUE}
+p <- ggplot() + 
+  geom_spatraster(data = propn_natural) + 
+  scale_fill_grass_c(palette = 'forest_cover') + 
+  geom_spatvector(data = nz_major_sv,col="#2E2585") +
+  geom_spatvector(data = sitesMap,size=1,col="#7E2954") + 
+  scale_x_continuous(name = "",limits = c(172.3,172.5)) + 
+  scale_y_continuous(name = "",limits = c(-42.66,-42.45)) + 
+  theme_classic()
+
+p
+```
+
+Grid coordinates
+
+Inspecting summary of grid values
+
+Arithmetic operations - convert to percentage
+
+
+
+# Coordinate and Projection Systems
+
+# Combining Spatial Data and Making Calculations
