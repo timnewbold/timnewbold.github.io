@@ -26,6 +26,7 @@ library(ggplot2)
 library(tidyterra)
 library(osmdata)
 library(rnaturalearth)
+library(geodata)
 ```
 
 If you don't have any of the aforementioned packages already, you can install them using the _install.packages_ function.
@@ -154,7 +155,7 @@ ewers2007 <- droplevels(predicts[(predicts$SS=="CC1_2007__Ewers 1"),])
 
 ewers2007 <- ewers2007 %>% CorrectSamplingEffort()
 
-ewers2007 <- ewers2007 %>% MergeSites(silent=FALSE)
+ewers2007 <- ewers2007 %>% MergeSites(silent=TRUE)
 
 ewers2007 %>%
   droplevels() %>%
@@ -237,11 +238,17 @@ We have now covered the three vector spatial data types. Now, we will move onto 
 
 Whereas before we read in vector spatial data using the _vect_ function in the *_terra_* package, now we will use the _rast_ function (also from the *_terra_* package) to read and create raster data.
 
-We will first read in an example raster dataset from file. This dataset describes the proportion of natural habitat globally at a 30-arc-second resolution, although for a lighter-weight download here we will work with a subset of these data just for New Zealand.
+We will first read in an example raster dataset from file. This dataset describes the proportion of natural habitat globally at a 30-arc-second resolution (see box, below), although for a lighter-weight download here we will work with a subset of these data just for New Zealand.
 
 <div style="background-color: #f0f0f0; color: black; padding: 15px; border: none;">
   <strong style="font-size: 1.1em;">A Note on Spatial Resolution</strong><br>
-  This is a light grey text box with black writing and no border.
+  <p>For rasters that are in a geographic projection (see more on projection systems later), the spatial units of the  raster are degrees of longitude/latitude.</p>
+  
+  <p>Thus, the resolution of such a raster can be described in terms of degrees (1 degree, 0.5 degrees etc.). Or, it can be described in terms of arc-minutes. There are 60 arc-minutes in a degree, and so a 0.5 degree resolution is the same as 30 arc-minute resolution. Alternatively, the resolution can be given in arc-seconds. There are 60 arc-seconds in an arc-minute, and so 3600 arc-seconds in a degree.</p>
+  
+  <p>For a raster with square cells, you obviously need just one value to describe resolution. In the rare case of a raster with rectangular cells, you need two values.</p>
+  
+  <p>For a raster with hexagonal cells, resolution is described using a bespoke system. For example, in the H3 system (implemented in the _h3_ package, in case you are interested), resolutions  range from 0, which is a very coarse resolution where each hexagon covers approximately 4 million km<sup>2</sup>, to 15, which is an incredibly fine resolution, with each hexagon covering less than 1 m<sup>2</sup>.</p>
 </div>
 
 ```{r ReadNaturalHabitatData, echo=TRUE, eval=TRUE}
@@ -272,14 +279,75 @@ p <- ggplot() +
 p
 ```
 
-Grid coordinates
+Similar to a vector object, where each point or line/polygon vertex is described by a pair of coordinates (longitude and latitude), the raster object contains a pair of coordinates representing the centre of each cell. We can show the coordinates using the _crds_ function.
 
-Inspecting summary of grid values
+```{r RasterCoordinates, echo=TRUE, eval=TRUE}
+head(crds(propn_natural))
+```
 
-Arithmetic operations - convert to percentage
+Besides the coordinates for each grid cell, the other main information in a raster object are the values of the variable shown in the raster (here the proportional coverage of natural habitats). We can show these values using the _values_ function.
 
+```{r RasterValues, echo=TRUE, eval=TRUE}
+summary(values(propn_natural))
+```
 
+```{r RasterValuesHistogram, echo=TRUE, eval=TRUE, warning=FALSE}
+ggplot() + 
+  geom_histogram(mapping = aes(x = values(propn_natural))) + 
+  theme_classic()
+```
+
+It is very simple to perform arithmetic operations on raster objects in R. You simply pass the whole raster into a calculation just as you would any other object. For example, let's convert our raster describing proportional coverage of natural habitats into percentage values by multiplying by 100:
+
+```{r PercentNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE}
+perc_natural <- propn_natural * 100
+
+# We have to use the basic colour scheme here, as the one we used before
+# only works on 0 to 1 values
+p <- ggplot() + 
+  geom_spatraster(data = perc_natural) + 
+  theme_classic()
+
+p
+```
+
+You can also combine two or more separate rasters into a calculation (as long as they have an identical spatial domain and resolution).
 
 # Coordinate and Projection Systems
 
+All maps captured as 2-dimensional objects are a representation of a 3-dimensional (spherical) world. The way that this conversion works depends on the coordinate and projection system used.
+
+The simplest way of representing spatial data is using a geographical projection, where space is described in terms of degrees of longitude and latitude, and the spatial unit is degrees.
+
+Because the Earth isn't perfectly spherical, longitude and latitude coordinates are mapped using a theoretical representation of the Earth's surface. This is called the 'geodetic' system. Different systems can produce coordinates that vary, sometimes by as much as several hundred metres. A very commonly used coordinate system is the World Geodetic System 1984 (WGS84 for short).
+
+For this part of the tutorial, we will work with global climate data from WorldClim, which we can obtain using the _geodata_ package in R.
+
+```{r GetTemperatureData, echo=TRUE, eval=TRUE, results=TRUE}
+# Read average temperature at 5 arc-minutes resolution
+temp <- worldclim_global(var = "tavg",res = 5,path = tempdir())
+```
+
+These data describe the average temperature in each of the months of the year, at a resolution of 5 arc-minutes, and mapped with a geographical projection and the WGS84 coordinate system.
+
+We will first average the estimates of temperature across the 12 months, to obtain a single annual average temperature.
+
+```{r AverageTemperatureData, echo=TRUE, eval=TRUE, results=TRUE}
+AnnAvgTemp <- mean(temp)
+```
+
+```{r PlotTemperatureWGS84, echo=TRUE, eval=TRUE, results=TRUE}
+p <- ggplot() + 
+  geom_spatraster(data = AnnAvgTemp) + 
+  scale_fill_grass_c(palette = 'celsius') + 
+  theme_classic()
+
+p
+```
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE}
+summary(cellSize(AnnAvgTemp))
+```
 # Combining Spatial Data and Making Calculations
+
+# Exercises
