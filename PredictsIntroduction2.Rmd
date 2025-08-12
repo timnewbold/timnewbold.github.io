@@ -180,7 +180,9 @@ You can get started quickly by downloading the PREDICTS database from my website
 # First we need to download and load the main 2016 release, as well as the 
 # supplementary data released in 2022
 url("https://www.dropbox.com/scl/fi/0mqoacviqiiurrtplby2m/predicts.rds?rlkey=m5ijge7w1dthkvm5gbp652uel&dl=1") %>% readRDS() %>% droplevels() -> predicts_2016
+
 url("https://www.dropbox.com/scl/fi/3dqv4ptkqkuswxx350xbx/predicts_2022.rds?rlkey=20g6v43l0vjdh3k8e7p533hri&dl=1") %>% readRDS() %>% droplevels() -> predicts_2022
+
 full_join(predicts_2016,predicts_2022) -> predicts
 ```
 
