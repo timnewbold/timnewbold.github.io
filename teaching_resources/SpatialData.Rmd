@@ -21,6 +21,7 @@ library(terra)
 We will also use a number of other packages:
 
 ```{r LoadPackages, echo=TRUE, results=TRUE, message=FALSE, warning=FALSE}
+library(sf)
 library(dplyr)
 library(ggplot2)
 library(tidyterra)
@@ -257,16 +258,22 @@ rast("https://www.dropbox.com/scl/fi/y8jr7uawyp1c4zcrscgiy/ProportionNaturalHabi
   propn_natural
 
 ```
+
+We can plot rasters using the _tidyterra_ package again, this time using the _geom_spatraster_ function.
+
 ```{r PlotNaturalHabitat1, echo=TRUE, eval=TRUE}
 p <- ggplot() + 
   geom_spatraster(data = propn_natural) + 
+  # This function allows the use of a range of nice colour palettes
   scale_fill_grass_c(palette = 'forest_cover') + 
   theme_classic()
 
 p
 ```
 
-```{r, echo=TRUE, eval=TRUE}
+We can also combine vector maps as an overlay, here showing the proportion of natural habitat, as well as roads and PREDICTS sites for the study region we looked at previously.
+
+```{r PlotNaturalHabitatStudyRegion, echo=TRUE, eval=TRUE}
 p <- ggplot() + 
   geom_spatraster(data = propn_natural) + 
   scale_fill_grass_c(palette = 'forest_cover') + 
@@ -282,20 +289,31 @@ p
 Similar to a vector object, where each point or line/polygon vertex is described by a pair of coordinates (longitude and latitude), the raster object contains a pair of coordinates representing the centre of each cell. We can show the coordinates using the _crds_ function.
 
 ```{r RasterCoordinates, echo=TRUE, eval=TRUE}
-head(crds(propn_natural))
+# Here we set na.rm=FALSE so that we show the coordinates for all cells in
+# the grid, not just those with non-NA values
+head(crds(propn_natural,na.rm=FALSE))
 ```
+You can see that this function (as do all functions that extract properties of individual raster grid cells) shows the top row of cells first, then the second row, the third, etc.
 
-Besides the coordinates for each grid cell, the other main information in a raster object are the values of the variable shown in the raster (here the proportional coverage of natural habitats). We can show these values using the _values_ function.
+Besides the coordinates for each grid cell, the other main information in a raster object are the values of the variable shown in the raster (here the proportional coverage of natural habitats). We can show these values using the _values_ function. Again, this function returns the values for the top row of cells first, then each following row of data.
 
 ```{r RasterValues, echo=TRUE, eval=TRUE}
 summary(values(propn_natural))
 ```
 
-```{r RasterValuesHistogram, echo=TRUE, eval=TRUE, warning=FALSE}
+```{r RasterValuesHistogram, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 ggplot() + 
   geom_histogram(mapping = aes(x = values(propn_natural))) + 
   theme_classic()
 ```
+
+Calling the raster object itself in R gives us an overview of all the properties of the raster.
+
+```{r RasterProperties, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+propn_natural
+```
+
+Here, we can see that this raster consists of 2,400 rows and 1,799 columns of data, has a spatial resolution of 30 arc-seconds (0.0083333 of a decimal degree), spans from 165 to 180 degrees of longitude (xmin and xmax) and from -50 to -30 degrees of latitude (ymin and ymax), uses the WGS84 coordinate reference system (more on this below), and has raster values (representing the proportion of natural habitat) ranging from 0.016 to 1.
 
 It is very simple to perform arithmetic operations on raster objects in R. You simply pass the whole raster into a calculation just as you would any other object. For example, let's convert our raster describing proportional coverage of natural habitats into percentage values by multiplying by 100:
 
@@ -313,6 +331,44 @@ p
 
 You can also combine two or more separate rasters into a calculation (as long as they have an identical spatial domain and resolution).
 
+### Resampling/Aggregating rasters
+
+It is often the case that we need a raster to be in a different spatial resolution than the one provided, for example because we have other datasets with a different resolution and we want to ensure consistency.
+
+There are two main ways that we can change the spatial resolution of a raster. The simplest is aggregation, where we change the resolution of a map by a specific factor. For this, we can use the _aggregate_ function in the _terra_ package. For this method, we specify a function to use when aggregating. Here, we will take a simple average, using the _mean_ function, and ignoring NA values.
+
+```{r AggregateNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+propn_natural_5a <- aggregate(x = propn_natural,fact = 10,fun = function(x) mean(x, na.rm=TRUE))
+
+p <- ggplot() + 
+  geom_spatraster(data = propn_natural_5a) + 
+  # This function allows the use of a range of nice colour palettes
+  scale_fill_grass_c(palette = 'forest_cover') + 
+  theme_classic()
+
+p
+```
+
+If you look carefully, you will see that the resulting map has a more blocky appearance than the original, owing to its coarser spatial resolution.
+
+Note, that there is also a _disaggregate_ function, if you need to convert your original map to one with a finer spatial resolution.
+
+If you need to change to a resolution that is not a simple factor of the original, or for other sorts of flexibility in changing resolution, you can use the _resample_ function, also in the _terra_ package. The default method to use for combining the values of cells is something called 'bilinear interpolation', which interpolates across several cells. Here, we will use a simple average _(method = "average")_, for comparability with the map we created using aggregation. There are also other methods you can use, including using the value for the nearest neighbour, which is useful if you have a map that describes categories rather than continuous values.
+
+```{r ResampleNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+propn_natural_5b <- resample(x = propn_natural,y = propn_natural_5a,method="average")
+
+p <- ggplot() + 
+  geom_spatraster(data = propn_natural_5b) + 
+  # This function allows the use of a range of nice colour palettes
+  scale_fill_grass_c(palette = 'forest_cover') + 
+  theme_classic()
+
+p
+```
+
+You can see that this map is essentially identical to the one we created before.
+
 # Coordinate and Projection Systems
 
 All maps captured as 2-dimensional objects are a representation of a 3-dimensional (spherical) world. The way that this conversion works depends on the coordinate and projection system used.
@@ -323,20 +379,20 @@ Because the Earth isn't perfectly spherical, longitude and latitude coordinates 
 
 For this part of the tutorial, we will work with global climate data from WorldClim, which we can obtain using the _geodata_ package in R.
 
-```{r GetTemperatureData, echo=TRUE, eval=TRUE, results=TRUE}
+```{r GetTemperatureData, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 # Read average temperature at 5 arc-minutes resolution
 temp <- worldclim_global(var = "tavg",res = 5,path = tempdir())
 ```
 
-These data describe the average temperature in each of the months of the year, at a resolution of 5 arc-minutes, and mapped with a geographical projection and the WGS84 coordinate system.
+These data describe the average temperature in each of the months of the year, at a resolution of 5 arc-minutes, and are mapped with a geographical projection and the WGS84 coordinate system.
 
 We will first average the estimates of temperature across the 12 months, to obtain a single annual average temperature.
 
-```{r AverageTemperatureData, echo=TRUE, eval=TRUE, results=TRUE}
+```{r AverageTemperatureData, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 AnnAvgTemp <- mean(temp)
 ```
 
-```{r PlotTemperatureWGS84, echo=TRUE, eval=TRUE, results=TRUE}
+```{r PlotTemperatureWGS84, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 p <- ggplot() + 
   geom_spatraster(data = AnnAvgTemp) + 
   scale_fill_grass_c(palette = 'celsius') + 
@@ -345,9 +401,118 @@ p <- ggplot() +
 p
 ```
 
-```{r, echo=TRUE, eval=TRUE, results=TRUE}
+This map is probably very similar to many depictions you have seen of the world map.
+
+However, the area covered by each grid cell on a grid defined by degrees of longitude and latitude varies enormously from the Equator to the Poles.
+
+Here we can use the _cellSize_ function to extract the area (in m<sup>2</sup>) of each grid cell in our raster. This function actually returns a raster of cell sizes. We can first show a simple summary of the grid cell areas, showing variation from just over a half a km<sup>2</sup> (567,025 m<sup>2</sup>) to over 85 km<sup>2</sup> (85,477,893 m<sup>2</sup>).
+
+```{r SummarizeCellSizes, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 summary(cellSize(AnnAvgTemp))
 ```
+
+By plotting the area of the grid cells against latitude, we can see (as expected) that cell areas are tiny at the poles, but enormous at the Equator.
+
+```{r PlotLatitudeCellArea, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+# Take a sample of cells consisting of the first cell in each row in the grid
+samp <- seq(from=1,to=9326881, by=4320)
+
+p <- ggplot() + 
+  # Note here that the second column returned by the crds function gives
+  # the latitudes of the grid cells
+  geom_point(mapping = aes(x = crds(AnnAvgTemp,na.rm=FALSE)[,2][samp],
+                           # Devide cell areas by 1,000,000 to convert to km2
+                           y = values(cellSize(AnnAvgTemp))[samp]/1e6)) + 
+  scale_x_continuous(name = "Latitude (decimal degrees)",
+                     breaks = seq(from=-90,to=90,by=10)) + 
+  scale_y_continuous(name = "Cell area (square km)") + 
+  geom_vline(mapping = aes(xintercept = 0),colour = "#BF2C23",
+                           linewidth = 1.5,linetype = "dashed") + 
+  theme_classic()
+
+p
+
+```
+
+Having such widely varying cell areas can be a problem for scientific studies, particularly in ecology, where many of the masurements we make of ecological communities vary depending on the spatial scale at which we measure them. 
+
+A solution to this problem is to change to using a projection that represents the world in such a way that grid cells have equal areas. This is called an equal-area projection, of which there are many examples. Here, we will use the Behrmann cylindrical equal area projection, and refer to it using its EPSG code (53017). See [https://epsg.io/](https://epsg.io/) for more details on these codes. We will specify here that we want an output cell resolution of 10,000 m.
+
+```{r ProjectTemperatureMap, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+AnnAvgTemp_EA <- project(x = AnnAvgTemp,y = "epsg:53017", res = 10000)
+
+AnnAvgTemp_EA
+```
+
+Inspecting the summary of this map, we can see a few key differences compared to the previous maps with the WGS84 geographic projection. Most importantly, all spatial units now are in m rather than degrees of latitude/longitude. So the spatial resolution here is 10,000 m (as we specified), and the values describing the extent of the map are also given in m. Similarly, if we inspect the coordinates of this map, these are also given in units of m rather than degrees of longitude/latitude.
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+head(crds(AnnAvgTemp_EA,na.rm=FALSE))
+```
+
+When projecting a raster map in this way, R has to combine the values of different cells to obtain values for the new grid. By default, the project function uses an averaging procedure called _bilinear interpolation_, but you can also specify simple averaging or the use of nearerst-neighbour values instead (the latter is useful if your data consist of categories rather than continuous values).
+
+If we plot this map, we can see that the representation of the world correctly shows the larger area encompassed by tropical regions such as Africa.
+
+```{r PlotTemperatureBehrmann, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+p <- ggplot() + 
+  geom_spatraster(data = AnnAvgTemp_EA) + 
+  scale_fill_grass_c(palette = 'celsius') + 
+  theme_classic()
+
+p
+```
+
+The cell areas are now much more consistent, although there is still some variation, particularly at extreme polar latitudes (no projection is perfect).
+
+```{r SummarizeCellSizesBehrmann, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+summary(cellSize(AnnAvgTemp))
+```
+
+We can project spatial vector objects in exactly the same way as for rasters.
+
+So, for example, let's project the sites sampled in the New Zealand beetles study and the New Zealand roads map to the same equal-area projection we have been using so far. We will also project the natural habitat map while we are at it.
+
+```{r ResampleNewZealandData, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+nz_major_sv_EA <- project(x = nz_major_sv,y = "epsg:53017")
+sitesMap_EA <- project(x = sitesMap,y = "epsg:53017")
+propn_natural_EA <- project(propn_natural,y = "epsg:53017",res = 1000)
+
+p <- ggplot() + 
+  geom_spatraster(data = propn_natural_EA) + 
+  scale_fill_grass_c(palette = 'forest_cover') + 
+  geom_spatvector(data = nz_major_sv_EA) + 
+  geom_spatvector(data = sitesMap_EA) + 
+  # Note that we are having to set the plotting limits in units of metres here
+  scale_x_continuous(name = "",limits = c(1.659e7,1.661e7)) +
+  scale_y_continuous(name = "",limits = c(-4.99e6,-4.96e6)) + 
+  theme_classic()
+
+p
+```
+
 # Combining Spatial Data and Making Calculations
+
+In the final section of this tutorial, we will look at how to combine different spatial datasets to make calculations for use in later analyses.
+
+We will focus in this session on extracting values of a raster at specified points, and on calculating distances between objects. These are commonly used methods in GIS, and are often very useful in scientific studies.
+
+Extracting values from a raster is very simple using the _extract_ function in the _terra_ package. We simply specify the raster we want to obtain values from, and the points at which we want to extract values.
+
+```{r ExtractNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+# Here the main data layer is labelled 'PRI_1km_2005_0ice' from the original data source. We have to specify that we want these values from the output produced by the extract function (otherwise we get cell IDs)
+sitesMap_EA$NaturalHabitat <- extract(
+  x = propn_natural_EA,
+  y = sitesMap_EA)$PRI_1km_2005_0ice
+```
+
+```{r DistanceToRoads, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+AllDistances <- st_distance(x = st_as_sf(sitesMap_EA),
+                            y = st_as_sf(nz_major_sv_EA))
+
+MinDistances <- apply(AllDistances, 1, min)
+
+sitesMap_EA$RoadDistance <- MinDistances
+```
 
 # Exercises
