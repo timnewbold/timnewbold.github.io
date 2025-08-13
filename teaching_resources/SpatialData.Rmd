@@ -497,7 +497,11 @@ In the final section of this tutorial, we will look at how to combine different 
 
 We will focus in this session on extracting values of a raster at specified points, and on calculating distances between objects. These are commonly used methods in GIS, and are often very useful in scientific studies.
 
+## Extracting Raster/Polygon Values at Specified Points
+
 Extracting values from a raster is very simple using the _extract_ function in the _terra_ package. We simply specify the raster we want to obtain values from, and the points at which we want to extract values.
+
+It is important to make sure, as we have already done in the previous section, that the raster map and the points map are in the same spatial projection, and that the units of the coordinates match. Otherwise, the resulting extracted values may be inaccurate.
 
 ```{r ExtractNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 # Here the main data layer is labelled 'PRI_1km_2005_0ice' from the original data source. We have to specify that we want these values from the output produced by the extract function (otherwise we get cell IDs)
@@ -506,13 +510,81 @@ sitesMap_EA$NaturalHabitat <- extract(
   y = sitesMap_EA)$PRI_1km_2005_0ice
 ```
 
-```{r DistanceToRoads, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-AllDistances <- st_distance(x = st_as_sf(sitesMap_EA),
-                            y = st_as_sf(nz_major_sv_EA))
+As well as specifying a spatial object of the points at which we want to extract values, we can also just specify the coordinates directly (again, making sure that these coordinates have the same spatial projection and units as the raster map).
 
+```{r ExractNaturalHabitatCoords, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+natHabExtract <- extract(x = propn_natural_EA,y = crds(sitesMap_EA))$PRI_1km_2005_0ice
+
+natHab <- data.frame(NaturalHabitat=natHabExtract)
+
+ggplot() + 
+  geom_histogram(data = natHab,mapping = aes(x = NaturalHabitat)) + 
+  theme_classic()
+```
+
+We can also extract values at specified points from a polygon object. So, for example, we could compare our points map to the polygon map of countries we worked with earlier. As before, we need to specify the label for the column of data we want to return. Here, we will ask for the ISO3 country code (column 'iso_a3').
+
+```{r ExtractPolygon, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+# We didn't project the New Zealand map to an equal-area projection earlier,
+# so we will do that now
+nz_EA <- project(x = nz, y = "epsg:53017")
+
+countryExtract <- extract(x = nz_EA, y = sitesMap_EA)$iso_a3
+
+table(countryExtract)
+```
+
+Not surprisingly, the only value we obtain is the country code for New Zealand.
+
+## Calculating Distances
+
+To begin with, we will focus in a simple calculation of distances, namely getting the shortest distance from a set of points to a set of lines (here, the roads map we worked with earlier). Other distance calcaulations for vector maps, such as distances to the nearest edge of a polygon or distances between two sets of points, follow the same basic principles.
+
+For this section of the tutorial, we will be working with the 'distance' function from the _terra_ package. This is a very flexible function that allows the calculation of all sorts of different distance measurements.
+
+The function itself calculates all pairwise differences, and so afterwards we need to calculate the minimum distances.
+
+```{r DistanceToRoads, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+# Get all pairwise distances from the sites in the sites map 
+# to each road in the roads map
+AllDistances <- distance(x = sitesMap_EA,
+                         y = nz_major_sv_EA)
+
+# Calculate the minimum distance to any road for each site
 MinDistances <- apply(AllDistances, 1, min)
 
+# Add these distances to the sites map data frame
 sitesMap_EA$RoadDistance <- MinDistances
+```
+
+We might also be interested in calculating is the distance from a set of points to the nearest raster cell of a specific value.
+
+Let's say we want to know the distance from each site to the nearest cell with more than 30% coverage of natural habitat.
+
+The easiest way to do this is first to get the coordinates of cells with more than 30% natural habitat, convert these cells into a vector map of points using the cell coordinates, and then calculate distances between the two sets of points (the locations with biodiversity data and the cells with high levels of natural habitat).
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+# The outline of this code was supplied by Microsoft Copilot
+
+# Identify cells with natural habitat higher than 30%
+high_nathab_cells <- which(values(propn_natural_EA)>0.3)
+
+# Get the coordinates of these cells
+high_nathab_coords <- xyFromCell(propn_natural_EA,high_nathab_cells)
+
+# Convert the coordinates into a vector points map
+high_nathab_points <- vect(high_nathab_coords, type="points", 
+                           crs=crs(propn_natural_EA))
+
+# Calculate all pairwise distances between biodiversity sampling sites and
+# cells with high natural habitat
+AllDistances <- distance(sitesMap_EA,high_nathab_points)
+
+# Calculate the minimum distances for all sites with biodiversity sampling
+MinDistances <- apply(AllDistances, 1, min)
+
+# Add the minimum distances to the original biodiversity sites map
+sitesMap_EA$NaturalHabitatDistance <- MinDistances
 ```
 
 # Exercises

@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2025-08-08" />
+        <meta name="date" content="2025-08-13" />
     
     <title>Working with Spatial Data in R</title>
 
@@ -1898,7 +1898,13 @@ margin-left: 0 !important;
             <li><a href="#coordinate-and-projection-systems" id="toc-coordinate-and-projection-systems">Coordinate and
             Projection Systems</a></li>
             <li><a href="#combining-spatial-data-and-making-calculations" id="toc-combining-spatial-data-and-making-calculations">Combining
-            Spatial Data and Making Calculations</a></li>
+            Spatial Data and Making Calculations</a>
+            <ul>
+            <li><a href="#extracting-rasterpolygon-values-at-specified-points" id="toc-extracting-rasterpolygon-values-at-specified-points">Extracting
+            Raster/Polygon Values at Specified Points</a></li>
+            <li><a href="#calculating-distances" id="toc-calculating-distances">Calculating
+            Distances</a></li>
+            </ul></li>
             <li><a href="#exercises" id="toc-exercises">Exercises</a></li>
             </ul>
           </div>
@@ -1921,7 +1927,7 @@ margin-left: 0 !important;
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2025-08-08</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2025-08-13</p>
            
 
    
@@ -2594,20 +2600,105 @@ analyses.</p>
 specified points, and on calculating distances between objects. These
 are commonly used methods in GIS, and are often very useful in
 scientific studies.</p>
+<div id="extracting-rasterpolygon-values-at-specified-points" class="section level2">
+<h2>Extracting Raster/Polygon Values at Specified Points</h2>
 <p>Extracting values from a raster is very simple using the
 <em>extract</em> function in the <em>terra</em> package. We simply
 specify the raster we want to obtain values from, and the points at
 which we want to extract values.</p>
+<p>It is important to make sure, as we have already done in the previous
+section, that the raster map and the points map are in the same spatial
+projection, and that the units of the coordinates match. Otherwise, the
+resulting extracted values may be inaccurate.</p>
 <pre class="r"><code># Here the main data layer is labelled &#39;PRI_1km_2005_0ice&#39; from the original data source. We have to specify that we want these values from the output produced by the extract function (otherwise we get cell IDs)
 sitesMap_EA$NaturalHabitat &lt;- extract(
   x = propn_natural_EA,
   y = sitesMap_EA)$PRI_1km_2005_0ice</code></pre>
-<pre class="r"><code>AllDistances &lt;- st_distance(x = st_as_sf(sitesMap_EA),
-                            y = st_as_sf(nz_major_sv_EA))
+<p>As well as specifying a spatial object of the points at which we want
+to extract values, we can also just specify the coordinates directly
+(again, making sure that these coordinates have the same spatial
+projection and units as the raster map).</p>
+<pre class="r"><code>natHabExtract &lt;- extract(x = propn_natural_EA,y = crds(sitesMap_EA))$PRI_1km_2005_0ice
 
+natHab &lt;- data.frame(NaturalHabitat=natHabExtract)
+
+ggplot() + 
+  geom_histogram(data = natHab,mapping = aes(x = NaturalHabitat)) + 
+  theme_classic()</code></pre>
+<p><img role="img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABgAAAAPACAMAAADE4EJKAAABPlBMVEUAAAAAADoAAGYAOjoAOmYAOpAAZrYzMzM6AAA6OgA6Ojo6OmY6OpA6ZmY6ZpA6ZrY6kJA6kLY6kNtNTU1NTW5NTY5Nbm5Nbo5NbqtNjshZWVlmAABmOgBmZjpmZmZmZpBmkJBmkLZmkNtmtrZmtttmtv9uTU1ubk1ubm5ubo5ujqtujshuq+SOTU2Obk2Obm6Oq6uOq8iOq+SOyOSOyP+QOgCQZjqQZmaQkGaQkLaQtraQttuQ2/+rbk2rbm6rjm6ryOSr5P+2ZgC2Zjq2Zma2kDq2kGa2tma2tra2ttu229u22/+2///Ijk3Ijm7Iq27I5P/I///bkDrbtmbbtpDbtrbb27bb29vb2//b///kq27kyI7kyKvk////tmb/yI7/25D/27b/29v/5Kv/5Mj//7b//8j//9v//+T///+oTKM1AAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO3df39cx3XYYSj+IVlJnNZLVVRtq0kbsa0iJmljO01jVrbSuKljupScODZjirZJU8D7fwMFFguQBLDDO3vn8Myd+zx/mCJMDvE5M5gvsFwsj04AWKWj7HcAgBwCALBSAgCwUgIAsFICALBSAgCwUgIAsFICALBSAgCwUgIAsFICALBSAgCwUgIAsFJhATiSFoCuCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJAMBKCQDASgkAwEoJQBv/vkL2+wqwJQBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgC0IYAAIsjAG0IALA4AtCGAACLIwBtCACwOALQhgAAiyMAbQgAsDgHX9NP7tx+tP2P44/vbDYfPri2sAAIANC1Q6/p43ub8wA8u7s5886nVxcWAAEAunboNf1wswvA/c3tBydPL3LwwsICIABA1w68pp/c2QXgyZ3t5/7P7t764ZWFBUAAgK4ddk0f39v85fnfATzcvLd9y8PNR1cWFgABALp22DV9f/Pe7i+B72++s33L410Ini8sAAIAdO2ga/rx5vaj8wAc39s99HP5pKCTN3cEQACArh1yTW8f8BeAlwgAsDiHXNP3zx7vvxaAK08E9RCQAAB9O+Cafrh9/s/erwAuFhYAAQC6Vn9NP7mzvfMF4CUCACxO/TX9cHPpnU89C2hHAIDFmRuAi+f/+z4AAQAWZu6LwflO4HMCACzO3AAc39u867WABABYoNkvB/3Uq4GeEQBgceb/ewBPPz69/z98dPX/FwABAPrmXwRrQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGANgQAWBwBaEMAgMURgDYEAFgcAWhDAIDFEYA2BABYHAFoQwCAxRGAgppbXQCApRGAAgEARiYABQIAjEwACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACMTgAIBAEYmAAUCAIxMAAoEABiZABQIADAyASgQAGBkAlAgAMDIBKBAAICRCUCBAAAjE4ACAQBGJgAFAgCMTAAKBAAYmQAUCAAwMgEoEABgZAJQIADAyASgQACAkQlAgQAAIxOAAgEARiYABQIAjEwACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACMTgAIBAEYmAAUCAIxMAAoEABiZABQIADAyASgQAGBkAlAgAMDIBKBAAICRCUCBAAAjE4ACAQBGJgAFAgCMTAAKBAAYmQAUCAAwMgEoEABgZAJQIADAyASgQACAkQlAgQAAIxOAAgEARiYABQIAjEwACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACMTgAIBAEYmAAUCAIxMAAoEABiZABQIADAyASgQAGBkAlAgAMDIBKBAAICRHXRN/+rPN5tb/+3R+U+OP76z2Xz44NrCAiAAQNcOuaYfbrbe/fTsJ8/ubn/yzqdXFxYAAQC6dsA1/eTOrb86OXn655v3zn52f3P7wcnTe5vbj64sLAACAHTtgGv6/uajsx+e3Dn7rP/8f0+/Drj1wysLC4AAAF07/Jp+dvfs6n94/nXA6Y8fXVlYAAQA6Nrh1/STO2eP+tzffGf7s8e7EDxfWAAEAOjawdf0v945u/qP7+0e+jnPwZk3dwRAAICuHXhN399sbv3gRAAEAFiuw67p4//1X+5sbv33lwJw5YmgHgISAKBvh1/Tvzp7DOiGrwAuFhYAAQC6NuOafry5/UgABABYqhnX9PbO9ywgAQAWqv6aPr63u/O3Abh4/r/vAxAAYGEO+k7g957/6DuBBQBYqINeC2jzZ49Ojn+6ObvzT78eeNdrAQkAsECHXNOPz18N9Nb2kaCnXg1UAIBFOuiafvoXp9f/xT8B8PTj0/v/w0dXf40ACADQN/8iWIEAACMTgAIBAEYmAAUCAIxMAAoEABiZABQIADAyASgQAGBkAlAgAMDIBKBAAICRCUCBAAAjE4ACAQBGJgAFAgCMTAAKBAAYmQAUCAAwMgEoEABgZAJQIADAyASgQACAkQlAgQAAIxOAAgEARiYABQIAjEwACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACMTgAIBAEYmAAUCAIxMAAoEABiZABQIADAyASgQAGBkAlAgAMDIBKBAAICRCUCBAAAjE4ACAQBGJgAFAgCMTAAKBAAYmQAUCAAwMgEoEABgZAJQIADAyASgQACAkQlAgQAAIxOAAgEARiYABQIAjEwACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACMTgAIBAEYmAAUCAIxMAAoEABiZABQIADAyASgQAGBkAlAgAMDIBKBAAICRCUCBAAAjE4ACAQBGJgAFAgCMTAAKBAAYmQAUCAAwMgEoEABgZAJQIADAyASgQACAkQlAgQAAIxOAAgEARiYABQIAjEwACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACMTgAIBAEYmAAUCAIxMAAoEABiZABQIADAyASgQAGBkAlAgAMDIBKBAAICRCUCBAAAjE4ACAQBGJgAFAgCMTAAKBAAYmQAUCAAwMgEoEABgZAJQIADAyASgQACAkQlAgQAAIxOAAgEARiYABQIAjEwACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACO7+Zr+4q//wy8vf/Lrb//BL2/8VeWFBUAAgK7dfE3/7pu/95ObfzJ9YQEQAKBrEwLw67cEQACA8Vy7pn/3zaNrvuIhIAEAhnP9mv78egA+OGRhARAAoGvXr+kv/vf773/7rTf+8P0Lf/zjgxYWAAEAujbh7wAOXFgABADo2oSngR64sAAIANA13whWIADAyErX9L9c+MUhCwuAAABd23dN/+Z7LzwLyPcBCAAwnj3X9MvfDSAAAgCMZ881/dnR0Zf/+B8u/F/fCCYAwHD2PAvou0dfnbuwAAgA0LV93wfwxvfnLiwAAgB0zTeCFQgAMLJ9DwH5CuBEAICx7f1L4G/MXVgABADo2p5r+vRLgD+dubAACADQtX2vBfTto6PnLwh6yAsDCYAAAH3b95fAR74RTACAsQlAgQAAI/NqoAUCAIxMAAoEABiZABQIADCyPdf0b//lRf49AAEAxuMvgQsEABiZABQIADCyPd8I9s8X/xTA//jW0Rv/078HIADAeF59Tf/6ra8ccP8LgAAAnZtwTR/2wnACIABA3yZc04d9CSAAAgD0bcI1fdi/DiMAAgD0bdJXAAIgAMB4Xn1Nf/HJkYeABAAYz75/D+DinwJ4/9tvHflLYAEABjTlG8E8DVQAgAG9OgBf+pND7n8BEACgc14NtEAAgJEJQIEAACMTgAIBAEa2/5r+7Y/ePjp64+0/OeQfAzgRAAEAerf3mv7s8m+BD3kSqAAIANC7fdf02f3/pT98/9tfO7QAAiAAQN/2XNO/fuvoK/+4/a/ffPfoje8fsrAACADQtT3X9Asv//DFd4++esjCAiAAQNf2vBTEd1/4rN/LQQsAMKJ93wn8wguAejloAQBGJAAFAgCMbN9DQEcfXP7kcy8HLQDAgPwlcIEAACPb/zTQL/94+18//5angQoAMKLSN4Idvf322wd/K7AACADQt73X9M/e2r0SxBt/etjCAiAAQNf2X9Nf/NO3T78C+MO/PeifgxEAAQB65+WgCwQAGJkAFAgAMLJXXdP/cvDCAiAAQNf2XtNf/Oj3f7L91+G//o+HLSwAAgB0bd81/flbR793HoCjNz7Y82vKCwuAAABd2/+NYOffC/zP33vLN4IJADCivS8F8eWLR368FIQAAEPa92qgL/17AF4NVACA8Rz0ctC/+ovN5taHD85/cvzxnc3m4icvLCwAAgB07ZCvAH662br1w7OfPLu7/ck7n15dWAAEAOja3r8D+OqN/33m8ebWX52cPL13funf39x+cPaT24+uLCwAAgB0bc81/fnR0dd/sf2v3/7d0dFLzwM9vrf5ztmPp5/6n/745M42A8/unn898MLCAiAAQNf2XdOfnL0O6Ntvv332mqAvfwHw7O7u4Z77m49OTh5u3tv+5OHZT15aWAAEAOjavmv6i78/ung56P+455dsA3D//MuBk8e7EDxfWAAEAOjaK18O+m/2vRz09lGf43u7h36e3Ln4S4A3dwRAAICuHX5Nbx/8EQABAJbq4Gv68fZpoC8E4MoTQT0EJABA3w69ph/fuXX24P8NXwFcLCwAAgB07cBr+uHu28AEQACApTrsmv7p5uJp/54FJADAQh1yTR/f37x78YD/xfP/fR+AAAALc8g1ff+F133wncACACzUAdf0wxdf9+f43uZdrwUkAMAC1V/Tu5f/PHP2sP9TrwYqAMAi1V/TjzcvBeDk6cen//Xho6u/TAAEAOhb2DUtAAIA9E0ACgQAGJkAFAgAMDIBKBAAYGQCUCAAwMgEoEAAgJEJQIEAACMTgAIBAEYmAAVBAdAKoAsCUJB9/QsAEEkACrKvfwEAIglAQfb1LwBAJAEoyL7+BQCIJAAF2de/AACRBKAg+/oXACCSABRkX/8CAEQSgILs618AgEgCUJB9/QsAEEkACrKvfwEAIglAQfb1LwBAJAEoyL7+BQCIJAAF2de/AACRBKAg+/oXACCSABRkX/8CAEQSgILs618AgEgCUJB9/QsAEEkACrKvfwEAIglAQfb1LwBAJAEoyL7+BQCIJAAF2de/AACRBKAg+/oXACCSABRkX/8CAEQSgILs618AgEgCUJB9/QsAEEkACrKvfwEAIglAQfb1LwBAJAEoyL7+BQCIJAAF2de/AACRBKAg+/oXACCSABRkX/8CAEQSgILs618AgEgCUJB9/QsAEEkACrKvfwEAIglAQfb1LwBApI4DEHNPht3VIebOEGA/Aeja3BkC7CcAXZs7Q4D9BKBrc2cIsJ8AdG3uDAH2E4CuzZ0hwH4C0LW5MwTYTwC6NneGAPsJQNfmzhBgPwHo2twZAuwnAF2bO0OA/QSga3NnCLCfAHRt7gwB9hOArs2dIcB+AtC1uTME2E8AujZ3hgD7CUDX5s4QYD8B6NrcGQLsJwBdmztDgP0EoGtzZwiwnwB0be4MAfYTgK7NnSHAfgLQtbkzBNhPALo2d4YA+wlA1+bOEGA/Aeja3BkC7CcAXZs7Q4D9BKBrc2cIsJ8AdG3uDAH2E4CuzZ0hwH4C0LW5MwTYTwC6NneGAPsJQNfmzhBgPwHo2twZAuwnAF2bO0OA/QRgFHPHDaTI/DAXgFHMHTeQIvPDXABGMXfcQIrMD3MBGMXccQMpMj/MBWAUc8cNpMj8MBeAUcwdN5Ai88NcAEYxd9xAiswPcwEYxdxxAykyP8wFYBRzxw2kyPwwF4BRzB03kCLzw1wARjF33ECKzA9zARjF3HEDKTI/zAVgFHPHDaTI/DAXgFHMHTeQIvPDXABGMXfcQIrMD3MBGMXccQMpMj/MBWAUc8cNpMj8MBeAUcwdN5Ai88NcAEYxd9xrEzRbW0atzDMjAKOYO+61CZqtLaNW5pkRgFHMHffaBM3WllEr88wIwCjmjnttgmZry6iVeWYEYBRzx702QbO1ZdTKPDMCMIq5416boNnaMmplnhkBGMXcca9N0GxtGbUyz4wAjGLuuNcmaLa2jFqZZ0YARjF33GsTNFtbRq3MMyMAo5g77rUJmq0to1bmmRGAUcwd99oEzdaWUSvzzAjAKOaOe22CZmvLqJV5ZgRgFHPHvTZBs7Vl1Mo8MwIwirnjXpug2doyamWeGQEYxdxxr03QbG0ZtTLPjACMYu641yZotraMWplnRgBGMXfcaxM0W1tGrcwzIwCjmDvutQmarS2jVuaZEYBRzB332gTNNn/Z2kGQLejMTCIAo5g77rUJmm3+srWDIFvQmZlEAEYxd9xrEzTb/GVrB0G2oDMziQCMYu641yZotvnL1g6CbEFnZhIBGMXcca9N0Gzzl60dBNmCzswkAjCKueNem6DZ5i9bOwiyBZ2ZSQRgFHPHvTZBs81ftnYQZAs6M5MIwCjmjnttgmabv2ztIMgWdGYmEYBRzB332gTNNn/Z2kGQLejMTCIAo5g77rUJmm3+srWDIFvQmZlEAEYxd9xrEzTb/GVrB0G2oDMziQCMYu641yZotvnL1g6CbEFnZhIBGMXcca9N0Gzzl60dBNmCzswkAjCKueNem6DZ5i9bOwiyBZ2ZSQRgFHPHvTZBs81ftnYQZAs6M5MIwCjmjnttgmabv2ztIMgWdGYmEYBRzB332gTNNn/Z2kGQLejMTCIAo5g77rUJmm3+srWDIFvQmZlEAEYxd9xrEzTb/GVrB0G2oDMziQCMYu641yZotvnL1g6CbEFnZhIBGMXcca9N0Gzzl60dBNmCzswkAjCKueNem6DZ5i9bOwiyBZ2ZSQRgFHPHvTZBs81ftnYQZAs6M5MIwCjmjnttgmabv2ztIMgWdGYmEYBRzB332gTNNn/Z2kGQLejMTCIAo5g77rUJmm3+srWDIFvQmZlEAEYxd9xrEzTb/GVrB0G2oDMziQCMYu641yZotvnL1g6CbEFnZhIBGMXcca9N0Gzzl60dBNmCzswkAjCKueNem6DZ5i9bOwiyBZ2ZSQRgFHPHvTZBs81ftnYQZAs6M5MIwCjmjnttgmabv2ztIMgWdGYmEYBRzB332gTNNn/Z2kGQLejMTCIAo5g77rUJmm3+srWDIFvQmZlEAEYxd9xrEzTb/GVrB0G2oDMziQCs0dytGUHQvPKXrR0E2YLOzCQCsEZzt2YEQfPKX7Z2EGQLOjOTCMAazd2aEQTNK3/Z2kGQLejMTCIAazR3a0YQNK/8ZWsHQbagMzOJAKzR3K0ZQdC88petHQTZgs7MJAKwRnO3ZgRB88pftnYQZAs6M5MIwBrN3ZoRBM0rf9naQZAt6MxMIgBrNHdrRhA0r/xlawdBtqAzM4kArNHcrRlB0Lzyl60dBNmCzswkArBGc7dmBEHzyl+2dhBkCzozkwjAGs3dmhEEzSt/2dpBkC3ozExy6DX97O57u/86/vjOZvPhg2sLC0C/5m7NCILmlb9s7SDIFnRmJjn0mr6/2QXg2d3NmXc+vbqwAPRr7taMIGhe+cvWDoJsQWdmksOu6eP7m4sA3N/cfnDy9N7m9qMrCwtAv+ZuzQiC5pW/bO0gyBZ0ZiY56Jr+1Z9vLgLw5M72c/9nd2/98MrCAtCvuVszgqB55S9bOwiyBZ2ZSQ65ph9uNn/2r7sAPLz88aMrCwtAv+ZuzQiC5pW/bO0gyBZ0ZiY5KADv/uDk8e7iv7/5zvbHi58/X1gA+jV3a0YQNK/8ZWsHQbagMzPJodf07sI/vrd76OfJnYu/BHhzRwD6NXdrRhA0r/xlawdBtqAzM4kArNHcrRlB0Lzyl60dBNmCzswk7QJw5YmgHgLq2NytGUHQvPKXrR0E2YLOzCTtvwK4WFgA+jV3a0YQNK/8ZWsHQbagMzOJAKzR3K0ZQdC88petHQTZgs7MJDMD4FlAizR3a0YQNK/8ZWsHQbagMzPJ3ABcPP/f9wEsydytGUHQvPKXrR0E2YLOzCRzA+A7gZdo7taMIGhe+cvWDoJsQWdmkrkBOL63eddrAS3N3K0ZQdC88petHQTZgs7MJHMDcPLUq4Euz9ytGUHQvPKXrR0E2YLOzCSzA3Dy9OPT+//DR1d/gQB0bO7WjCBoXvnL1g6CbEFnZhL/Itgazd2aEQTNK3/Z2kGQLejMTCIAazR3a0YQNK/8ZWsHQbagMzOJAKzR3K0ZQdC88petHQTZgs7MJAKwRnO3ZgRB88pftnYQZAs6M5MIwBrN3ZoRBM0rf9naQZAt6MxMIgBrNHdrRhA0r/xlawdBtqAzM4kArNHcrRlB0Lzyl60dBNmCzswkArBGc7dmBEHzyl+2dhBkCzozkwgARXN3sVtBQ8hftnYQZAs6M5MIAEVzd7FbQUPIX7Z2EGQLOjOTCABFc3exW0FDyF+2dhBkCzozkwgARXN3sVtBQ8hftnYQZAs6M5MIAEVzd7FbQUPIX7Z2EGQLOjOTCABFc3exW0FDyF+2dhBkCzozkwgARXN3sVtBQ8hftnYQZAs6M5MIAEVzd7FbQUPIX7Z2EGQLOjOTCABFc3exW0FDyF+2dhBkCzozkwgARXN3sVtBQ8hftnYQZAs6M5MIAEVzd7FbQUPIX7Z2EGQLOjOTCABFc3exW0FDyF+2dhBkCzozkwgARXN3sVtBQ8hftnYQZAs6M5MIAEVzd7FbQUPIX7Z2EGQLOjOTCABFc3exW0FDyF+2dhBkCzozkwgARXN3sVtBQ8hftnYQZAs6M5MIAEVzd7FbQUPIX7Z2EGQLOjOTjBEAwrQ4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgrB5GloAAA+nSURBVIaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNmCzswkAkBRi7PQpaAh5C9bOwiyBZ2ZSQSAohZnoUtBQ8hftnYQZAs6M5MIAEUtzkKXgoaQv2ztIMgWdGYmEQCKWpyFLgUNIX/Z2kGQLejMTCIAFLU4C10KGkL+srWDIFvQmZlEAChqcRa6FDSE/GVrB0G2oDMziQBQ1OIsdCloCPnL1g6CbEFnZhIBoKjFWehS0BDyl60dBNOlb64A8Hq1OAtdChpC/rK1g2C69M0VAF6vFmehS0FDyF+2dhBMl765AsDr1eIsdCloCPnL1g6C6dI3VwB4vVqchS4FDSF/2dpBMF365goAr1eLs9CloCHkL1s7CKZL31wB4PVqcRa6FDSE/GVrB8F06ZsrALxeLc5Cl4KGkL9s7SCYLn1zBYDXq8VZ6FLQEPKXrR0E06VvrgDwerU4C10KGkL+srWDYLr0zRUAXq8WZ6FLQUPIX7Z2EEyXvrkCwOvV4ix0KWgI+cvWDoLp0jdXAHi9WpyFLgUNIX/Z2kEwXfrmCgCvV4uz0KWgIeQvWzsIpkvfXAHg9WpxFroUNIT8ZWsHwXTpmysAvF4tzkKXgoaQv2ztIJgufXMFgNerxVnoUtAQ8petHQTTpW+uAPB6tTgLXQoaQv6ytYNguvTNFQBerxZnoUtBQ4jah5B3lkox25C5uwJAUYuz0KWgIUTtQ8g7S6WYbcjcXQGgqMVZ6FLQEKL2IeSdpVLMNmTurgBQ1OIsdCloCFH7EPLOUilmGzJ3VwAoanEWuhQ0hKh9CHlnqRSzDZm7KwAUtTgLXQoaQtQ+hLyzVIrZhszdFQCKWpyFLgUNIWofQt5ZKsVsQ+buCgBFLc5Cl4KGELUPIe8slWK2IXN3BYCiFmehS0FDiNqHkHeWSjHbkLm7AkBRi7PQpaAhRO1DyDtLpZhtyNzd+QE4/vjOZvPhg2sLC8AQ5u5it4KGELUPIe8slWK2IXN3Z1/Tz+5uzrzz6dWFBWAIc3exW0FDiNqHkHeWSjHbkLm7s6/p+5vbD06e3tvcfnRlYQEYwtxd7FbQEKL2IeSdpVLMNmTu7txr+smd7ef+z+7e+uGVhQVgCHN3sVtBQ4jah5B3lkox25C5u3Ov6Yeb93Y/fnRlYQEYwtxd7FbQEKL2IeSdpVLMNmTu7txr+v7mO9sfH+9C8HxhARjC3F3sVtAQovYh5J2lUsw2ZO7uzGv6+N7uoZ8ndy7+EuDNHQEYwtxd7FbQEKL2IeSdpVLMNmTubscBACBSuwBceSLo/IeAAIjU/iuAi4UFAKBrAgCwUh0/CwiASPO/D+Cjl358vrAAAHSt4+8EBiDS3Gv6+N7m3aDXAgIg0uxr+mnYq4ECEGn+Nf3049P7/8NHV98sAAB96/hfBAMgkgAArJQAAKyUAACslAAArJQAAKyUAACslAAArJQAAKyUAACslAAArJQAAKyUAACslAAArJQAAKyUAACslAAArJQAAKyUAACslAAArJQAAKyUAACslAAArJQAAKyUAACslAAArJQAAKyUAACsVGAAAOjK6wqAArT05pvZ7wFZ7P16Bez9awsADb35ZvZ7QBZ7v17xey8Ai+ASWC97v14CwJZLYL3s/XoJAFsugfWy9+slAGy5BNbL3q+XALDlElgve79eAsCWS2C97P16CQAAQQQAYKUEAGClBABgpQQAYKUEAGClBABgpQQAYKUEoFvHH9/ZbD588OKbfvUXm82tl9/EiG7Y+zNP7tx+lPHu8BrdsPfHPz1907/7q4g/TQB69ezu5sw7nz5/00+3b9nc+mHee8XrcMPenzm+txGA0d2w90/P37T5s4A/TgB6dX9z+8HJ0xc/5B9vbp1+EnD6pqsXA4O5vvdbDzcCMLzre3/a/XcfnBz/v5DP/ASgU0/ubK/5Z3cvd/30HHznZPum8x8Z1fW9371ZAIZ3w94/3n3G93DzXvs/TwA6dbHbDzcf7d7y7O7uM//7l29iSNf3/szpJwB/6e8ARnd97y8+8YshAJ26v9v1x9ezLwCDu3nv72/e85fAw7u+95ef+IUQgD4d39t9CXj9Y/7qIwMM5ua9f7y5/UgARnfD3p/917/+583m3R9E/IEC0KdCAEIeCqQfN+79NvsCMLqbA/Dx+bOAIr7wF4A+vXAQrnwB+NjTQAd3495vH/cTgNHdsPePz54A+ujk+KeeBbQie78CeHznlucAje2mvX+4ff6PAIzuhr1/fPGp/33PAlqPfQF46PP/4d34MMD2TQIwuv17H7T7AtCpm58JEvNlIH25vvcPN5d8F+DQru/95YNB1x4NbkEAOnXxPOAXnwt+fH/zrg//8V3fewFYi+t7f/lFweOIbwMUgE7d9N2g930j6Crs+U5gDwGtwA17f/HYf8j3/whAp85fAOSl1wR56P5fhxv2/pwADO+GvX9y5+zFQT0LaGWevvCqgNu/B9q9TOAZ3wgwtmt7vyMA47th7x/fOX8V4Iin/wlAt56effvHh9sP+O1BeLwRgLW4uvc7ArACN+z907N/IuC/hvw7IAIAsFICALBSAgCwUgIAsFICALBSAgCwUgIAsFICALBSAgCwUgIAsFICALBSAgCwUgIAsFICwCA+OTr6xuVPfvfNo6+2WvYrv9z+8Hs/edXqp2/+xktv2P1e6JUAMIjTALzx/Yuf7A3Az/6g8kpuEYB9f2j1OwNtCQCDOA3A80+49wWg/nPyBgHY94f6AoFsAsAgzgJweQH3EYBX/KECQDYBYBDbAFw8CCQAMIEAMIjTK/r/XD4IJAAwgQAwiLMr+vKZQM+v6J9/763Trwze/pOzq/azo6Pzx4meX9WfbS/2L7579ME/fevo6Evfv/I7XhWAl37t2apf/N3pG37/b0+e/97LP3TfOwNpBIBBnF3Rp1fw+YNAF1f0F393tPPln5QD8P7Z/3P63y//jnIArvza0zd//ZvnPz//1P5KAPa8M5BGABjE9or+fHf3XlzRp7fsH53+/Denn91/9fwXXfzfVwNwVo7f/O3e3/HJ0ctuWv13Z7f/6RvOLvqXf+95D/YsDWkEgEGcf45+elF/cHIZgMvHak7/48W7+KYAfHDxC2/8HTcF4OqvPQvAN3arbr8Q+eTqH3rj0pBGABjEeQB+/db2h91l+/nF04JOb/jtQzj7A7B7hGff77gpAFd/7emqu1V2f/zLAdi3NKQRAAaxe5T+s+3lfO15Op+8KgDX7uJPrgSg9CygT16szsnl79r3jWCfCAB9EAAGsbtVzx/NefGK/u3P/+Gvv3b0qgC8eKPf8Dv2BuCFX/vC00AvHo+6FoAbloY0AsAgLq7o7YNAl1f0z7528aDN1ADc/DtuDsDLv/b0zR+cvLjs1QDcvDSkEQAGcXlFnz0ItLuiz74cODp6+/2/+cUrHwLaBWDf77gpAFd/7Su+Ati3NKQRAAZxeUWfXbT/6fyK3j3x8uTqw+7Pr+pPrgRg3++4KQBXf+1LAbj+dwD7loY0AsAgnl/Rv35r9zyd53+3e/EEnavPyNw9IecyAHt/xw0BuPZrL57eeZmClwKwd2lIIwAM4oUr+rNrAfjs5YfdL/+Pz4/2BeCzV/4dwLVfe/Z9AB/s3pfr3wewd2lIIwAM4oUrevto+wsP0vz8W0e7Fwo9+w6tL36x/T++8o8nX/zoraObHwJ6/jte/RDQ5a/dfifwv/3lyW++t/uGsMvHfrZ/6N53BrIIAIN48Yo+exBo+72639o96+brf3/+yfnnz782OH/Nnr+/EoBrv6MQgKu/9vTN/2b3WkB/tHuXdt8Btv1D974zkEUAGMRLV/Rnu5v1ix997fTT7a//+PJR/5+dpeGXu//jS396/WmgV39H8cXgXv61z18N9McX79Lun4Q8/0P3vjOQRAAAVkoAAFZKAABWSgAAVkoAAFZKAABWSgAAVkoAAFZKAABWSgAAVkoAAFZKAABWSgAAVkoAAFZKAABWSgAAVkoAAFZKAABWSgAAVkoAAFbq/wPLmdGTgg3s/gAAAABJRU5ErkJggg==" width="768" /></p>
+<p>We can also extract values at specified points from a polygon object.
+So, for example, we could compare our points map to the polygon map of
+countries we worked with earlier. As before, we need to specify the
+label for the column of data we want to return. Here, we will ask for
+the ISO3 country code (column ‘iso_a3’).</p>
+<pre class="r"><code># We didn&#39;t project the New Zealand map to an equal-area projection earlier,
+# so we will do that now
+nz_EA &lt;- project(x = nz, y = &quot;epsg:53017&quot;)
+
+countryExtract &lt;- extract(x = nz_EA, y = sitesMap_EA)$iso_a3
+
+table(countryExtract)</code></pre>
+<pre><code>## countryExtract
+## NZL 
+## 233</code></pre>
+<p>Not surprisingly, the only value we obtain is the country code for
+New Zealand.</p>
+</div>
+<div id="calculating-distances" class="section level2">
+<h2>Calculating Distances</h2>
+<p>To begin with, we will focus in a simple calculation of distances,
+namely getting the shortest distance from a set of points to a set of
+lines (here, the roads map we worked with earlier). Other distance
+calcaulations for vector maps, such as distances to the nearest edge of
+a polygon or distances between two sets of points, follow the same basic
+principles.</p>
+<p>For this section of the tutorial, we will be working with the
+‘distance’ function from the <em>terra</em> package. This is a very
+flexible function that allows the calculation of all sorts of different
+distance measurements.</p>
+<p>The function itself calculates all pairwise differences, and so
+afterwards we need to calculate the minimum distances.</p>
+<pre class="r"><code># Get all pairwise distances from the sites in the sites map 
+# to each road in the roads map
+AllDistances &lt;- distance(x = sitesMap_EA,
+                         y = nz_major_sv_EA)
+
+# Calculate the minimum distance to any road for each site
 MinDistances &lt;- apply(AllDistances, 1, min)
 
+# Add these distances to the sites map data frame
 sitesMap_EA$RoadDistance &lt;- MinDistances</code></pre>
+<p>We might also be interested in calculating is the distance from a set
+of points to the nearest raster cell of a specific value.</p>
+<p>Let’s say we want to know the distance from each site to the nearest
+cell with more than 30% coverage of natural habitat.</p>
+<p>The easiest way to do this is first to get the coordinates of cells
+with more than 30% natural habitat, convert these cells into a vector
+map of points using the cell coordinates, and then calculate distances
+between the two sets of points (the locations with biodiversity data and
+the cells with high levels of natural habitat).</p>
+<pre class="r"><code># The outline of this code was supplied by Microsoft Copilot
+
+# Identify cells with natural habitat higher than 30%
+high_nathab_cells &lt;- which(values(propn_natural_EA)&gt;0.3)
+
+# Get the coordinates of these cells
+high_nathab_coords &lt;- xyFromCell(propn_natural_EA,high_nathab_cells)
+
+# Convert the coordinates into a vector points map
+high_nathab_points &lt;- vect(high_nathab_coords, type=&quot;points&quot;, 
+                           crs=crs(propn_natural_EA))
+
+# Calculate all pairwise distances between biodiversity sampling sites and
+# cells with high natural habitat
+AllDistances &lt;- distance(sitesMap_EA,high_nathab_points)
+
+# Calculate the minimum distances for all sites with biodiversity sampling
+MinDistances &lt;- apply(AllDistances, 1, min)
+
+# Add the minimum distances to the original biodiversity sites map
+sitesMap_EA$NaturalHabitatDistance &lt;- MinDistances</code></pre>
+</div>
 </div>
 <div id="exercises" class="section level1">
 <h1>Exercises</h1>
