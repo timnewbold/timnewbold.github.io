@@ -62,7 +62,7 @@ opq(bbox = c(171.5,-43.6,172.9,-42.3)) %>%
 # contains the actual roads data we are interested in)
 nz_major$osm_lines %>% vect() -> nz_major_sv
 ```
-We will plot the roads map using ggplot and the geom_spatvector function from the _tidyterra_ package.
+We will plot the roads map using ggplot and the geom_spatvector function from the _tidyterra_ package. You can see from the code that we plot spatial data in a very similar way to how we would produce other graphs using ggplot. Here, the _scale_x_continuous_ and _scale_y_continuous_ commands, which would normally allow you to adjust the span of your x and y axes in a normal graph, can be used to set the spatial limits of the plotted data.
 
 ```{r PlotRoads, echo=TRUE, results=TRUE}
 p <- ggplot() + 
@@ -81,13 +81,13 @@ Each line in a spatial vector lines dataset is described by a series of coordina
 head(geom(nz_major_sv[1,]))
 ```
 
-The first six rows here all refer to the same geometry, _(geom = 1)_, because the coordinates of these rows are all vertices of the first road in the dataset. In total, there are 3668 different roads (geometries) in this dataset.
+The first six rows here all refer to the same geometry, _(geom = 1)_, because the coordinates of these rows are all vertices of the first road in the dataset. In total, there are 3726 different roads (geometries) in this dataset.
 
 ### Polygons
 
 Polygon data are very similar to vector line data, but the lines connect at the ends to form polygons.
 
-Polygons are often used to describe the boundaries of regions. In ecological studies, we might be interested in administrative regions, such as countries, or ecological regions, such as biogeographic realms, biomes or ecoregions, or many other spatial regions.
+Polygons are often used to describe the boundaries of regions. In ecological studies, we might be interested in administrative regions, such as countries, or ecological regions, such as biogeographic realms, biomes or ecoregions, among many others.
 
 Here, we will use the _rnaturalearth_ package to read in country borders, here the border of New Zealand. This package has the option to return the data directly as a _terra_ package 'SpatVector' object: _returnClass='sv'_.
 
@@ -110,7 +110,7 @@ p <- ggplot() +
 p
 ```
 
-We can then combine the plots for the polygons (New Zealand border) and lines (major roads).
+We can then combine the plots for the polygons (New Zealand border) and lines (major roads). We will zoom in here to focus on the specific region for which we obtained the roads data (getting the data for all roads in New Zeleand would be rather time-consuming).
 
 ```{r PlotCountries2, echo=TRUE, results=TRUE}
 p <- ggplot() + 
@@ -131,13 +131,13 @@ As with line data, polygons data are described a series of coordinates forming t
 head(geom(nz))
 ```
 
-Here, all rows belong to the same geometry, _(geom = 1)_ (New Zealand), but the data are separated into 13 different polygons (parts). Here, the first six rows that we see are all vertices for the first polygon/'part'. With polygon data, the final column, _hole_ tells us whether a vertex belongs to an inner hole rather than the outer boundary (although there aren't any holes in the New Zealand map). 
+Here, all rows belong to the same geometry, _(geom = 1)_ (New Zealand), but the data are separated into 13 different polygons (parts). Here, the first six rows that we see are all vertices for the first polygon ('part'). With polygon data, the final column, _hole_ tells us whether a vertex belongs to an inner hole rather than the outer boundary (although there aren't any holes in the New Zealand map).
 
 ### Points
 
 The final type of vector data you will encounter describe single points in space.
 
-To illustrate point data, we will use a dataset from within the PREDICTS database, which you will encounter later.
+To illustrate point data, we will use a dataset from within the PREDICTS database, which we will explore in more detail in a later session.
 
 For this, you will need my _predictsFunctions_ package for working with the PREDICTS database. You can install this by running: _remotes::install_github("timnewbold/predicts-demo",subdir="predictsFunctions")_
 
@@ -205,7 +205,7 @@ p <- ggplot() +
 p
 ```
 
-We could also add the roads data (here we only see one road becuase we are looking at a remote region in New Zealand)
+We could also add the roads data. I chose the location of the roads data to download to match up with these sites with biodiversity data. We only see one road becuase we are looking at a remote region in New Zealand.
 
 ```{r PlotPREDICTSSites3, echo=TRUE, eval=TRUE}
 p <- ggplot() + 
@@ -231,7 +231,7 @@ Just as we did before with the other vector data types, we can inspect the geome
 head(geom(sitesMap))
 ```
 
-Here, each row belongs to a different geometry (point) with specific (point) coordinates.
+Here, each row belongs to a different geometry (point) with specific (point) coordinates. The 'hole' column is meaningless for point data, but is still given as this is a vector object.
 
 ## Raster Data
 
@@ -271,7 +271,7 @@ p <- ggplot() +
 p
 ```
 
-We can also combine vector maps as an overlay, here showing the proportion of natural habitat, as well as roads and PREDICTS sites for the study region we looked at previously.
+We can also combine our raster data with vector maps as an overlay, here showing the proportion of natural habitat, as well as roads and PREDICTS sites for the study region we looked at previously.
 
 ```{r PlotNaturalHabitatStudyRegion, echo=TRUE, eval=TRUE}
 p <- ggplot() + 
@@ -331,6 +331,49 @@ p
 
 You can also combine two or more separate rasters into a calculation (as long as they have an identical spatial domain and resolution).
 
+So far, we have been working with simple raster data, where each raster has a single set of values across the grid. However, rasters can also have multiple 'layers', where each layer has its own set of values.
+
+To look at an example of such multi-layer data, we will download monthly average temperature values from the WorldClim dataset using the _geodata_ package. These data describe the average temperature in each of the months of the year, at a resolution of 5 arc-minutes.
+
+```{r GetTemperatureData, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+# Read average temperature at 5 arc-minutes resolution
+MonthlyTemp <- worldclim_global(var = "tavg",res = 5,path = tempdir())
+```
+
+We can see how many layers a raster object contains using the _nlyr_ function, here showing that we have a layer for each of the 12 months of the year.
+
+```{r InsepectLayers, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+nlyr(MonthlyTemp)
+```
+We can plot these data, plotting each of the 12 layers as a different facet.
+
+```{r PlotMonthlyTemperature, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+p <- ggplot() + 
+  geom_spatraster(data = MonthlyTemp) + 
+  scale_fill_grass_c(palette = "celsius") + 
+  facet_wrap(~lyr) + 
+  theme_classic()
+
+p
+```
+
+If we want to combine the layers, one option is simply to apply a mathematical function to the raster layer. For example, if we want to calculate the average temperature across all months of the year, we can simply apply the _mean_ function to our raster of monthly average temperatures.
+
+```{r AverageTemperatureData, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+AnnAvgTemp <- mean(MonthlyTemp)
+```
+
+Plotting the data again, we now just have a single layer for annual mean temperature.
+
+```{r PlotAnnualAvgTemperature, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+p <- ggplot() + 
+  geom_spatraster(data = AnnAvgTemp) + 
+  scale_fill_grass_c(palette = 'celsius') + 
+  theme_classic()
+
+p
+```
+
 ### Resampling/Aggregating rasters
 
 It is often the case that we need a raster to be in a different spatial resolution than the one provided, for example because we have other datasets with a different resolution and we want to ensure consistency.
@@ -338,7 +381,8 @@ It is often the case that we need a raster to be in a different spatial resoluti
 There are two main ways that we can change the spatial resolution of a raster. The simplest is aggregation, where we change the resolution of a map by a specific factor. For this, we can use the _aggregate_ function in the _terra_ package. For this method, we specify a function to use when aggregating. Here, we will take a simple average, using the _mean_ function, and ignoring NA values.
 
 ```{r AggregateNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-propn_natural_5a <- aggregate(x = propn_natural,fact = 10,fun = function(x) mean(x, na.rm=TRUE))
+propn_natural_5a <- aggregate(x = propn_natural,fact = 10,
+                              fun = function(x) mean(x, na.rm=TRUE))
 
 p <- ggplot() + 
   geom_spatraster(data = propn_natural_5a) + 
@@ -353,7 +397,7 @@ If you look carefully, you will see that the resulting map has a more blocky app
 
 Note, that there is also a _disaggregate_ function, if you need to convert your original map to one with a finer spatial resolution.
 
-If you need to change to a resolution that is not a simple factor of the original, or for other sorts of flexibility in changing resolution, you can use the _resample_ function, also in the _terra_ package. The default method to use for combining the values of cells is something called 'bilinear interpolation', which interpolates across several cells. Here, we will use a simple average _(method = "average")_, for comparability with the map we created using aggregation. There are also other methods you can use, including using the value for the nearest neighbour, which is useful if you have a map that describes categories rather than continuous values.
+If you need to change to a resolution that is not a simple factor of the original, or for other sorts of flexibility in changing resolution, you can use the _resample_ function, also in the _terra_ package. The default method to use for combining the values of cells is something called 'bilinear interpolation', which interpolates across several cells. Here, we will use a simple average _(method = "average")_, for comparability with the map we created using aggregation. There are also other methods you can use, including using the value for the nearest neighbour, which is useful if you have a map that describes categories rather than continuous values. We will use the coarser resolution map as a template for the resampling here (basically, the output of the resampling will match the grid resolution and spatial extent of the template map).
 
 ```{r ResampleNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 propn_natural_5b <- resample(x = propn_natural,y = propn_natural_5a,method="average")
@@ -373,24 +417,11 @@ You can see that this map is essentially identical to the one we created before.
 
 All maps captured as 2-dimensional objects are a representation of a 3-dimensional (spherical) world. The way that this conversion works depends on the coordinate and projection system used.
 
-The simplest way of representing spatial data is using a geographical projection, where space is described in terms of degrees of longitude and latitude, and the spatial unit is degrees.
+The simplest way of representing spatial data is using a geographical projection, where 3-dimensional space is flattened onto a 2-dimensional map, but spatial locations are still described in terms of degrees of longitude and latitude, and the spatial unit is degrees.
 
-Because the Earth isn't perfectly spherical, longitude and latitude coordinates are mapped using a theoretical representation of the Earth's surface. This is called the 'geodetic' system. Different systems can produce coordinates that vary, sometimes by as much as several hundred metres. A very commonly used coordinate system is the World Geodetic System 1984 (WGS84 for short).
+Because the Earth isn't perfectly spherical, longitude and latitude coordinates are mapped using a theoretical representation of the Earth's surface. This is called the 'geodetic' system. Different systems can produce coordinates that vary, sometimes by as much as several hundred metres. Therefore, you need to be careful to ensure that any maps you want to overlay or compare use the same coordinate systems (more on converting coordinate systems and projections later). A very commonly used coordinate system is the World Geodetic System 1984 (WGS84 for short).
 
-For this part of the tutorial, we will work with global climate data from WorldClim, which we can obtain using the _geodata_ package in R.
-
-```{r GetTemperatureData, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-# Read average temperature at 5 arc-minutes resolution
-temp <- worldclim_global(var = "tavg",res = 5,path = tempdir())
-```
-
-These data describe the average temperature in each of the months of the year, at a resolution of 5 arc-minutes, and are mapped with a geographical projection and the WGS84 coordinate system.
-
-We will first average the estimates of temperature across the 12 months, to obtain a single annual average temperature.
-
-```{r AverageTemperatureData, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-AnnAvgTemp <- mean(temp)
-```
+For this part of the tutorial, we will return to the map of annual average temperature that we calculated earlier.
 
 ```{r PlotTemperatureWGS84, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 p <- ggplot() + 
@@ -436,7 +467,7 @@ p
 
 Having such widely varying cell areas can be a problem for scientific studies, particularly in ecology, where many of the masurements we make of ecological communities vary depending on the spatial scale at which we measure them. 
 
-A solution to this problem is to change to using a projection that represents the world in such a way that grid cells have equal areas. This is called an equal-area projection, of which there are many examples. Here, we will use the Behrmann cylindrical equal area projection, and refer to it using its EPSG code (53017). See [https://epsg.io/](https://epsg.io/) for more details on these codes. We will specify here that we want an output cell resolution of 10,000 m.
+A solution to this problem is to change to using a projection that represents the world in such a way that grid cells have equal areas. This is called an equal-area projection, of which there are many examples. Here, we will use the Behrmann cylindrical equal area projection, and refer to it using its EPSG code (53017). See [https://epsg.io/](https://epsg.io/) for more details on these codes. In the _terra_ package, we can convert the projection system for both vector and raster maps using the _project_ function. We just need to specify the output coordinate system (y="epsg:53017") and the output spatial resolution. Here, we will specify here that we want an output cell resolution of 10,000 m, which is close to the average resolution of the input map (remember, that the resolution describes the length and width of cells, not the cell area).
 
 ```{r ProjectTemperatureMap, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 AnnAvgTemp_EA <- project(x = AnnAvgTemp,y = "epsg:53017", res = 10000)
@@ -466,7 +497,7 @@ p
 The cell areas are now much more consistent, although there is still some variation, particularly at extreme polar latitudes (no projection is perfect).
 
 ```{r SummarizeCellSizesBehrmann, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-summary(cellSize(AnnAvgTemp))
+summary(cellSize(AnnAvgTemp_EA))
 ```
 
 We can project spatial vector objects in exactly the same way as for rasters.
@@ -501,10 +532,12 @@ We will focus in this session on extracting values of a raster at specified poin
 
 Extracting values from a raster is very simple using the _extract_ function in the _terra_ package. We simply specify the raster we want to obtain values from, and the points at which we want to extract values.
 
-It is important to make sure, as we have already done in the previous section, that the raster map and the points map are in the same spatial projection, and that the units of the coordinates match. Otherwise, the resulting extracted values may be inaccurate.
+It is important to make sure, as we have already done in the previous section, that the raster map and the points map are in the same spatial projection and use the same coordinate system, and that the units of the coordinates match. Otherwise, the resulting extracted values may be inaccurate.
 
 ```{r ExtractNaturalHabitat, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-# Here the main data layer is labelled 'PRI_1km_2005_0ice' from the original data source. We have to specify that we want these values from the output produced by the extract function (otherwise we get cell IDs)
+# Here the main data layer is labelled 'PRI_1km_2005_0ice' from the original data 
+# source. We have to specify that we want these values from the output produced by 
+# the extract function (otherwise we get cell IDs)
 sitesMap_EA$NaturalHabitat <- extract(
   x = propn_natural_EA,
   y = sitesMap_EA)$PRI_1km_2005_0ice
@@ -538,7 +571,7 @@ Not surprisingly, the only value we obtain is the country code for New Zealand.
 
 ## Calculating Distances
 
-To begin with, we will focus in a simple calculation of distances, namely getting the shortest distance from a set of points to a set of lines (here, the roads map we worked with earlier). Other distance calcaulations for vector maps, such as distances to the nearest edge of a polygon or distances between two sets of points, follow the same basic principles.
+To begin with, we will focus on a simple calculation of distances, namely getting the shortest distance from a set of points to a set of lines (here, the roads map we worked with earlier). Other distance calcaulations for vector maps, such as distances to the nearest edge of a polygon or distances between two sets of points, follow the same basic principles.
 
 For this section of the tutorial, we will be working with the 'distance' function from the _terra_ package. This is a very flexible function that allows the calculation of all sorts of different distance measurements.
 
@@ -557,14 +590,14 @@ MinDistances <- apply(AllDistances, 1, min)
 sitesMap_EA$RoadDistance <- MinDistances
 ```
 
-We might also be interested in calculating is the distance from a set of points to the nearest raster cell of a specific value.
+We might also be interested in calculating the distance from a set of points to the nearest raster cell of a specific value.
 
 Let's say we want to know the distance from each site to the nearest cell with more than 30% coverage of natural habitat.
 
 The easiest way to do this is first to get the coordinates of cells with more than 30% natural habitat, convert these cells into a vector map of points using the cell coordinates, and then calculate distances between the two sets of points (the locations with biodiversity data and the cells with high levels of natural habitat).
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-# The outline of this code was supplied by Microsoft Copilot
+# Note that the outline of this code was supplied by Microsoft Copilot
 
 # Identify cells with natural habitat higher than 30%
 high_nathab_cells <- which(values(propn_natural_EA)>0.3)
@@ -586,5 +619,7 @@ MinDistances <- apply(AllDistances, 1, min)
 # Add the minimum distances to the original biodiversity sites map
 sitesMap_EA$NaturalHabitatDistance <- MinDistances
 ```
+
+There are loads of other types of calculation that you can do with spatial data, which we don't have time to cover today, including variations on the extraction and distance operations that we have just investigated. If you are interested in further exploring the use and handling of spatial data, I encourage you to explore some of the many functions in the very versatile _terra_ package.
 
 # Exercises
