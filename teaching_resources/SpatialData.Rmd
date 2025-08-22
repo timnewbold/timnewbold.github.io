@@ -569,6 +569,74 @@ table(countryExtract)
 
 Not surprisingly, the only value we obtain is the country code for New Zealand.
 
+Finally, we might be interested to know the average value of a raster in the area up to some specified distance around a set of points. For example, let's say we want to know the average natural habitat cover up to a 2,500-m radius around the points where we have sampled biodiversity. Given that animals move, it may be more important to know the average natural habitat across a landscape than at the specific point where we sampled biodiversity (although, of course depending on the resolution of the raster map, we are already looking at some sort of average across a landscape, albeit quite a small landscape; we will also ignore for now the fact that the beetles that were sampled in the study we are looking at are not particulary mobile!).
+
+This is a slightly more complex operation. We first need to define the landscapes around our spatial points. We can do this using the _buffer_ function in _terra_.
+
+This creates a polygon object describing circular buffers around each of our points. In this case, these buffers are strongly overlapping.
+
+```{r BufferSpatialPoints, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+
+# Create a 2,500-m buffer around each of the biodiversity points
+PtsBuff <- buffer(x = sitesMap_EA,width = 2500)
+
+p <- ggplot() + 
+  geom_spatraster(data = propn_natural_EA) + 
+  scale_fill_grass_c(palette = 'forest_cover') + 
+  geom_spatvector(data = PtsBuff,fill="#00000000") + 
+  # geom_spatvector(data = nz_major_sv_EA) + 
+  geom_spatvector(data = sitesMap_EA) + 
+  # Note that we are having to set the plotting limits in units of metres here
+  scale_x_continuous(name = "",limits = c(1.658e7,1.662e7)) +
+  scale_y_continuous(name = "",limits = c(-5.00e6,-4.95e6)) + 
+  theme_classic()
+
+p
+
+```
+
+Now we have defined the landscapes over which we want to average our natural habitat values, we can perform an extract operation to obtain the raster values in our landscapes of interest.
+
+When we extract values from a raster based on overlaying polygons, we obtain a data table of values, where the ID column corresponds to the ID in the original geometry.
+
+```{r, ExtractRasterValuesPoly,echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+NatHabValsLandscapes <- extract(x = propn_natural_EA,y = PtsBuff)
+
+head(NatHabValsLandscapes)
+```
+
+Now we can summarize the average values of natural habitat for each buffer:
+
+```{r SummarizeNaturalHabitatBuffers,echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+# Summarize average natural habitat values across our 2,500-m buffers
+# Remember that, because of the way it was created, 
+# our original layer labelled natural habitat as 'PRI_1km_2005_0ice'
+# We need to specify na.rm=TRUE when averaging because there are some missing
+# values in our natural habitat layer
+NatHabValsLandscapes %>% group_by(ID) %>% 
+  summarize(NaturalHabitat5k = mean(PRI_1km_2005_0ice,na.rm=TRUE)) -> 
+  NatHabLandscapeAvgs
+```
+
+Finally, we can merge these final average values into the data frame for our sampled sites. We can do this using a left join, but first we need to add the ID for each of the sites to its data frame (at the moment, this is only stored in the geometry).
+
+```{r MergeSitesNaturalHabitatLandscapes,echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+sitesMap_EA$ID <- data.frame(geom(sitesMap_EA))$geom
+
+sitesMap_EA %>% left_join(NatHabLandscapeAvgs,by = "ID") -> sitesMap_EA
+```
+
+Plotting our original site-specific values of proportion of natural habitat with our new values averaged across landscapes, we can see that we have pretty similar values (because in this case our buffers aren't much bigger than the 1,000-m resolution of the original raster). However, there is some variation in the estimated values.
+
+```{r PlotPointLandscapeNaturalHabitat,echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+p <- ggplot() + 
+  geom_point(data = sitesMap_EA,
+             mapping = aes(x = NaturalHabitat,y = NaturalHabitat5k)) +
+  theme_classic()
+
+p
+```
+
 ## Calculating Distances
 
 To begin with, we will focus on a simple calculation of distances, namely getting the shortest distance from a set of points to a set of lines (here, the roads map we worked with earlier). Other distance calcaulations for vector maps, such as distances to the nearest edge of a polygon or distances between two sets of points, follow the same basic principles.
@@ -623,3 +691,12 @@ sitesMap_EA$NaturalHabitatDistance <- MinDistances
 There are loads of other types of calculation that you can do with spatial data, which we don't have time to cover today, including variations on the extraction and distance operations that we have just investigated. If you are interested in further exploring the use and handling of spatial data, I encourage you to explore some of the many functions in the very versatile _terra_ package.
 
 # Exercises
+
+<div style="background-color: #f0f0f0; color: black; padding: 15px; border: none;">
+1. Try extracting the annual average temperature at the points where beetle biodiversity was sampled
+2. Try to calculate the distance from each of the points where beetle biodiversity was sampled to the nearest bit of coastline (hint, the functions we used earlier to calculate distances between points and lines work also for polygons, but to use just the edges you have to apply the <i>as.lines</i> function to the polygon first)
+3. CHALLENGE EXERCISE. Try to calculate the average of annual mean temperature across the whole of New Zealand
+</div>
+
+
+
