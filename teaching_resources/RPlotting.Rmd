@@ -306,6 +306,68 @@ ggplot(mtcars, aes(x=wt, y=mpg)) +
   theme_classic()
 ```
 
+We can also plot histograms, density plots and bar plots (as well as _*many*_ other types of graph) using ggplot:
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(data = mtcars,mapping = aes(x = mpg)) + 
+  # The 'bins' parameter here specifies the number of bins we want to plot
+  # You can also specify bin widths, or the breaks between each bin manually
+  geom_histogram(bins = 12,fill = "#58184599") + 
+  scale_x_continuous(name = 'Fuel economy (mpg)') + 
+  scale_y_continuous(name = 'Frequency') + 
+  theme_classic()
+```
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(data = mtcars,mapping = aes(x = mpg)) + 
+  geom_density(fill="#58184599") + 
+  scale_x_continuous(name = 'Fuel economy (mpg)') + 
+  scale_y_continuous(name = 'Density') + 
+  theme_classic()
+```
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(data = mtcars,mapping = aes(x = cyl,y = mpg)) + 
+  geom_boxplot(fill = "#58184599") + 
+  scale_x_discrete(name = "Number of cylinders") + 
+  scale_y_continuous(name = "Fuel economy (mpg)") +
+  theme_classic()
+```
+
+There are _*many*_ other types of graph we can produce with ggplot. To get some ideas, have a look at this [webpage](https://r-graph-gallery.com/ggplot2-package.html).
+
+# Saving ggplot Graphs to File
+
+To save a ggplot graph, the simplest method is to use the _ggsave_ function (there are many other ways that offer a lot of flexibility). We must first assign our graph to a new object in R, which we then pass to the _ggsave_ function. We can produce some sort of bitmap file, which produces an image composed of pixels, such as a png or jpeg file.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+p <- ggplot(data = mtcars,mapping = aes(x = cyl,y = mpg)) + 
+  geom_boxplot(fill = "#58184599") + 
+  scale_x_discrete(name = "Number of cylinders") + 
+  scale_y_continuous(name = "Fuel economy (mpg)") +
+  theme_classic()
+
+# The 'width' and 'height' parameters specify the dimensions of the saved graph,
+# in the 'units' specified (here cm), with the resolution 
+ggsave(filename = "ggBoxplot.png",plot = p,width = 12.5,height = 10,
+       units = "cm",dpi = 1200)
+```
+
+Alternatively, for most types of graph, we can obtain better quality (and typically much smaller file size) by writing a vector-based file, such as a pdf or eps file, which uses points and lines instead of pixels. Many journals will require you to submit figures in vector format to ensure high quality in the final published paper.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+p <- ggplot(data = mtcars,mapping = aes(x = cyl,y = mpg)) + 
+  geom_boxplot(fill = "#58184599") + 
+  scale_x_discrete(name = "Number of cylinders") + 
+  scale_y_continuous(name = "Fuel economy (mpg)") +
+  theme_classic()
+
+# For vector files, we no longer need the 'dpi' parameter
+ggsave(filename = "ggBoxplot.pdf",plot = p,width = 12.5,height = 10,
+       units = "cm")
+
+```
+
 # Next Time
 
 That's all I will cover in terms of plotting in R. There are thousands of ways you can make graphs and visualisations in R. With experience, you will start to encounter graphics that work for you and your datasets. You might want to look at these cheatsheets for <a href="http://publish.illinois.edu/johnrgallagher/files/2015/10/BaseGraphicsCheatsheet.pdf" target="_blank">base graphics</a> and <a href="https://raw.githubusercontent.com/rstudio/cheatsheets/master/data-visualization.pdf" target="_blank">ggplot</a>.
