@@ -85,8 +85,8 @@ hist(mtcars$hp)
 Both of these variables are right skewed. Therefore, let's try log transformations of both:
 
 ```{r,echo=TRUE,results=TRUE}
-mtcars$LogMPG <- log(mtcars$mpg)
-mtcars$LogHP <- log(mtcars$hp)
+mtcars$LogMPG <- log10(mtcars$mpg)
+mtcars$LogHP <- log10(mtcars$hp)
 
 hist(mtcars$LogMPG)
 hist(mtcars$LogHP)
@@ -158,6 +158,35 @@ The principle is the same for the coefficient tables produced by analysis of cov
 Things are a little more complicated for analyses of covariance where we have an interaction between variables. In the case of the interaction between a continuous and grouping variable (as in the model above), we now have individual slopes for the continuous variable for each group within the grouping variable.
 
 ![Interpreting the cofficient table in an interactive analysis of covariance](coef_table_ancova_interactive.jpg)
+
+## Making Predictions from an ANOVA Model
+
+As we did with <a href="./LinearRegression.html">linear regression</a>, it is useful to be able to make predictions from an analysis of covariance.
+
+As before, we can simply make predictions for the values of the explanatory variables in our original dataset, which can be great for making graphs.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+preds <- predict(object = m3,interval = 'confidence')
+
+mtcars <- cbind(mtcars,preds)
+
+head(mtcars)
+```
+
+Now, we can add these predictions to a results graph. Note that we have to back-transform the predictions because our model fit log<sub>10</sub> horsepower.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(data = mtcars,mapping = aes(x = hp,fill=cyl,colour=cyl)) + 
+  geom_point(mapping = aes(y = mpg)) + 
+  geom_line(mapping = aes(y = 10^(fit))) + 
+  # We set colour = NA here, so as not to have lines around our uncertainty ribbons
+  geom_ribbon(mapping = aes(ymin = 10^lwr,ymax = 10^upr),alpha=0.2,colour=NA) + 
+  guides(colour = guide_legend(title = "Cylinders"),
+         fill = guide_legend(title = "Cylinders")) + 
+  scale_x_continuous(name = "Horsepower",transform = 'log10') + 
+  scale_y_continuous(name = "Fuel efficiency (MPG)",transform = 'log10') + 
+  theme_classic()
+```
 
 # Next Time
 

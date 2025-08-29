@@ -78,7 +78,7 @@ We will not actually run a manual linear regression here. There is in additional
 In R, we can run a linear regression very simply using the _lm_ function. Here we will test whether the % of people with post-primary education in Swiss cantons in the late 19th Century had a significant effect on their fertility. First, we must ask R to fit a linear regression of fertility as a function of (_~_) education:
 
 ```{r,echo=TRUE,results=TRUE}
-m1 <- lm(swiss$Fertility~swiss$Education)
+m1 <- lm(formula = Fertility~Education,data = swiss)
 summary(m1)
 ```
 
@@ -141,9 +141,9 @@ hist(swiss$Fertility)
 The fertility values (response variable) seem reasonably close to a normal distribution, but the education values are very right-skewed. The obvious next step, therefore, is to try a model where we log-transform the values for education:
 
 ```{r,echo=TRUE,results=TRUE}
-swiss$LogEducation <- log(swiss$Education)
+swiss$LogEducation <- log10(swiss$Education)
 
-m2 <- lm(swiss$Fertility~swiss$LogEducation)
+m2 <- lm(formula = Fertility~LogEducation,data = swiss)
 summary(m2)
 anova(m2)
 ```
@@ -166,7 +166,79 @@ The eagle-eyed among you may also have noticed that the residuals seem to be low
 ggplot(data = swiss,mapping = aes(x=LogEducation,y=Fertility)) + geom_point() + geom_smooth(method="lm") + theme_classic()
 ```
 
-In fact, it looks as though the relationship between education and fertility is non-linear, violating our assumption of linearity. We won't deal with the non-linearity issue any further in this session, but we will return to this in later sessions.
+In fact, it looks as though the relationship between education and fertility is non-linear, violating our assumption of linearity. We won't deal with the non-linearity issue any further in this session, but we will return to this in later sessions. 
+
+Assuming for now that we are happy with this latest model, we will now move onto how we make predictions from our model.
+
+## Making Predictions from a Linear Regression Model
+
+There are many situations in which it is necessary to make predictions from a model, including to make graphs of the results. Although for very simple relationships, such as simple linear regression, packages such as ggplot will add the fitted regression line, for more complex models we need to make the predictions manually to capture all the variables accounted for in the model.
+
+The _predict_ function in R can make predictions for most model types (we will encounter a few exceptions in later tutorials). The simplest method is to make predictions for the observations in the original dataset (with their associated explanatory variables).
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+preds <- predict(m2)
+
+summary(preds)
+```
+
+At the moment, this just gives us the median prediction from our model, but we also need to know the uncertainty in our predictions. For this, we can use the _interval_ parameter. Now, we obtain a data frame with the median prediction ('fit') and the lower and upper 95% confidence intervals ('lwr' and 'upr').
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+preds <- predict(m2,interval='confidence')
+
+head(preds)
+```
+
+Let's add these model predictions to the original data frame.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+swiss <- cbind(swiss,preds)
+```
+
+We can now add these predictions to a graph to show both our model data and model fit.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+ggplot(data = swiss,mapping = aes(x = Education)) + 
+  geom_point(mapping = aes(y = Fertility)) + 
+  geom_line(mapping = aes(y = fit),colour="#2E2585",size = 0.8) + 
+  geom_ribbon(mapping = aes(ymin = lwr,ymax = upr),fill = "#2E2585",alpha = 0.2) + 
+  scale_x_continuous(name = "Post-primary Education (%)",transform = 'log10') +
+  scale_y_continuous(name = "Fertility (standardized)") + 
+  theme_classic()
+```
+
+Finally, we might also be interested in making predictions for values of the explanatory variables not encountered in the original dataset. In this case, we can pass a new data frame of explanatory variable values to the predict function. Let's say here that we are interested in making predictions of fertility for levels of post-primary education up to 100%. So, let's predict fertility at levels of post-primary education of 1%, 25%, 50%, 75% and 100%.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+nd <- data.frame(Education = c(1,25,50,75,100))
+nd$LogEducation <- log10(nd$Education)
+
+preds <- predict(object=m2,newdata=nd,interval='confidence')
+
+preds <- cbind(nd,preds)
+
+preds
+```
+
+Therefore, our model predicts that if everyone in a 19th Century Swiss canton had received post-primary education, that the standardized fertility level would have been 49.5 (95% confidence interval: 38.9 - 60.0).
+
+So far, we have calculated the confidence interval, which gives an estimate of the range within which the average fertility of a canton with, say, 100% post-primary education is expected to fall. In other words, this confidence interval ignores variation among individual cantons, and represents our ability to estimate the average response.
+
+We might also be interested in our ability to predict any given individual response, now accounting for individual variation. In this case, we need to calculate prediction intervals.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+nd <- data.frame(Education = c(1,25,50,75,100))
+nd$LogEducation <- log10(nd$Education)
+
+preds <- predict(object=m2,newdata=nd,interval='confidence')
+
+preds <- cbind(nd,preds)
+
+preds
+```
+
+You can see that, inevitably, the 95% prediction interval is higher than the confidence interval, in this case considerably so. In other words, we have a higher confidence in our ability to predict the average fertility of a canton with a given level of education than to predict the fertility of a specific individual canton.
 
 # Next Time
 
