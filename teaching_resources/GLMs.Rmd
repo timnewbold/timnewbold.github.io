@@ -90,6 +90,7 @@ remotes::install_github("timnewbold/MResEcologicalModelling",subdir="MResModelli
 
 ```{r,echo=TRUE,results=FALSE,message=FALSE,warning=FALSE}
 library(MResModelling)
+library(ggplot2)
 ```
 
 # Example Datasets
@@ -323,6 +324,92 @@ dispersiontest(abundMod1)
 ```
 
 Here the model is violating the assumptions of residual distribution, equality of variance and dispersion.
+
+## Making Predictions from a GLM
+
+For now, we will ignore these violations of model assumptions, and look at how we make predictions from a generalized linear model.
+
+We can generate simple median predicted values just as <a href="./ANCOVA.html">we did</a> with simpler linear models (ignore the names associated with these predictions - they refer to the line numbers in the original PREDICTS database). These predicted values are in the log-transformed space as fit in the Poisson GLM.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+preds.abundMod <- predict(object = abundMod1)
+
+head(preds.abundMod)
+```
+
+We can't automatically generate confidence intervals for GLMs, because the way this is done for linear models is based on statistical properties that apply only to normally distributed data.
+
+Instead, to generate confidence intervals on our predictions, we must first obtain estimates of the standard error around our predictions, which is calculated based on the estimate of standard error around each of the model coefficients, and is achieved by setting the _se.fit_ parameter in the _predict_ function.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+preds.abundMod <- predict(object = abundMod1,se.fit = TRUE)
+
+str(preds.abundMod)
+```
+
+Now, the function returns a list containing 'fit', which are the median predictions, and 'se.fit', which are the estimates of the standard error around these predictions.
+
+We can use these values to calculate confidence intervals, by taking into account the following facts:
+
+1. The prediction estimates from the model linear predictor (before applying the GLM link function) can be assumed to follow a normal distribution.
+2. In a normal distribution, 95% of the data fall within $\pm$ 1.96 standard deviations of the mean.
+3. If we want to calculate _confidence_ intervals (not _prediction_ intervals), because we are interested in our confidence in the estimated average response, we can treat the standard error of the model predictions as the standard deviation of this normal distribution. 
+4. This is because, provided that the assumptions of our model are met, if we hypothetically repeated the experiment from scratch many times over, the standard deviation of the distribution of predictions from these hypothetical repeat experiments would be equal to the standard error of the predictions from the real analysis that we have run on the single real experiment (return to the <a href="./StandardDeviationStandardError.html">tutorial</a> on standard deviation and standard error if you need a recap of why this is).
+5. Bringing all of this together, calculating the median prediction $\pm$ 1.96 $\times$ the standard error of the predictions gives us the 95% confidence intervals of the predictions (i.e., the interval within which we would expect 95% of estimated median responses to fall if we hypothetically repeated the experiment many times).
+
+Remember, that we also need to take the exponential of all predicted values to back-transform from the log-transformed models fit within a Poisson GLM.
+
+So that we can plot the individual effects of land use and forest cover, we will make predictions onto new data frames where we separate out differences in forest cover and differences in land use.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+nd.FC <- data.frame(LandUse=factor("Primary",levels=levels(hh.sp$LandUse)),
+                    ForestCover=seq(from = min(hh.sp$ForestCover),
+                                    to = max(hh.sp$ForestCover),
+                                    length.out=100))
+
+preds.abundMod.FC <- predict(object = abundMod1,newdata = nd.FC,se.fit = TRUE)
+
+nd.FC$PredAbund <- exp(preds.abundMod.FC$fit)
+nd.FC$PredAbundLower <- exp(preds.abundMod.FC$fit - 
+                              1.96 * preds.abundMod.FC$se.fit)
+nd.FC$PredAbundUpper <- exp(preds.abundMod.FC$fit + 
+                              1.96 * preds.abundMod.FC$se.fit)
+```
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+p <- ggplot(data = nd.FC,mapping = aes(x = ForestCover)) + 
+  geom_line(mapping = aes(y = PredAbund)) + 
+  geom_ribbon(mapping = aes(ymin = PredAbundLower,ymax = PredAbundUpper),alpha=0.2) + 
+  scale_x_continuous(name = "Forest Cover (%)") +
+  scale_y_continuous(name = "Abundance (Predicted)") + 
+  theme_classic()
+
+p
+```
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+nd.LU <- data.frame(LandUse=factor(
+  c("Primary","Pasture"),levels=levels(hh.sp$LandUse)),
+  ForestCover=median(hh.sp$ForestCover))
+
+preds.abundMod.LU <- predict(object = abundMod1,newdata = nd.LU,se.fit = TRUE)
+
+nd.LU$PredAbund <- exp(preds.abundMod.LU$fit)
+nd.LU$PredAbundLower <- exp(
+  preds.abundMod.LU$fit - 1.96 * preds.abundMod.LU$se.fit)
+nd.LU$PredAbundUpper <- exp(
+  preds.abundMod.LU$fit + 1.96 * preds.abundMod.LU$se.fit)
+```
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+p2 <- ggplot(data = nd.LU,mapping = aes(x = LandUse)) + 
+  geom_point(mapping = aes(y = PredAbund)) + 
+  geom_linerange(mapping = aes(ymin = PredAbundLower,ymax = PredAbundUpper)) + 
+  scale_y_continuous(name = "Abundance (Predicted)") + 
+  theme_classic()
+
+p2
+```
 
 # GLMs for Overdispersed Poisson Data
 
