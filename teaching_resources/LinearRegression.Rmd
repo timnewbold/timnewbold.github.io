@@ -182,7 +182,7 @@ preds <- predict(m2)
 summary(preds)
 ```
 
-At the moment, this just gives us the median prediction from our model, but we also need to know the uncertainty in our predictions. For this, we can use the _interval_ parameter. Now, we obtain a data frame with the median prediction ('fit') and the lower and upper 95% confidence intervals ('lwr' and 'upr').
+At the moment, this just gives us the median prediction from our model, but we also need to know the uncertainty in our predictions. For this, we can use the _interval_ parameter. Now, we obtain a data frame with the median prediction ('fit') and the lower and upper 95% confidence intervals ('lwr' and 'upr'). If we repeated our experiment many times from scratch, we would expect 95% of the predictions to fall within these confidence intervals.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 preds <- predict(m2,interval='confidence')

@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2025-08-29" />
+        <meta name="date" content="2025-09-01" />
     
     <title>Linear Regression</title>
 
@@ -1525,7 +1525,7 @@ margin-left: 0 !important;
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2025-08-29</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2025-09-01</p>
            
 
    
@@ -1863,7 +1863,9 @@ summary(preds)</code></pre>
 model, but we also need to know the uncertainty in our predictions. For
 this, we can use the <em>interval</em> parameter. Now, we obtain a data
 frame with the median prediction (‘fit’) and the lower and upper 95%
-confidence intervals (‘lwr’ and ‘upr’).</p>
+confidence intervals (‘lwr’ and ‘upr’). If we repeated our experiment
+many times from scratch, we would expect 95% of the predictions to fall
+within these confidence intervals.</p>
 <pre class="r"><code>preds &lt;- predict(m2,interval=&#39;confidence&#39;)
 
 head(preds)</code></pre>
