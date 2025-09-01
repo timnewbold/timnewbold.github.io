@@ -188,6 +188,8 @@ ggplot(data = mtcars,mapping = aes(x = hp,fill=cyl,colour=cyl)) +
   theme_classic()
 ```
 
+We can also make predictions for a new dataset, in exactly the same way as we did in the session on <a href="./LinearRegression.html">linear regression</a>.
+
 # Next Time
 
 In the <a href="./AssessingModels.html">next session</a>, we will look at how you can assess how well your model describes your study system.
