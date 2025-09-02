@@ -46,6 +46,7 @@ remotes::install_github("timnewbold/StatisticalModels")
 library(ggplot2)
 library(lme4)
 library(StatisticalModels)
+library(dplyr)
 ```
 
 # Example Dataset
@@ -145,9 +146,47 @@ plot(fitted(m2),residuals(m2))
 
 By accounting for variation in growth among individual trees, our mixed-effects model seems to be behaving much better in terms of equality of variance compared to the simple linear model we fitted earlier. This in addition to dealing with the issue of non-independence of data points caused by sampling repeated measures on the same individual trees.
 
+# Making Predictions from Mixed-effects Models
+
+We can make predictions from a mixed-effects model using a very similar method to that we have used previously for <a href="./ANCOVA.html">linear models</a> and <a href="./GLMs.html">generalized linear models</a>.
+
+To isolate the effect on circumference of age, ignoring the effect of tree identity, we will predict onto a new dataset where we specify that we want to predict circumference for ages from 118 to 1582 days.
+
+We will use a prediction function that I have written for my _StatisticalModels_ package, _PredictGLMER_, because the function in the _lme4_ package is rather error prone when predicting onto new data.
+
+For this function to work, you need to make sure that the new dataset you are using for prediction contains _*all*_ columns from the original dataset that are used in the model: explanatory (fixed) variables, random terms, and the response variable. The values entered for the random effects and response variable don't matter as they are not used directly in making predictions.
+
+The function returns a data table with median predictions ('y') and lower and upper 95% (by default) confidence intervals ('yminus' and 'yplus').
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+nd <- data.frame(age = seq(from = 118,to = 1582,length.out = 1000),
+                 Tree = ordered(1,levels=levels(m2@frame$Tree)),
+                 circumference=0)
+
+preds <- PredictGLMER(model = m2,data = nd,se.fit = TRUE)
+
+nd %>% bind_cols(preds) -> nd
+
+head(nd)
+```
+
+Now we can plot the predictions alongside the original data.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+p <- ggplot() + 
+  geom_point(data = Orange,
+             mapping = aes(x = age, y = circumference, colour = Tree)) + 
+  geom_line(data = nd,mapping = aes(x = age,y = y)) + 
+  geom_ribbon(data = nd,mapping = aes(x = age,ymin = yminus,ymax = yplus),
+              alpha = 0.2) + 
+  theme_classic()
+
+p
+```
+
 # Generalized Linear Mixed-effects Models
 
-So far in this session, we have been using ***linear mixed-effects models***. If you have data drawn from a Poisson or binomial distribution, you can use ***generalized linear mixed-effects models***. Just as with generalized *linear* models, you simply specify *family="poisson"*.
+So far in this session, we have been using ***linear mixed-effects models***. If you have data drawn from a Poisson or binomial distribution, you can use ***generalized linear mixed-effects models***. To do so, you use the _glmer_ instead of _lmer_ function in the _lme4_ package. Just as with generalized *linear* models, you simply specify *family="poisson"* or whatever family you are using.
 
 # Further Information
 
