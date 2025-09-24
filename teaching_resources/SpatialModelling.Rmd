@@ -14,7 +14,7 @@ output:
 
 In this session, we will explore some of the basic options available for modelling spatial data in R. Given the vast number of methods available for spatial modelling, we will only be able to scratch the surface in this session. However, the tutorial will hopefully give you some insights into the necessity we often face of dealing with space in our models, some of the complexities of constructing spatial models, and some pointers towards commonly used methods you might encounter.
 
-# Further Resources
+# Further Reading
 
 # Dataset and Non-spatial Models
 
@@ -25,6 +25,7 @@ library(dplyr)
 library(ggplot2)
 library(spdep)
 library(spatialreg)
+library(INLA)
 ```
 
 You can load the beetles dataset using the following code.
@@ -90,6 +91,50 @@ mt1
 
 Inspecting the results of the Moran test reveals that we have strong and significant positive spatial autocorrelation in the residuals of our simple generalized linear model.
 
+To make a nice visualization of spatial autocorrelation in our data and models, we can use Moran's plot.
+
+We will start by showing spatial autocorrelation in our response variable (species richness). The _moran.plot_ function generates a data frame with, among other things, the raw values of the specified variable (here species richness), labelled _x_ in the data frame, and a spatially weighted average of the variable at neighbouring locations.
+
+We will plot points identified as influential, in the _is_inf_ column, as large diamonds, and label them with the corresponding row number from the original dataset.
+
+We will add a trend line to show any correlation between raw values and neighbouring values. The positive relationship that we observe here indicates the presence of positive spatial autocorrelation. In other words, smaller values of species richness tend to be associated with smaller values in neighbouring locations, while larger values tend to be associated with larger values in neighbouring locations. 
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+mp <- moran.plot(x = beetles$Species_richness,listw = sw1,plot = FALSE)
+
+p <- ggplot(data = mp,mapping = aes(x = x,y = wx)) + 
+  geom_point(shape = 16) + 
+  geom_smooth(formula = y~x, method="lm",colour="#5DA899",fill="#5DA899") + 
+  geom_hline(yintercept=mean(mp$wx), lty=2) + 
+  geom_vline(xintercept=mean(mp$x), lty=2) + 
+  geom_point(data=mp[mp$is_inf,], aes(x=x, y=wx), shape=18,size=4) + 
+  geom_text(data=mp[mp$is_inf,], aes(x=x, y=wx, label=labels, vjust=1.5)) + 
+  scale_x_continuous(name = "Species Richness") + 
+  scale_y_continuous(name = "Weighted Avg. Neighbour Species Richness") + 
+  theme_classic()
+
+p
+```
+
+We can produce the same plot but for the residuals of our simple non-spatial model.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+mp <- moran.plot(x = residuals(m1),listw = sw1,plot = FALSE)
+
+p <- ggplot(data = mp,mapping = aes(x = x,y = wx)) + 
+  geom_point(shape = 16) + 
+  geom_smooth(formula = y~x, method="lm",colour="#5DA899",fill="#5DA899") + 
+  geom_hline(yintercept=mean(mp$wx), lty=2) + 
+  geom_vline(xintercept=mean(mp$x), lty=2) + 
+  geom_point(data=mp[mp$is_inf,], aes(x=x, y=wx), shape=18,size=4) + 
+  geom_text(data=mp[mp$is_inf,], aes(x=x, y=wx, label=labels, vjust=1.5)) + 
+  scale_x_continuous(name = "Model Residuals") + 
+  scale_y_continuous(name = "Weighted Avg. Neighbour Model Residual") + 
+  theme_classic()
+
+p
+```
+
 # Accounting for Spatial Dependency - Spatial Autoregression
 
 ## Running Spatial Autoregressive Models
@@ -99,7 +144,6 @@ The existence of positive spatial autocorrelation in the residuals of our model 
 Therefore, to make robust inferences with our data, we need some way of accounting for the spatial dependency in the data. One simple way of doing this is to use spatial autoregression, with a number of functions to do this provided in the _spatialreg_ package.
 
 We have a two key decisions to make in running a spatial autoregressive model:
-
 
 1. Whether to inclucde a spatially lagged term just for the response variable (simple spatial autoregression) or for both the response and explanatory variables (spatial Durbin model).
 2. Whether to fit a spatial autoregressive component (which describes the dependency of values at one location on the values of nearby locations) for just the model error, for just the response variable, or for both the response variable and the model error.
@@ -111,6 +155,7 @@ These spatial autoregressive models are an adaptation of linear models, and so c
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 beetles$LogRichness <- log(beetles$Species_richness)
 
+# Spatial dependence in model error only
 m1.spat.sar.err <- spatialreg::errorsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,
@@ -119,12 +164,14 @@ m1.spat.sar.err.d <- spatialreg::errorsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,
   listw = sw1,Durbin = TRUE)
+# Spatial dependence in the response variable only
 m1.spat.sar.lag <- spatialreg::lagsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,listw = sw1)
 m1.spat.sar.lag.d <- spatialreg::lagsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,listw = sw1,Durbin = TRUE)
+# Spatial dependence in the model error and response variable
 m1.spat.sar.sac <- spatialreg::sacsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,listw = sw1)
@@ -216,22 +263,23 @@ p <- ggplot(data = beetles,mapping = aes(x = NaturalHabitat5k)) +
 p
 ```
 
-Another problem that we have with the predictions from a spatial autoregression is that we don't get an estimate of the uncertainty in our predictions.
-
-TODO: Obtaining standard error of predictions (appropriately caveated!)
+Another problem that we have with the predictions from a spatial autoregression is that we don't automatically get an estimate of the uncertainty in our predictions. We can use a work-around, manually calculating the confidence in our model estimates from the model coefficients and the variance-covariance matrix (which gives the uncertainty associated with each coefficient as well as covariance between each pair of coefficients). Although this is the standard approach for obtaining confidence in the estimates made by classical statistical models, it is a bit of a fudge for spatial models (ignoring the spatial component of the model), and so we should treat these uncertainty estimates with some caution!
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-# Obtain the model design matrix
+# Obtain the model design matrix (this represents the values of the
+# explanatory variables for each row of data)
 mm <- model.matrix(formula(m1.spat.sar.err),data = beetles)
 
 # Extract the model coefficients
 coefs <- coef(m1.spat.sar.err)
+
 # Remove the 'lambda' coefficient, which gets in the way when we try
 # to make predictions
 coefs <- coefs[-which(names(coefs)=='lambda')]
 
 # Obtain the variance-covariance matrix from the model
 vc <- vcov(m1.spat.sar.err)
+
 # Remove rows and columns associated with the 'lambda' parameter, which again
 # cause problems when making predictions
 vc <- vc[-which(rownames(vc)=='lambda'),]
@@ -263,5 +311,90 @@ p
 
 ```
 
+# Accounting for Spatial Dependency - INLA Models
 
+In the final section of the tutorial, we will work with a powerful, flexible and very fast-running set of Bayesian methods for developing models with spatial dependency, using the _INLA_ package, which uses Integrated Nested Laplace Approximation to find parameter values.
+
+We will only here scratch the surface of what these models can do. If you want to find out more, this [website](https://www.r-inla.org/) has a lot of useful materials.
+
+We will here run a conditional autoregressive Besag model to capture the spatial dependency (see this [tutorial](https://codingclubuc3m.rbind.io/post/2019-11-05/) for further details).
+
+We first need to define the neighbourhood of sampled locations again, and now convert this to an INLA graph object. We also need to create a variable that identifies each row in the data, for linking to the spatial neighbourhoods object.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+nb <- tri2nb(coords = beetles[,c('Longitude','Latitude')])
+nb.mat <- nb2mat(neighbours = nb,style = "B",zero.policy = TRUE)
+nb.graph <- inla.read.graph(nb.mat)
+
+beetles$ID <- 1:nrow(beetles)
+```
+
+We can now create our model formula, which contains the standard formulation for relating species richness to land use and natural habitat, as well as the spatial dependency component, which specifies a Besag model.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+mod.formula <- Species_richness~LandUse+NaturalHabitat5k+LandUse:NaturalHabitat5k+
+  f(ID, model="besag",graph = nb.graph)
+```
+
+Now, we can run our INLA model. We need to specify that we want to return the model correlation matrix, which allows us to extract the variances and covariances of the model parameters, for plotting uncertainty.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+m1.spat.inla <- inla(formula = mod.formula,family = "poisson",
+                     data = beetles,
+                     control.fixed = list(correlation.matrix=TRUE))
+```
+
+Inspecting the summary of this model, you can see the coefficient estimates (with uncertainty). These values should now hopefully be at least somewhat familiar.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+summary(m1.spat.inla)
+```
+
+We can plot the model-estimated effects of land use and natural habitat from this model in a very similar way as for the simple spatial autoregressive models we used earlier.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+coefs <- m1.spat.inla$summary.fixed$mean
+names(coefs) <- m1.spat.inla$names.fixed
+
+vc <- m1.spat.inla$misc$lincomb.derived.covariance.matrix
+
+pred <- mm %*% coefs
+
+se_pred <- sqrt(diag(mm %*% vc %*% t(mm)))
+
+beetles$PredINLA <- exp(pred)
+beetles$PredINLALower <- exp(pred - 1.96 * se_pred)
+beetles$PredINLAUpper <- exp(pred + 1.96 * se_pred)
+
+beetles$FittedINLA <- m1.spat.inla$summary.fitted.values$mean
+
+p <- ggplot(data = beetles) + 
+  geom_point(mapping = aes(x = NaturalHabitat5k,y = Species_richness,
+                           colour = LandUse)) +
+  geom_line(mapping = aes(x = NaturalHabitat5k,y = FittedINLA,
+                          colour = LandUse),linetype = 2,alpha = 0.7) + 
+  geom_line(mapping = aes(x = NaturalHabitat5k,y = PredINLA,
+                          colour = LandUse)) +
+  geom_ribbon(mapping = aes(x = NaturalHabitat5k,
+                            ymin = PredINLALower,ymax = PredINLAUpper,
+                            fill = LandUse),
+              alpha = 0.2) +
+  theme_classic()
+
+p
+```
+
+Finally, let's run a Moran test to assess the spatial autocorrelation in the residuals of this INLA model. This test shows that there is no significant residual spatial autocorrelation with this model.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+inla.resids <- beetles$LogRichness - log(beetles$FittedINLA)
+
+nb <- tri2nb(beetles[,c('Longitude','Latitude')])
+w <- nb2listw(neighbours = nb,style = "W")
+mt <- moran.test(x = inla.resids,listw = w)
+
+mt
+```
+
+# Exercises
 
