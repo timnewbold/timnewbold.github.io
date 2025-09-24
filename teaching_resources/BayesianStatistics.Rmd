@@ -1,0 +1,61 @@
+---
+title: Bayesian Statistics - A Very Short Introduction
+date: "`r Sys.Date()`"
+author: "Tim Newbold"
+output:
+  rmdformats::downcute:
+  code_folding: show
+self_contained: true
+thumbnails: false
+lightbox: true
+---
+
+# Introduction and Further Reading
+
+This tutorial only covers 
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(brms)
+```
+
+# Bayesian Linear Regression
+
+## Running the Model
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+data(swiss)
+head(swiss)
+
+ggplot(data = swiss,mapping = aes(x=Education,y=Fertility)) + 
+  geom_point() + 
+  geom_smooth(method = 'lm') + 
+  scale_x_continuous(transform = 'log10') + 
+  theme_classic()
+```
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+m1 <- brm(formula = Fertility ~ log10(Education),data = swiss)
+```
+
+## Checking the Model
+
+## Predictions and Plotting
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+preds <- conditional_effects(m1)
+
+ggplot() + 
+  geom_point(data = swiss,mapping = aes(x = Education,y = Fertility)) + 
+  scale_x_continuous(transform = 'log10') + 
+  geom_line(data = preds$Education,mapping = aes(x = Education,y=estimate__),
+            colour="#2E2585",size=1) + 
+  geom_ribbon(data = preds$Education,mapping = aes(
+    x = Education,ymin = lower__,ymax = upper__),
+    fill = "#2E2585",alpha=0.3) + 
+  theme_classic()
+```
+
+# Bayesian Generalized Linear Models
+
+# Bayesian Mixed-effects Models
