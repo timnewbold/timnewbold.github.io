@@ -18,6 +18,16 @@ Linear regression allows us to test for an effect of a continuous explanatory va
 
 If you are not familiar with basic statistical concepts (hypotheses, null hypotheses, P values, degrees of freedom etc.), I recommend taking a look at <a href="https://www.khanacademy.org/math/statistics-probability/significance-tests-one-sample#idea-of-significance-tests" target="_blank">these videos</a>.
 
+# Further Reading
+
+The following books are good references for basic statistical tests, including ANOVA, linear regression and ANCOVA:
+
+Crawley, M.J. (2014). <i>Statistics: An Introduction Using R</i>. 2nd Edition. John Wiley & Sons, Hoboken, USA
+
+Barnard, C., Gilbert, F. & McGregor, P. (2007). <i>Asking Questions in Biology: A Guide to Hypothesis Testing, Experimental Design and Presentation in Practical Work and Research Projects</i>. 3rd Edition. Benjamin Cummings, San Francisco, USA.
+
+# Dataset
+
 In this session, we will work with a new dataset that is built into R, the 'swiss' dataset, which details socio-economic and fertility indicators for Swiss cantons in 1888.
 
 ```{r,echo=TRUE,results=TRUE}
