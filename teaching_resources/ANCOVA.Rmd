@@ -18,117 +18,146 @@ ANCOVAs are used to test for an effect of a mixture of both continuous and categ
 
 If you are not familiar with basic statistical concepts (hypotheses, null hypotheses, P values, degrees of freedom etc.), I recommend taking a look at <a href="https://www.khanacademy.org/math/statistics-probability/significance-tests-one-sample#idea-of-significance-tests" target="_blank">these videos</a>.
 
-We will work again with the cars dataset that we have used previously:
+We will work again with the dataset that we have used previously, describing the total abundance of beetles in locations across different types of land use - natural forest (primary vegetation) and areas of livestock grazing (pasture) - in New Zealand.
 
 ```{r,echo=TRUE,results=TRUE}
-data(mtcars)
-
-# Ensure that the number of cylinders is treated as a categorical (grouping) variable, 
-# by converting it to a factor
-mtcars$cyl <- factor(mtcars$cyl)
+library(dplyr)
+url("https://www.dropbox.com/scl/fi/4olcttgagt0sd92hg64vk/Ewers2007BeetleData.rds?rlkey=14c8qby2023lt9924bi3th0ee&dl=1") %>%
+  readRDS() -> beetles
 ```
+
+As before, because beetle abundance can only take positive values, and because the distribution of values is highly skewed, we will work with log-transformed total abundance.
+
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% mutate(LogAbundance = log10(Total_abundance)) -> beetles
+```
+
+# Further Reading
+
+The following books are good references for basic statistical tests, including ANOVA, linear regression and ANCOVA:
+
+Crawley, M.J. (2014). <i>Statistics: An Introduction Using R</i>. 2nd Edition. John Wiley & Sons, Hoboken, USA
+
+Barnard, C., Gilbert, F. & McGregor, P. (2007). <i>Asking Questions in Biology: A Guide to Hypothesis Testing, Experimental Design and Presentation in Practical Work and Research Projects</i>. 3rd Edition. Benjamin Cummings, San Francisco, USA.
 
 # Running ANCOVAs
 
 ## Simple Additive Models
 
-In this session, we will investigate the effects of car power and fuel efficiency. Let's begin by plotting this relationship:
+In this session, we will investigate the effects of land use and natural habitat coverage in the landscape on beetle total abundance. Let's begin by plotting these relationships.
 
 ```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 library(ggplot2)
 
-ggplot(data = mtcars,mapping = aes(x=hp,y=mpg))+geom_point()+
-  scale_x_continuous(name = "Power (HP)")+
-  scale_y_continuous(name = "Fuel Efficiency (MPG)")+
-  geom_smooth(method = "lm")+theme_classic()
+ggplot(data = beetles,mapping = aes(
+  x = NaturalHabitat5k,y = Total_abundance,col=LandUse,fill=LandUse)) + 
+  geom_point() + 
+  geom_smooth(method = 'lm') + 
+  scale_x_continuous(name = "Surrounding Natural Habitat Proportion") + 
+  scale_y_continuous(name = "Total beetle abundance",transform = 'log10') + 
+  theme_classic()
 ```
 
-We will also additionally consider the effect of the number of cylinders on this relationship, so let's plot the relationship again, but separating car models based on their number of cylinders:
-
-```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
-ggplot(data = mtcars,mapping = aes(x=hp,y=mpg,col=cyl,shape=cyl))+geom_point()+
-  scale_x_continuous(name = "Power (HP)")+
-  scale_y_continuous(name = "Fuel Efficiency (MPG)")+
-  geom_smooth(method = "lm")+theme_classic()
-```
-
-To begin with, we will fit a model to test whether both power and number of cylinders affect fuel economy. To do this, we use the _lm_ function. This is the same function that we used when we fit a linear regression, but here by adding also a categoraical (grouping) variable into our model we have fit an analysis of covariance:
+To begin with, we will fit a model to test whether both land use and natural habitat coverage affect beetle abundance. To do this, we use the _lm_ function. This is the same function that we used when we fit a linear regression, but here by adding also a categoraical (grouping) variable into our model we have fit an analysis of covariance:
 
 ```{r,echo=TRUE,results=TRUE}
-m1 <- lm(mtcars$mpg~mtcars$hp+mtcars$cyl)
+m1 <- lm(formula = LogAbundance~LandUse+NaturalHabitat5k,data = beetles)
 
 summary(m1)
 anova(m1)
 ```
 
-If we look at the ANOVA table, both power and number of cylinders have F ratios with a significant P value, suggesting that both might be important in explaining fuel economy (but more on statistical significance in models with multiple explanatory variables in the <a href="./AssessingModels.html">next session</a>). 
+If we look at the ANOVA table, both land use and natural habitat coverage have F ratios with a significant P value, suggesting that both might be important in explaining beetle abundance (but more on statistical significance in models with multiple explanatory variables in the <a href="./AssessingModels.html">next session</a>). 
 
 ## Checking Model Assumptions
 
-For now though, we will check our model assumptions. As in previous sessions, we will assume that our data points are independent of one another, and that there is a linear relationship between our explanatory variables and our response variable. So, for now, we will check the assumptions of equality of variance and normal distribution of residuals:
+For now though, we will check our model assumptions. As in previous sessions, we will assume that our data points are independent of one another, and that there is a linear relationship between our explanatory variables and our response variable. So, for now, we will check the assumptions of equality of variance and normal distribution of residuals.
 
-```{r,echo=TRUE,results=TRUE}
-plot(fitted(m1),residuals(m1)); abline(h=0,lty=2,lwd=2,col="red")
-qqnorm(residuals(m1)); qqline(residuals(m1))
-hist(residuals(m1))
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(x = fitted(m1),y = residuals(m1))) + 
+  geom_point() + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0,linewidth = 1.2,linetype='dashed',col="#bf2c23") + 
+  theme_classic()
 ```
 
-It looks as though there is a higher spread of residuals for higher fitted values in the model. The  residuals appear to conform fairly well to a normal distribution, although it seems there might be some slight skew. 
-
-As in the <a href="./LinearRegression.html">session on linear regression</a>, the first thing we might try in order to diagnose these issues is to investigate the distributions of values in the two continuous variables in our model (the response variable and the continuous explanatory variable):
-
-```{r,echo=TRUE,results=TRUE}
-hist(mtcars$mpg)
-hist(mtcars$hp)
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(sample = residuals(m1))) + 
+  geom_qq() + geom_qq_line() + 
+  theme_classic()
 ```
 
-Both of these variables are right skewed. Therefore, let's try log transformations of both:
+It looks as though there is a slightly lower spread of residuals for higher fitted values in the model. The  residuals appear to conform fairly well to a normal distribution, although it seems there might be some slight skew. 
 
-```{r,echo=TRUE,results=TRUE}
-mtcars$LogMPG <- log10(mtcars$mpg)
-mtcars$LogHP <- log10(mtcars$hp)
+As in the <a href="./LinearRegression.html">session on linear regression</a>, the first thing we might try in order to diagnose these issues is to investigate the distributions of values of our continuous variables. Since we have already log-transformed total abundance, we will focus now on the natural habitat values.
 
-hist(mtcars$LogMPG)
-hist(mtcars$LogHP)
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(data = beetles,mapping = aes(x = NaturalHabitat5k)) + 
+  geom_histogram() + theme_classic()
 ```
 
-This seems to have improved the distributions of both variables. So, let's try refitting our model, but this time using the log-transformed values:
+The distribution of values for landscape coverage of natural habitat is strongly right-skewed. Therefore, we will try log-transforming this variable also.
+
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% mutate(LogNaturalHabitat5k = log10(NaturalHabitat5k)) -> beetles
+
+ggplot(data = beetles,mapping = aes(x = LogNaturalHabitat5k)) + 
+  geom_histogram() + theme_classic()
+```
+
+This does seem to have improved the distribution at least a little bit. So, let's try refitting our model, but this time using the log-transformed values for natural habitat coverage.
 
 ```{r,echo=TRUE,results=TRUE}
-m2 <- lm(mtcars$LogMPG~mtcars$LogHP+mtcars$cyl)
+m2 <- lm(formula = LogAbundance~LandUse+LogNaturalHabitat5k, data = beetles)
 
 summary(m2)
 anova(m2)
 ```
 
-```{r,echo=TRUE,results=TRUE}
-plot(fitted(m2),residuals(m2))
-qqnorm(residuals(m2)); qqline(residuals(m2))
+Now we will check the model assumptions again.
+
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(x = fitted(m2),y = residuals(m2))) + 
+  geom_point() + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0,linewidth = 1.2,linetype='dashed',col="#bf2c23") + 
+  theme_classic()
 ```
 
-This model conforms to the assumptions of parametric statistical tests better than before, although there are still some signs of problems. We will return to this issue again shortly.
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(sample = residuals(m2))) + 
+  geom_qq() + geom_qq_line() + 
+  theme_classic()
+```
+
+There is maybe a slight improvement in conformation to model assumptions, although not by much.
 
 ## Fitting Interactions Between Variables
 
-Let's re-plot our original relationship between car power and fuel economy, separating cars with different numbers of cylinders:
+Let's re-plot the original relationship of beetle abundance as a function of land use and surrounding natural habitat in the landscape. This time, we will plot both abundance and natural habitat on log-transformed axes.
 
 ```{r,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-ggplot(data = mtcars,mapping = aes(x=hp,y=mpg,col=cyl,shape=cyl))+geom_point()+
-  scale_x_continuous(name = "Power (HP)")+
-  scale_y_continuous(name = "Fuel Efficiency (MPG)")+
-  geom_smooth(method = "lm")+theme_classic()
+ggplot(data = beetles,mapping = aes(
+  x = NaturalHabitat5k,y = Total_abundance,col=LandUse,fill=LandUse)) + 
+  geom_point() + 
+  geom_smooth(method = 'lm') + 
+  scale_x_continuous(name = "Surrounding Natural Habitat Proportion",transform = 'log10') + 
+  scale_y_continuous(name = "Total beetle abundance",transform = 'log10') + 
+  theme_classic()
 ```
 
-It looks as though the effect of power on fuel economy differs depending on how many cylinders the car has (i.e., the slopes of the lines are different). 
+It looks as though the effect of natural habitat on beetle abundance differs among the two land-use types (i.e., the slopes of the lines are different). 
 
 Accounting for variability in the effect of one explanatory variable depending on the value of another explanatory variable is achieved by fitting an _interaction_ term in the model. This is done in one of two ways in R. Both approaches here yield exactly the same model:
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 # First, we can put an asterisk instead of a plus symbol between our variables:
-m3 <- lm(mtcars$LogMPG~mtcars$LogHP*mtcars$cyl)
-# Second, we can manually specify that we want to fit effects of power, number of
-# cylinders, and their interaction, as follows:
-m4 <- lm(mtcars$LogMPG~mtcars$LogHP+mtcars$cyl+mtcars$LogHP:mtcars$cyl)
+m3 <- lm(LogAbundance~LandUse*LogNaturalHabitat5k, data = beetles)
+
+# Second, we can manually specify that we want to fit effects of land use,
+# natural habitat, and their interaction, as follows:
+m4 <- lm(LogAbundance~LandUse+LogNaturalHabitat5k+LandUse:NaturalHabitat5k,
+         data = beetles)
 
 summary(m3)
 anova(m3)
@@ -136,22 +165,11 @@ anova(m3)
 
 The second of these two approaches is useful if you have more than two terms in the model. If you put asterisks between all variables in your model, as in the first approach, you will get a model with every possible combination of interactions (including higher-order interactions) between your explanatory variables. This quickly leads to _very_ complex models with increasing numbers of explanatory variables.
 
-Looking at the model summary and P values, it doesn't look as though the interaction between power and number of cylinders if very helpful in explaining the fuel efficiency of cars (we will return to this in the <a href="./AssessingModels.html">next session</a>).
-
-## Checking Model Assumptions
-
-Let's check our model assumptions again:
-
-```{r,echo=TRUE,results=TRUE}
-plot(fitted(m3),residuals(m3))
-qqnorm(residuals(m3)); qqline(residuals(m3))
-```
-
-It looks as though this interactive model is conforming better to the assumptions of equal variance and normal distribution of residuals. Missing important variables in your model is another common cause for violation of model assumptions. The only apparent issue remaining is that there are two data points with large negative residuals. The next step in improving this model would probably be to investigate these data points.
+Looking at the model summary and P values, it doesn't look as though the interaction between land use and surrounding natural habitat has a significant effect on beetle abundance (but we will return to this in the <a href="./AssessingModels.html">next session</a>).
 
 ## Interpreting Model Coefficients
 
-The principle is the same for the coefficient tables produced by analysis of covariance models as those produced by simple ANOVAs or linear regressions. For additive models, interpreting the model coefficients is relatively straightforward. We just have a mix of slope coefficients for continuous variables (as in linear regression), and difference coefficients for grouping variables (as in analysis of variance). The intercept now refers to the value of the response variable when continuous variables have a value of zero ***and*** for reference groupings (in this case, cars with 4 cylinders).
+The principle is the same for the coefficient tables produced by analysis of covariance models as those produced by simple ANOVAs or linear regressions. For additive models, interpreting the model coefficients is relatively straightforward. We just have a mix of slope coefficients for continuous variables (as in linear regression), and difference coefficients for grouping variables (as in analysis of variance). The intercept now refers to the value of the response variable when continuous variables have a value of zero ***and*** for reference groupings (in this case, samples taken within locations where the land use is pasture).
 
 ![Interpreting the cofficient table in an additive analysis of covariance](coef_table_ancova_additive.jpg)
 
@@ -166,25 +184,29 @@ As we did with <a href="./LinearRegression.html">linear regression</a>, it is us
 As before, we can simply make predictions for the values of the explanatory variables in our original dataset, which can be great for making graphs.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-preds <- predict(object = m3,interval = 'confidence')
+preds <- predict(object = m2,interval = 'confidence')
 
-mtcars <- cbind(mtcars,preds)
+bind_cols(beetles,preds) -> beetles2
 
-head(mtcars)
+head(beetles2)
 ```
 
-Now, we can add these predictions to a results graph. Note that we have to back-transform the predictions because our model fit log<sub>10</sub> horsepower.
+Now, we can add these predictions to a results graph. Note that we have to back-transform the predictions because our model fit log<sub>10</sub> beetle abundance.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-ggplot(data = mtcars,mapping = aes(x = hp,fill=cyl,colour=cyl)) + 
-  geom_point(mapping = aes(y = mpg)) + 
-  geom_line(mapping = aes(y = 10^(fit))) + 
-  # We set colour = NA here, so as not to have lines around our uncertainty ribbons
-  geom_ribbon(mapping = aes(ymin = 10^lwr,ymax = 10^upr),alpha=0.2,colour=NA) + 
-  guides(colour = guide_legend(title = "Cylinders"),
-         fill = guide_legend(title = "Cylinders")) + 
-  scale_x_continuous(name = "Horsepower",transform = 'log10') + 
-  scale_y_continuous(name = "Fuel efficiency (MPG)",transform = 'log10') + 
+beetles2 %>% mutate(PredMedian = 10^fit,
+                    PredLower = 10^upr,
+                    PredUpper = 10^lwr) -> beetles2
+
+ggplot(data = beetles2,mapping = aes(x = NaturalHabitat5k,
+                                     fill = LandUse,
+                                     colour = LandUse)) + 
+  geom_point(mapping = aes(y = Total_abundance)) + 
+  geom_line(mapping = aes(y = PredMedian)) + 
+  geom_ribbon(mapping = aes(ymin = PredLower,ymax = PredUpper),
+              alpha = 0.2, colour = NA) + 
+  scale_x_continuous(name = "Natural Habitat Proportion",transform = 'log10') + 
+  scale_y_continuous(name = "Total beetle abundance",transform = 'log10') + 
   theme_classic()
 ```
 

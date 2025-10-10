@@ -20,13 +20,25 @@ There are three main ways that we might assess the ability of our model to expla
 2. We might be interested in how strong an effect an explanatory variable has on the response variable (i.e., its **_effect size_**).
 3. We can assess how much of the variability in our response variable is explained by the set of explanatory variables in our model. This is referred to as **_model explanatory power_**.
 
-We will return yet again to the cars dataset for this session:
+We will return again to the beetles dataset for this session, again log-transforming abundance and surrounding natural habitat values, to deal with the fact that the distributions of values are very right-skewed, and also that abundance values are bound at zero.
 
 ```{r,echo=TRUE,results=TRUE}
-data(mtcars)
+library(dplyr)
+url("https://www.dropbox.com/scl/fi/4olcttgagt0sd92hg64vk/Ewers2007BeetleData.rds?rlkey=14c8qby2023lt9924bi3th0ee&dl=1") %>%
+  readRDS() %>% 
+  mutate(LogAbundance = log10(Total_abundance),
+         LogNaturalHabitat5k = log10(NaturalHabitat5k)) -> beetles
 
-mtcars$cyl <- factor(mtcars$cyl)
+
 ```
+
+# Further Reading
+
+The following books are good references for basic statistical tests, including ANOVA, linear regression and ANCOVA. Crawley (2014) details the approach to model selection that I introduce here.
+
+Crawley, M.J. (2014). <i>Statistics: An Introduction Using R</i>. 2nd Edition. John Wiley & Sons, Hoboken, USA
+
+Barnard, C., Gilbert, F. & McGregor, P. (2007). <i>Asking Questions in Biology: A Guide to Hypothesis Testing, Experimental Design and Presentation in Practical Work and Research Projects</i>. 3rd Edition. Benjamin Cummings, San Francisco, USA.
 
 # Model Selection
 
@@ -34,21 +46,12 @@ In classical statistics, we want to discard any candidate explanatory variables 
 
 There are a number of different approaches that are used to select the most parsimonious statistical model. Here, we will follow the most commonly used of these approaches, which is to start with the most complex model, and see which explanatory variables can be dropped from the model because they don't have a significant effect. This approach tends to be referred to as **_backward stepwise model selection_**.
 
-Following on from the session on analysis of covariance, we will start with the most complex interactive model of car fuel efficiency as a function of power and number of cylinders:
+Following on from the session on analysis of covariance, we will start with the most complex interactive model of beetle abundance as a function of land use and coverage of natural habitat in the surrounding landscape.
 
 ```{r,echo=TRUE,results=TRUE}
-# First, we need to create log-transformed versions of our response and continuous
-# explanatory variable, as we saw in the last session that these variables have
-# a skewed distribution
-mtcars$LogMPG <- log(mtcars$mpg)
-mtcars$LogHP <- log(mtcars$hp)
-
-# We also need to make sure that the number of cylinders is treated 
-# as a grouping variable
-mtcars$cyl <- factor(mtcars$cyl)
-
-# Now we can build the model
-mFull <- lm(mtcars$LogMPG~mtcars$LogHP*mtcars$cyl)
+# Build the most complex model with an interaction between land use and
+# coverage of natural habitats in the surrounding landscape
+mFull <- lm(formula = LogAbundance~LandUse*LogNaturalHabitat5k, data = beetles)
 
 summary(mFull)
 anova(mFull)
@@ -57,53 +60,46 @@ anova(mFull)
 The analysis of variance table here already gives us P values, and so some indication of which variables have a significant effect on our response variable. The problem is that these F ratios and P values are influenced by the order in which the variables are entered into the model. We can demonstrate this very easily by creating a model with the same structure, but where the two variables are entered in the opposite order:
 
 ```{r,echo=TRUE,results=TRUE}
-mFull2 <- lm(mtcars$LogMPG~mtcars$cyl*mtcars$LogHP)
+mFull2 <- lm(formula = LogAbundance~LogNaturalHabitat5k*LandUse,data = beetles)
 
 anova(mFull)
 anova(mFull2)
 ```
 
-Here, the F ratios and P values for the effects of the first two variables entered into the model (the effects of power and number of cylinders alone) are slightly different in the two models. The values for the interaction term are identical, because this was the last variable entered into the model.
+Here, the F ratios and P values for the effects of the first two variables entered into the model (the effects of land use and surrounding natural habitat alone) are slightly different in the two models. The values for the interaction term are identical, because this was the last variable entered into the model.
 
 The best way to assess the significance of terms in a statistical model is to try dropping terms, and seeing whether this leads to a significant drop in the ability of the model to explain the response variable.
 
 The first step in a backward stepwise model selection exercise is to try dropping the interaction term from the model, in this case comparing the full complex model with an additive model that doesn't have the interaction term. As well as allowing us to compute the sums of squares, F ratios and P values from a single model, the _anova_ function in R also allows us to compare two models:
 
 ```{r,echo=TRUE,results=TRUE}
-mR1 <- lm(mtcars$LogMPG~mtcars$LogHP+mtcars$cyl)
+mR1 <- lm(formula = LogAbundance~LandUse+LogNaturalHabitat5k,data = beetles)
 
 anova(mFull,mR1)
 ```
 
-The analysis of variance to compare two models is based on the reduction in the model sum of squares in the simpler model compared to the more complex model. In other words, this tells us how much less well the simpler model explains the response variable compared to the more complex model. 
+The analysis of variance to compare two models is based on the reduction in the model sum of squares in the simpler model compared to the more complex model. A more complex model must explain the data better than the simpler model by virtue of the extra parameters in the model (as long as the structure of the simpler model is nested within the structure of the more complex model). What we need to determine is whether the reduction in fit of the simpler model is _significant_. 
 
-Just as with a classic analysis of variance test, we can use this sum of squares to calculate an F ratio and P value. This P value tells us the probability that the more complex model would be as much better fitting than the simpler model as we observe given the null hypothesis that the extra term in the more complex model is in fact unimportant. Here, a P value substantially greater than 0.05 tells us that the interaction term does not significantly improve the fit of the model to the data.
+Just as with a classic analysis of variance test, we can use this sum of squares to calculate an F ratio and P value. This P value tells us the probability that the better fit of the complex model could have occurred by chance given the null hypothesis that the additional term(s) in the model are not actually important. When conducting backward stepwise model selection, it is best practice to compare models that differ by just one term.
+
+For the comparison we are making here, the fact that the P value is greater than 0.05 tells us that the interaction term does not significantly improve the fit of the model to the data.
 
 Once we have tested the significance of the interaction terms in our model, we then remove these and test the main effect (i.e., non-interaction) terms. Here we have two main effects, so we would simultaneously try dropping each of these, and assessing the effect on the fit of the model to the data (by comparison with the additive model that contains both terms):
 
 ```{r,echo=TRUE,results=TRUE}
-mR2 <- lm(mtcars$LogMPG~mtcars$LogHP)
-mR3 <- lm(mtcars$LogMPG~mtcars$cyl)
+mR2 <- lm(formula = LogAbundance~LogNaturalHabitat5k,data = beetles)
+mR3 <- lm(formula = LogAbundance~LandUse,data = beetles)
 
 anova(mR1,mR2)
 anova(mR1,mR3)
 ```
 
-In this case, dropping car power leads to a significant reduction in model explanatory power, but dropping the number of cylinders leads to a non-significant reduction. If any of our variables yields a non-significant P value, we drop the one that has the highest p value, and then proceed to a second round of model selection. So, now we need to compare a model with just power to a model without power. This second model has no explanatory variables, and is referred to as an intercept-only model. To run such a model in R, we ask R to fit our response variable as a function of 1:
+The removal of both land use and surrounding natural habitat leads to a significant reduction in model explanatory power. If any of the variables had been non-significant, we would then remove the variable with the highest P value, and proceed to a second round of model selection.
+
+Therefore, we have identified the most parsimonious, _*minimum adequate model*_. We now need to compile the final model with all significant terms (both main effects and interaction terms). Here, this is a model that contains just the main effects of land use and surrounding natural habitat, since the interaction was non-significant.
 
 ```{r,echo=TRUE,results=TRUE}
-mR4 <- lm(mtcars$LogMPG~1)
-
-# Remember that the model with just power in the last round of model selection was mR2
-anova(mR4,mR2)
-```
-
-Dropping car power leads to a highly significant reduction in our ability to explain fuel efficiency. So, that's it, we have found our most parsimonious model (a model with just car power). Had there still been non-significant terms, we would have continued with successive rounds of model selection until all terms in the model are associated with a significant P value. If any interaction terms were significant, we must add these back into our final model at the end of model selection.
-
-We already had our final, most parsimonious, model stored in R, but we will run the final model again, to avoid any ambiguity: 
-
-```{r,echo=TRUE,results=TRUE}
-mFinal <- lm(mtcars$LogMPG~mtcars$LogHP)
+mFinal <- lm(formula = LogAbundance~LandUse+LogNaturalHabitat5k,data = beetles)
 
 summary(mFinal)
 ```
@@ -112,71 +108,80 @@ summary(mFinal)
 
 P values tell us how likely it is that we would have observed a given effect by chance given the null hypothesis that there is no relationship between variables. However, this doesn't on its own tell us how strong an effect is in real terms. A weak effect of an explanatory variable on a response variable could be identified as a significant effect given a large enough sample size. To understand how strong an effect an explanatory variable has on a response variable, we need to consider ***_effect sizes_***. That is, how much a response variable changes for a given change in an explanatory variable.
 
-Let's consider here the difference in fuel economy between a car with the lowest power among those in the dataset (52 horsepower, or 3.95 in log-transformed terms) and the car with the highest power (335 horsepower, 5.81 in log-transformed values).
+Here, we will consider the difference in the beetle abundance we would expect to sample in a location in primary vegetation with 10% coverage of natural habitat in the surrounding landscape compared to a location in primary vegetation with 50% surrounding coverage of natural habitat. 
 
-We can use our model to make some predictions. From the coefficient table, we can extract the intercept and slope of the fitted relationship in our final model:
+To make these predictions, we can extract the necessary slope and intercept parameters from the coefficient table. Because we are making predictions for locations in primary vegetation, which is the reference level for our land use variable, we just need the overall model intercept and the main slope for the effect of natural habitat.
 
 ```{r,echo=TRUE,results=TRUE}
 summary(mFinal)
 
 intercept <- summary(mFinal)$coefficients['(Intercept)','Estimate']
-slope <- summary(mFinal)$coefficients['mtcars$LogHP','Estimate']
+slope <- summary(mFinal)$coefficients['LogNaturalHabitat5k','Estimate']
 
 intercept
 slope
 ```
 
-Now we can calculate the average fuel efficiency of a car with a power of 53 HP and of a car with a power of 335 HP:
+Now we can calculate the beetle abundance that we would expect to sample in primary vegetation if surrounding natural habitat is 10% compared to if it is 50%.
 
 ```{r,echo=TRUE,results=TRUE}
-# First, let's set the log-transformed horsepowers for cars of 52 and 335 HP
-log.hp.52 <- log(52)
-log.hp.335 <- log(335)
+# First, let's set the log-transformed natural habitat values corresponding with 
+# 10% and 50% coverage
+log.nh.10 <- log10(0.1)
+log.nh.50 <- log10(0.5)
 
-# Now we will use the regression equation to calculate predicted fuel efficiency
-av.fuelecon.52 <- intercept + log.hp.52 * slope
-av.fuelecon.335 <- intercept + log.hp.335 * slope
+# Now we will use the regression equation to calculate expected (log) 
+# total beetle abundance
+exp.log.abund.10 <- intercept + log.nh.10 * slope
+exp.log.abund.50 <- intercept + log.nh.50 * slope
 
-# We must remember that our response variable was also log-transformed
-# So we need to back-transform by taking the exponential
-av.fuelecon.52 <- exp(av.fuelecon.52)
-av.fuelecon.335 <- exp(av.fuelecon.335)
+# We must remember that our response variable was also log-transformed. Therefore,
+# we need to back-transform by raising 10 to the power of these predicted values
+exp.abund.10 <- 10^exp.log.abund.10
+exp.abund.50 <- 10^exp.log.abund.50
 
-av.fuelecon.52
-av.fuelecon.335
+# Finally, let's the calculate the expected abundance where coverage of natural
+# habitat is 10% as a percentage of expected abundance where coverage of natural
+# habitat is 50%
+exp.abund.10.percent <- (exp.abund.10/exp.abund.50)*100
+
+round(exp.abund.10.percent,2)
 ```
 
-So, the fuel economy of the most powerful car in this dataset is more than 60% lower than that of the least powerful car. This is a very large effect size!
+This calculation shows us that beetle abundance is reduced by nearly a half, on average, when landscapes have 10% coverage of natural habitat compared to 50%. This is a very large effect size.
 
 # Model Explanatory Power
 
-The final piece of information we are likely to be interested in for assessing the quality of our models is explanatory power. Model explanatory power tells us how much of the variation in our response variable is explained by the combination of explanatory variables in our model. The most commonly used measure of explanatory power for basic statistical approaches is the coefficient of determination, or R<sup>2</sup>. We can calculate R<sup>2</sup> manually, based on the sums of squares, using the following equation:
+The final piece of information we are likely to be interested in for assessing how well our model describes the study system is explanatory power. Model explanatory power tells us how much of the variation in our response variable is explained by the combination of explanatory variables in our model. The most commonly used measure of explanatory power for basic statistical approaches is the coefficient of determination, or R<sup>2</sup>. We can calculate R<sup>2</sup> manually, based on the sums of squares, using the following equation:
 $$R^2=1-\frac{SS_{residual}}{SS_{total}}$$.
 
 See the <a href="./LinearRegression.html">session on linear regression</a> for a refresher on the basis for the different sums of squares values.
 
 From this equation, we can easily calculate the R<sup>2</sup> value of our final model from earlier:
 
-```{r,echoo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE}
 anova(mFinal)
 
 ss.resid <- anova(mFinal)['Residuals','Sum Sq']
-ss.model <- anova(mFinal)['mtcars$LogHP','Sum Sq']
+# For the model sum of squares, we need to combine the sum of squares associated
+# with both terms in our model
+ss.model <- anova(mFinal)['LandUse','Sum Sq'] + 
+  anova(mFinal)['LogNaturalHabitat5k','Sum Sq']
 ss.total <- ss.resid + ss.model
 
 r2 <- 1 - (ss.resid/ss.total)
 r2
 ```
 
-However, we don't need to worry about manually calculating R<sup>2</sup> values for every model we run, because it is reported in the model summary:
+However, we don't need to worry about manually calculating R<sup>2</sup> values for every model we run, because it is reported in the model summary.
 
 ```{r,echo=TRUE,results=TRUE}
 summary(mFinal)
 ```
 
-The R<sup>2</sup> of our final model tells us that just over 70% of the variability in car fuel efficiency is explained by the power of the car. This is a very good value - you will be very lucky to get such high R<sup>2</sup> values with real biological datasets, especially ecological datasets.
+The R<sup>2</sup> of our final model tells us that just over 35% of the variability in sampled beetle abundance is explained by land use and the amount of natural habitat in the surrounding landscape. This is pretty good for an ecological study, when you consider the complexity of natural systems, and the many variables that may determine species abundance within ecosystems.
 
-We may also be interested in the adjusted R<sup>2</sup> value, which is penalized according to the complexity (number of parameters) of the model.
+We may also be interested in the adjusted R<sup>2</sup> value, which is penalized according to the complexity (number of parameters) of the model, which here is 0.35.
 
 # Next Time
 

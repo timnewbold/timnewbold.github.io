@@ -12,7 +12,9 @@ lightbox: true
 
 # Introduction and Further Reading
 
-This tutorial only covers 
+This tutorial only covers the running of some basic Bayesian models using the _brms_ package. If you want to delve further into the world of Bayesian statistics, including specification of priors and more complex models, I strongly recommend Richard McElreath's book:
+
+McElreath, R. (2020). <i> Statistical Rethinking: A Bayesian Course with Examples in R and Stan</i>. 2nd Edition. CRC Press, Boca Raton, USA.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 library(ggplot2)
@@ -21,7 +23,9 @@ library(brms)
 
 # Bayesian Linear Regression
 
-## Running the Model
+## Dataset
+
+We will work with the R dataset that we used for the [main linear regression tutorial](./LinearRegression.html), describing various socio-economic measures from Swiss cantons in 1888. Specifically, we will focus again on the relationship between % of people receiving post-primary education and standardized average fertility.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 data(swiss)
@@ -34,11 +38,33 @@ ggplot(data = swiss,mapping = aes(x=Education,y=Fertility)) +
   theme_classic()
 ```
 
+## Running the Model
+
+As a reminder, we had previously run a standard (Ordinary Least Squares) linear regression to assess the relationship between these two variables.
+
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-m1 <- brm(formula = Fertility ~ log10(Education),data = swiss)
+m.ols <- lm(formula = Fertility ~ log10(Education),data = swiss)
+
+summary(m.ols)
 ```
 
+To run an equivalent Bayesian model using the _brms_ package is really simple. We just use the _brm_ function instead of the standard _lm_ function (although note that it does take much longer to run, because the algorithm must now sample parameter space, since there isn't a simple analytical solution as with classical linear regression).
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+m1.bayes <- brm(formula = Fertility ~ log10(Education),data = swiss)
+
+summary(m1.bayes)
+```
+
+You can see that the model output gives some familiar information, such as coefficient estimates along with associated uncertainty. Remember that estimated uncertainty with Bayesian models is derived from the posterior samples of parameter space.
+
+If you compare the coefficients estimated by the Bayesian model and by the standard linear regression, you will see that they are very similar.
+
 ## Checking the Model
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+plot(m1.bayes)
+```
 
 ## Predictions and Plotting
 

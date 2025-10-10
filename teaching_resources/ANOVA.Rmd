@@ -14,7 +14,7 @@ output:
 
 This session will cover Analysis of Variance (ANOVA). I will start by introducing the manual calculation of an ANOVA, and then show you the function you can use to calculate ANOVA automatically in R.
 
-An ANOVA statistical test allows us to ask whether a measured response variable differs among several treatment groups in an experiment (or observational groups). 
+ANOVA allows us to ask whether a measured response variable differs among several treatment groups in an experiment (or observational groups). 
 
 If you are not familiar with basic statistical concepts (hypotheses, null hypotheses, P values, degrees of freedom etc.), I recommend taking a look at <a href="https://www.khanacademy.org/math/statistics-probability/significance-tests-one-sample#idea-of-significance-tests" target="_blank">these videos</a>.
 
@@ -28,20 +28,34 @@ Barnard, C., Gilbert, F. & McGregor, P. (2007). <i>Asking Questions in Biology: 
 
 # Dataset
 
+In this session, we will work with a dataset that describes the total abundance of beetles in different types of land use: natural forest (primary vegetation) and areas used for livestock grazing (pasture).
+
 In this session, we will work with the cars dataset that we have used previously:
 
-```{r, echo=TRUE,results=TRUE}
-data(mtcars)
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+library(dplyr)
+
+url("https://www.dropbox.com/scl/fi/4olcttgagt0sd92hg64vk/Ewers2007BeetleData.rds?rlkey=14c8qby2023lt9924bi3th0ee&dl=1") %>%
+  readRDS() -> beetles
 ```
 
-Specifically, we will use ANOVA to test whether the power of cars varies according to how many cylinders they have. Let's start by plotting a boxplot of this relationship:
+Because total abundance can only take positive values, and because the distribution of those values is highly right-skewed, we will start by log transforming this variable.
+
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% mutate(LogAbundance = log10(Total_abundance)) -> beetles
+```
+
+Specifically, we will use ANOVA to test whether the (log-transformed) total abundance of beetles varies according to land use Let's start by plotting a boxplot of this relationship:
 
 ```{r,echo=TRUE,results=TRUE}
 library(ggplot2)
-ggplot(data = mtcars,mapping = aes(x=as.factor(cyl),y=hp)) + geom_boxplot() + theme_classic()
+ggplot(data = beetles,mapping = aes(x = LandUse,y = Total_abundance)) + 
+  geom_boxplot(mapping = aes(fill = LandUse), notch = TRUE) + 
+  scale_y_continuous(transform = 'log10') + 
+  theme_classic()
 ```
 
-It certainly looks as though cars with more cylinders tend to be more powerful, but we will use an ANOVA to test whether this is a statistically significant relationship.
+It certainly looks as though there is higher beetle abundance in natural forests compared to pastures, but we will use an ANOVA to test whether this is a statistically significant relationship.
 
 # Manual Calculation of ANOVA
 
@@ -70,64 +84,51 @@ $$SS_{between} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(\overline{Y_k} - \overline{Y})^2}
 3. The sum of squares within groups is the sum (yet again, across each group $k$, and each data value $i$ within each group) of squared differences between each data value, $Y_{ik}$, and the mean of data values across the group to which that data value belongs, $\overline{Y_k}$:
 $$SS_{within} = \sum_{k=1}^{K}\sum_{i=1}^{I}{(Y_{ik} - \overline{Y_k})^2}$$
 
-## Manual ANOVA on Cars Dataset
+## Manual ANOVA on Beetles Dataset
 
-Let's put this into practice to ask whether there is a significant difference in the power of cars depending on how many cylinders they have.
+Let's put this into practice to ask whether there is a significant difference in the total abundance of beetles depending on land use.
 
-First, we will calculate the grand mean of all values in the dataset:
+First, we will calculate the grand mean of all (log) total abundance values in the dataset:
 
-```{r,echo=TRUE,results=TRUE}
-grand.mean <- mean(mtcars$hp)
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% summarize(mean(LogAbundance)) %>% as.numeric() -> grand.mean
 grand.mean
 ```
 
-Next, we will use the _tapply_ function to calculate the means of values within each group:
+Next, we will calculate the means of values within each group.
 
-> TIP: The _tapply_ function allows us to perform some operation _FUN_ on a variable _X_ grouped by another variable _INDEX_.
-
-```{r,echo=TRUE,results=TRUE}
-group.means <- tapply(X = mtcars$hp,INDEX = mtcars$cyl,FUN = mean)
-group.means
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% group_by(LandUse) %>% summarize(mean(LogAbundance)) %>% 
+  mutate(GroupMean=`mean(LogAbundance)`) -> group.means
 ```
 
-To help with our later calculations, we will now add these group means as a new column in the original data table. We can do this using the _match_ function, matching based on the number of cylinders (don't worry if it is not yet clear to you how this function works):
+To help with our later calculations, we will now add these group means as a new column in the original data table. We can do this using the _left_join_ function.
 
-```{r,echo=TRUE,results=TRUE}
-mtcars$group.means <- group.means[match(mtcars$cyl,names(group.means))]
-head(mtcars)
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% left_join(group.means) -> beetles
 ```
 
-> TIP: If you want to read more about the _match_ function use help(match)
+Now we will calculate the different squared deviance values. The total squared deviances are the squared differences between the observed values and the overall mean value in the dataset. The squared deviances between groups are the squared differences between the group means and the overall mean value in the dataset. Finally, the squared deviances within groups are the squared differences between the observed values and the group means.
 
-Now, let's calculate the total sum of squares (the sum of the squared differences between each data value and the grand mean value across the whole dataset). To do so, we will first create a column to hold the individual squared differences:
-
-```{r,echo=TRUE,results=TRUE}
-mtcars$SquDevTotal <- (mtcars$hp - grand.mean)^2
-sst <- sum(mtcars$SquDevTotal)
-sst
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% mutate(SquDevTotal = (LogAbundance - grand.mean)^2,
+                   SquDevBetween = (GroupMean - grand.mean)^2,
+                   SquDevWithin = (LogAbundance - GroupMean)^2) -> beetles
 ```
 
-Next, we will calculate the sum of squares between groups (the sum of the squared differences between the group means and the grand mean):
+Now we will sum each of these sets of squared deviances to obtain the corresponding 'sums of squares'.
 
-```{r,echo=TRUE,results=TRUE}
-mtcars$SquDevBetween <- (mtcars$group.means - grand.mean)^2
-ssb <- sum(mtcars$SquDevBetween)
-ssb
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+beetles %>% summarize(sst=sum(SquDevTotal),
+                      ssb=sum(SquDevBetween),
+                      ssw=sum(SquDevWithin)) -> SumsOfSquares
 ```
 
-And then the sum of squares within groups (the sum of the squared differences between each data value and its respective group mean):
+We now need to calculate the degrees of freedom (total, between groups and within groups). First, we will derive the $N$ and $K$ parameters (the total size of the dataset and the number of groups, respectively).
 
-```{r,echo=TRUE,results=TRUE}
-mtcars$SquDevWithin <- (mtcars$hp - mtcars$group.means)^2
-ssw <- sum(mtcars$SquDevWithin)
-ssw
-```
-
-We now need to calculate the degrees of freedom (total, between groups and within groups). First, we will derive the $N$ and $K$ parameters (the total size of the dataset and the number of groups, respectively):
-
-```{r,echo=TRUE,results=TRUE}
-N = nrow(mtcars)
-K = length(unique(mtcars$cyl))
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+N = nrow(beetles)
+K = length(unique(beetles$LandUse))
 df.total <- N - 1
 df.between <- K - 1
 df.within <- N - K
@@ -136,18 +137,18 @@ df.between
 df.within
 ```
 
-As a check that we did our calculations correctly, let's make sure that $SS_{total} = SS_{between}+SS_{within}$ and that $DF_{total} = DF_{between} + DF_{within}$:
+As a check that we did our calculations correctly, let's make sure that $SS_{total} = SS_{between}+SS_{within}$ and that $DF_{total} = DF_{between} + DF_{within}$. We use _all.equal_ for the first test because of potential imprecision in the numbers.
 
 ```{r,echo=TRUE,results=TRUE}
-sst == ssb + ssw
+all.equal(SumsOfSquares$sst,SumsOfSquares$ssb+SumsOfSquares$ssw)
 df.total == df.between + df.within
 ```
 
 We can then calculate the mean of squares between and within groups (i.e., the sum of squares divided by the degrees of freedom):
 
 ```{r,echo=TRUE,results=TRUE}
-msb <- ssb/df.between
-msw <- ssw/df.within
+msb <- SumsOfSquares$ssb/df.between
+msw <- SumsOfSquares$ssw/df.within
 msb
 msw
 ```
@@ -172,16 +173,10 @@ P
 
 As you have seen, manually calculating an ANOVA is rather laborious. Luckily, R has a function, _aov_, that can run an ANOVA very quickly.
 
-First, we need to convert the variable giving the number of cylinders to a factor, so that R treats the groups correctly:
+Now we can run the ANOVA, specifying that we want to model the (log-transformed) total abundance of beetles as a function of (_~_) land use.
 
 ```{r,echo=TRUE,results=TRUE}
-mtcars$cyl <- factor(mtcars$cyl)
-```
-
-Now we can run the ANOVA, specifying that we want to model the horsepower of cars as a function of (_~_) the number of cylinders:
-
-```{r,echo=TRUE,results=TRUE}
-a1 <- aov(mtcars$hp~mtcars$cyl)
+a1 <- aov(beetles$LogAbundance~beetles$LandUse)
 summary(a1)
 ```
 
@@ -195,7 +190,7 @@ Once we have run an analysis of variance in R, we can also inspect the coefficie
 a1$coefficients
 ```
 
-Basically, you get an 'intercept' coefficient, which for an ANOVA gives you the group mean for the reference group (in this case, cars with four cylinders), and you get coefficients describing how the average value differs for the other groups. To obtain group means for the non-reference groups, you simply add together the intercept with the coefficient for the group in question (you can check that this is the same value we calculated earlier):
+Basically, you get an 'intercept' coefficient, which for an ANOVA gives you the group mean for the reference group (in this case, primary vegetation), and you get coefficients describing how the average value differs for the other groups. To obtain group means for the non-reference groups, you simply add together the intercept with the coefficient for the group in question (you can check that this is the same value we calculated earlier):
 
 ![Interpreting the cofficient table in an ANOVA](coef_table_anova.jpg)
 
@@ -210,65 +205,33 @@ ANOVAs are parametric statistical tests, and as such have to meet the four assum
 
 We will explore the first two of these assumptions here.
 
-First, the distribution of residuals. Model residuals are the differences between the observed and predicted values in a model. In an ANOVA, the residuals are the differences between each data value and the group mean value (i.e., the differences that form the basis of the sum of squares within groups).  We can investigate the distribution of model residuals using either a Q-Q plot (generated using the _qqnorm_ and _qqline_ functions), or using a simple histogram. In the first plot, if the residuals are normally distributed, we expect to see the points lining up along the diagonal line:
+First, the distribution of residuals. Model residuals are the differences between the observed and predicted values in a model. In an ANOVA, the residuals are the differences between each value of the response variable (here log-transformed total abundance of beetles) and the group mean values (i.e., the differences that form the basis of the sum of squares within groups).  We can investigate the distribution of model residuals using either a Q-Q plot (generated using the _geom_qq_ and _geom_qq_line_ functions), or using a simple histogram. In the first plot, if the residuals are normally distributed, we expect to see the points falling more-or-less along the diagonal line:
 
-```{r,echo=TRUE,results=TRUE}
-# The qqnorm function creates the basic Q-Q plot, while the Q-Q line adds the diagonal line
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+# The geom_qq function creates the basic Q-Q plot, while the geom_qq_line adds the diagonal line
 # along which we expect points to full if there is a normal distribution of residuals
-qqnorm(residuals(a1))
-qqline(residuals(a1))
-hist(residuals(a1))
+ggplot() + 
+  geom_qq(mapping = aes(sample=residuals(a1))) + 
+  geom_qq_line(mapping = aes(sample = residuals(a1))) + 
+  theme_classic()
+```
+
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot() + 
+  geom_histogram(mapping = aes(x = residuals(a1))) + 
+  theme_classic()
 ```
 
 Both of these plots suggest that there is some skew in the model residuals.
 
-Next, we will test for equality of variance, in this case we are interested in equality of variances among groups. Replotting the original boxplot of power against number of cylinders already suggests that variance in horsepower is higher for cars with 8 cylinders:
+Next, we will test for equality of variance. For ANOVA, we need to assess whether the model residuals show equality of variance among the treatment groups (here the two land-use types). A boxplot of the residuals against land use suggests that the equality of variance assumption is met reasonably well (i.e., there is a similar spread of total abundance values for both land-use types).
 
 ```{r,echo=TRUE,results=TRUE}
-boxplot(mtcars$hp~mtcars$cyl)
+ggplot() + 
+  geom_boxplot(mapping = aes(x = beetles$LandUse,
+                             y = residuals(a1)),outliers = FALSE) + 
+  theme_classic()
 ```
-
-Most important, though, for the model assumptions is whether the model residuals show equality of variance among groups. A boxplot of the residuals against the number of cylinders shows that this assumption is clearly violated, since there is a much greater spread of residuals for cars with 8 cylinders:
-
-```{r,echo=TRUE,results=TRUE}
-boxplot(residuals(a1)~mtcars$cyl)
-```
-
-One simple thing to check, if the assumptions of parametric tests are violated, is whether our response variable appears to be drawn from a normal distribution:
-
-```{r,echo=TRUE,results=TRUE}
-hist(mtcars$hp)
-```
-
-The values are clearly right-skewed. To attempt to deal with this issue, let's try log-transforming the values of this variable:
-
-```{r,echo=TRUE,results=TRUE}
-mtcars$LogHP <- log(mtcars$hp)
-hist(mtcars$LogHP)
-```
-
-The distribution of values certainly now looks much better. If we replot our original box-plot, this time with log-transformed values, it looks as though variances are more equal among groups:
-
-```{r,echo=TRUE,results=TRUE}
-boxplot(mtcars$LogHP~mtcars$cyl)
-```
-
-So, let's try re-running our Analysis of Variance, this time with the log-transformed values of horsepower:
-
-```{r,echo=TRUE,results=TRUE}
-a2 <- aov(mtcars$LogHP~mtcars$cyl)
-summary(a2)
-```
-
-We still have a highly significant difference in power among groups with cars with different numbers of cylinders. Let's check against the model assumptions again:
-
-```{r,echo=TRUE,results=TRUE}
-qqnorm(residuals(a2)); qqline(residuals(a2))
-hist(residuals(a2))
-boxplot(residuals(a2)~mtcars$cyl)
-```
-
-The model seems to be behaving much better now. We would probably be happy with this model.
 
 # Next Time
 

@@ -398,3 +398,11 @@ mt
 
 # Exercises
 
+<div style="background-color: #f0f0f0; color: black; padding: 15px; border: none;">
+Download a dataset that describes recorded mammal species richness across Egypt:
+url("https://www.dropbox.com/scl/fi/hy5zlgtav7mguncqs9i0h/EgyptMammalSpeciesRichness.rds?rlkey=vavnb7d0appd16q1d14tkau46&dl=1") %>% readRDS -> EgyptMammalSpeciesRichness
+
+The columns in this dataset describe recorded mammal species richness (SpRich), annual mean temperature (AnnualTemp), total annual precipitation (AnnualPrecip), as well as the Longitude and Latitude spatial coordinates.
+
+Try making some simple generalized linear models of species richness as a function of the climate variables. Then, test for spatial autocorrelation, and try out some of the spatial modelling techniques we have learned in the preceding tutorial.
+</div>

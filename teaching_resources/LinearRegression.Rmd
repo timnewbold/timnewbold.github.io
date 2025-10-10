@@ -30,14 +30,15 @@ Barnard, C., Gilbert, F. & McGregor, P. (2007). <i>Asking Questions in Biology: 
 
 In this session, we will work with a new dataset that is built into R, the 'swiss' dataset, which details socio-economic and fertility indicators for Swiss cantons in 1888.
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+library(dplyr)
 data(swiss)
 head(swiss)
 ```
 
 Specifically, we will look at whether education level had an effect on fertility. Let's look at the relationship between the % of people that received education beyond primary level and average fertility.
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 library(ggplot2)
 
 ggplot(data = swiss,mapping = aes(x=Education,y=Fertility)) + geom_point() + 
@@ -79,7 +80,7 @@ Just as in ANOVA, these differences between observed and predicted values are th
 
 ## Manual Calculation of Linear Regression
 
-We will not actually run a manual linear regression here. There is in additional step in doing so compared to calculating an ANOVA, in that you first have to find the best-fitting regression line, from which to calculate the sums of squares. The normal method for finding the best-fitting regression line is to minimize the error sum of squares. This method is part of a class of models referred to as Ordinary Least Squares Regression. We will come across Ordinary Least Squares regression again in later sessions.
+We will not actually run a manual linear regression here. There is an additional step in doing so compared to calculating an ANOVA, in that you first have to find the best-fitting regression line, from which to calculate the sums of squares. The normal method for finding the best-fitting regression line is to minimize the error sum of squares. This method is part of a class of models referred to as Ordinary Least Squares Regression.
 
 # Running Linear Regression in R
 
@@ -87,7 +88,7 @@ We will not actually run a manual linear regression here. There is in additional
 
 In R, we can run a linear regression very simply using the _lm_ function. Here we will test whether the % of people with post-primary education in Swiss cantons in the late 19th Century had a significant effect on their fertility. First, we must ask R to fit a linear regression of fertility as a function of (_~_) education:
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 m1 <- lm(formula = Fertility~Education,data = swiss)
 summary(m1)
 ```
@@ -96,7 +97,7 @@ The summary of the model gives us the slope and intercept of the best-fitting re
 
 We can also obtain our sums of squares by running the _anova_ function. Note that, confusingly, this is not the same as the _aov_ function, which we used to run an actual ANOVA in the previous session. The _anova_ function calculates the sums of squares, F ratio and a P value from any basic statistical model:
 
-```{r,echo=TRUE,results=TRUE}
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 anova(m1)
 ```
 
@@ -121,64 +122,100 @@ Since the data represent different cantons in Switzerland, it is probably OK to 
 
 The figure we plotted earlier of the relationship between education and fertility suggests that the assumption of a linear relationship is reasonable.
 
-To test for equality of variace in a linear regression model, we can look at the spread of residuals across different predicted values in our regression, and we would hope to see a similar spread across these predicted values. The most straightforward way to do this is to plot the relationship between predicted (or fitted) values from the model, and the model residuals:
+To test for equality of variace in a linear regression model, we can look at the spread of residuals across different predicted values in our regression, and we would hope to see a similar spread across these predicted values. The most straightforward way to do this is to plot the relationship between predicted (or fitted) values from the model, and the model residuals.
 
-```{r,echo=TRUE,results=TRUE}
-plot(fitted(m1),residuals(m1))
-# Add a horizontal red dashed line where the residuals = 0
-abline(h=0,lwd=2,lty=2,col="red")
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot() + 
+  geom_point(mapping = aes(x = fitted(m1),y = residuals(m1))) + 
+  geom_hline(yintercept = 0,linewidth = 1.2,linetype = 'dashed',col="#bf2c23") + 
+  theme_classic()
 ```
 
 This plot clearly shows an increase in the spread of residuals at higher predicted/fitted values, and so our model definitely violates the assumption of equality of variance.
 
 Before dealing with this issue, we will also check for a normal distribution of residuals. As when we ran ANOVA tests in the previous sessions, we can check for a normal distribution of residuals either using a Q-Q plot, or a simple histogram:
 
-```{r,echo=TRUE,results=TRUE}
-qqnorm(residuals(m1))
-qqline(residuals(m1))
-hist(residuals(m1))
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(sample = residuals(m1))) + 
+  geom_qq() + 
+  geom_qq_line() + 
+  theme_classic()
+```
+
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(x = residuals(m1))) +
+  geom_histogram() + 
+  theme_classic()
 ```
 
 Both these plots suggest a significant deviation from a normal distribution of residuals.
 
-As before, if the assumptions of our test are violated, a simple thing to check is whether the input variables conform to a normal distribution. Although it is not necessary that the input variables are normally distributed, it is more likely that the assumptions of equality of variance and a normal distribution of _residuals_ will be violated if not:
+As before, if the assumptions of our test are violated, a simple thing to check is whether the input variables conform to a normal distribution. Although it is not necessary that the input variables are normally distributed, it is more likely that the assumptions of equality of variance and a normal distribution of _residuals_ will be violated if not.
 
-```{r,echo=TRUE,results=TRUE}
-hist(swiss$Education)
-hist(swiss$Fertility)
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(data = swiss,mapping = aes(x = Education)) + 
+  geom_histogram() + 
+  theme_classic()
+```
+
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(data = swiss,mapping = aes(x = Fertility)) + 
+  geom_histogram() + 
+  theme_classic()
 ```
 
 The fertility values (response variable) seem reasonably close to a normal distribution, but the education values are very right-skewed. The obvious next step, therefore, is to try a model where we log-transform the values for education:
 
 ```{r,echo=TRUE,results=TRUE}
-swiss$LogEducation <- log10(swiss$Education)
+swiss %>% mutate(LogEducation = log10(Education)) -> swiss
 
 m2 <- lm(formula = Fertility~LogEducation,data = swiss)
 summary(m2)
 anova(m2)
 ```
 
-We still have a highly significant negative relationship between education and fertility. Let's check the assumptions of equality of variance and normal distribution of residuals again:
+We still have a highly significant negative relationship between education and fertility. Let's check the assumptions of equality of variance and normal distribution of residuals again.
 
-```{r,echo=TRUE,results=TRUE}
-plot(fitted(m2),residuals(m2))
-abline(h=0,lwd=2,lty=2,col="red")
-qqnorm(residuals(m2))
-qqline(residuals(m2))
-hist(residuals(m2))
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(sample = residuals(m2))) + 
+  geom_qq() + 
+  geom_qq_line() + 
+  theme_classic()
 ```
 
-The spread of residuals certainly seems more even along the range of fitted values. The residuals seem to conform more closely to a normal distributions, although still with a slight deviation. If we were conducting this analysis as part of a scientific study that we wanted to publish, we would probably dig into this issue more carefully.
+The residuals seem to conform more closely to a normal distributions, although still with a slight deviation.
 
-The eagle-eyed among you may also have noticed that the residuals seem to be lower at either end of the range of fitted values. If we re-plot the original relationship between education and fertility, but this time with the log-transformed education values, we can see why:
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(x = fitted(m2),y = residuals(m2))) + 
+  geom_point() + 
+  geom_hline(yintercept = 0,linewidth = 1.2,linetype = 'dashed',col="#bf2c23") + 
+  theme_classic()
+```
 
-```{r,echo=TRUE,results=TRUE}
+The equality of variance assumption now seems met reasonably well. However, the eagle-eyed among you may also have noticed that the residuals seem to be lower at either end of the range of fitted values. Replotting the fitted versus residual plot, now adding a trend line, highlights this issue.
+
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+ggplot(mapping = aes(x = fitted(m2),y = residuals(m2))) + 
+  geom_point() + 
+  geom_smooth() + 
+  geom_hline(yintercept = 0,linewidth = 1.2,linetype = 'dashed',col="#bf2c23") + 
+  theme_classic()
+```
+If we re-plot the original relationship between education and fertility, but this time with the log-transformed education values, we can see that there may be a non-linear relationship between education and fertility.
+
+```{r,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 ggplot(data = swiss,mapping = aes(x=LogEducation,y=Fertility)) + geom_point() + geom_smooth(method="lm") + theme_classic()
 ```
 
-In fact, it looks as though the relationship between education and fertility is non-linear, violating our assumption of linearity. We won't deal with the non-linearity issue any further in this session, but we will return to this in later sessions. 
+Therefore, let's try fitting a quadratic relationship in our model, which is straightforward to do in R.
 
-Assuming for now that we are happy with this latest model, we will now move onto how we make predictions from our model.
+```{r, echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
+m3 <- lm(formula = Fertility~LogEducation + I(LogEducation^2),data = swiss)
+summary(m3)
+anova(m3)
+```
+
+If we replot the fitted versus residual plot we can see that the residuals are now more closely centered around the zero line, but the equality of variance assumption is now violated again. We won't solve this issue in this session, but it would be important to investigate further in a real study.
 
 ## Making Predictions from a Linear Regression Model
 
@@ -187,7 +224,7 @@ There are many situations in which it is necessary to make predictions from a mo
 The _predict_ function in R can make predictions for most model types (we will encounter a few exceptions in later tutorials). The simplest method is to make predictions for the observations in the original dataset (with their associated explanatory variables).
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-preds <- predict(m2)
+preds <- predict(m3)
 
 summary(preds)
 ```
@@ -195,7 +232,7 @@ summary(preds)
 At the moment, this just gives us the median prediction from our model, but we also need to know the uncertainty in our predictions. For this, we can use the _interval_ parameter. Now, we obtain a data frame with the median prediction ('fit') and the lower and upper 95% confidence intervals ('lwr' and 'upr'). If we repeated our experiment many times from scratch, we would expect 95% of the predictions to fall within these confidence intervals.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-preds <- predict(m2,interval='confidence')
+preds <- predict(m3,interval='confidence')
 
 head(preds)
 ```
@@ -203,13 +240,13 @@ head(preds)
 Let's add these model predictions to the original data frame.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-swiss <- cbind(swiss,preds)
+bind_cols(swiss,preds) -> swiss_preds
 ```
 
 We can now add these predictions to a graph to show both our model data and model fit.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-ggplot(data = swiss,mapping = aes(x = Education)) + 
+ggplot(data = swiss_preds,mapping = aes(x = Education)) + 
   geom_point(mapping = aes(y = Fertility)) + 
   geom_line(mapping = aes(y = fit),colour="#2E2585",size = 0.8) + 
   geom_ribbon(mapping = aes(ymin = lwr,ymax = upr),fill = "#2E2585",alpha = 0.2) + 
@@ -218,30 +255,30 @@ ggplot(data = swiss,mapping = aes(x = Education)) +
   theme_classic()
 ```
 
-Finally, we might also be interested in making predictions for values of the explanatory variables not encountered in the original dataset. In this case, we can pass a new data frame of explanatory variable values to the predict function. Let's say here that we are interested in making predictions of fertility for levels of post-primary education up to 100%. So, let's predict fertility at levels of post-primary education of 1%, 25%, 50%, 75% and 100%.
+Finally, we might also be interested in making predictions for values of the explanatory variables not encountered in the original dataset. In this case, we can pass a new data frame of explanatory variable values to the predict function. Let's say here that we are interested in making predictions of fertility for levels of post-primary education of 1%, 25% and 50%.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-nd <- data.frame(Education = c(1,25,50,75,100))
+nd <- data.frame(Education = c(1,25,50))
 nd$LogEducation <- log10(nd$Education)
 
-preds <- predict(object=m2,newdata=nd,interval='confidence')
+preds <- predict(object=m3,newdata=nd,interval='confidence')
 
-preds <- cbind(nd,preds)
+bind_cols(nd,preds) -> preds
 
 preds
 ```
 
-Therefore, our model predicts that if everyone in a 19th Century Swiss canton had received post-primary education, that the standardized fertility level would have been 49.5 (95% confidence interval: 38.9 - 60.0).
+Therefore, our model predicts that if half of people in a 19th Century Swiss canton had received post-primary education, that the standardized fertility level would have been 38.6 (95% confidence interval: 27.4 - 49.8).
 
 So far, we have calculated the confidence interval, which gives an estimate of the range within which the average fertility of a canton with, say, 100% post-primary education is expected to fall. In other words, this confidence interval ignores variation among individual cantons, and represents our ability to estimate the average response.
 
 We might also be interested in our ability to predict any given individual response, now accounting for individual variation. In this case, we need to calculate prediction intervals.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-nd <- data.frame(Education = c(1,25,50,75,100))
+nd <- data.frame(Education = c(1,25,50))
 nd$LogEducation <- log10(nd$Education)
 
-preds <- predict(object=m2,newdata=nd,interval='confidence')
+preds <- predict(object=m3,newdata=nd,interval='prediction')
 
 preds <- cbind(nd,preds)
 
