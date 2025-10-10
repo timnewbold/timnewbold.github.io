@@ -16,6 +16,18 @@ In this session, we will explore some of the basic options available for modelli
 
 # Further Reading
 
+This book covers some basics of spatial modelling:
+
+Bivand, R.S., Pebesma, E. & Gómez-Rubio, V. (2013). _Applied Spatial Data Analysis with R_. Springer, New York.
+
+Richard McElreath's excellent _Statistical Rethinking_ has some sections on spatial modelling:
+
+McElreath, R. (2020). <i> Statistical Rethinking: A Bayesian Course with Examples in R and Stan</i>. 2nd Edition. CRC Press, Boca Raton, USA.
+
+You may also be interested in McElreath's associated lecture videos, which are available on [YouTube](https://www.youtube.com/watch?v=BYUykHScxj8&list=PLDcUM9US4XdMROZ57-OIRtIK0aOynbgZN).
+
+Finally, if you want to delve more into INLA modelling, you may find this [tutorial](https://codingclubuc3m.rbind.io/post/2019-11-05/) useful.
+
 # Dataset and Non-spatial Models
 
 For this tutorial, we will return to the dataset on beetle biodiversity that we created during the <a href="./SpatialData.html">tutorial</a> on spatial data processing, but first we load the R packages that we will be working with this session.

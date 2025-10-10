@@ -7,7 +7,7 @@
 
         <meta name="author" content="Tim Newbold" />
     
-        <meta name="date" content="2025-09-24" />
+        <meta name="date" content="2025-10-10" />
     
     <title>Modelling Spatial Data in R</title>
 
@@ -1927,7 +1927,7 @@ margin-left: 0 !important;
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Tim Newbold
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2025-09-24</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2025-10-10</p>
            
 
    
@@ -1947,6 +1947,19 @@ some pointers towards commonly used methods you might encounter.</p>
 </div>
 <div id="further-reading" class="section level1">
 <h1>Further Reading</h1>
+<p>This book covers some basics of spatial modelling:</p>
+<p>Bivand, R.S., Pebesma, E. &amp; Gómez-Rubio, V. (2013). <em>Applied
+Spatial Data Analysis with R</em>. Springer, New York.</p>
+<p>Richard McElreath’s excellent <em>Statistical Rethinking</em> has
+some sections on spatial modelling:</p>
+<p>McElreath, R. (2020). <i> Statistical Rethinking: A Bayesian Course
+with Examples in R and Stan</i>. 2nd Edition. CRC Press, Boca Raton,
+USA.</p>
+<p>You may also be interested in McElreath’s associated lecture videos,
+which are available on <a href="https://www.youtube.com/watch?v=BYUykHScxj8&amp;list=PLDcUM9US4XdMROZ57-OIRtIK0aOynbgZN">YouTube</a>.</p>
+<p>Finally, if you want to delve more into INLA modelling, you may find
+this <a href="https://codingclubuc3m.rbind.io/post/2019-11-05/">tutorial</a>
+useful.</p>
 </div>
 <div id="dataset-and-non-spatial-models" class="section level1">
 <h1>Dataset and Non-spatial Models</h1>
@@ -2476,7 +2489,7 @@ estimates (with uncertainty). These values should now hopefully be at
 least somewhat familiar.</p>
 <pre class="r"><code>summary(m1.spat.inla)</code></pre>
 <pre><code>## Time used:
-##     Pre = 0.463, Running = 0.64, Post = 0.161, Total = 1.26 
+##     Pre = 3.82, Running = 1.52, Post = 0.517, Total = 5.86 
 ## Fixed effects:
 ##                                   mean    sd 0.025quant 0.5quant 0.975quant
 ## (Intercept)                      3.899 0.128      3.647    3.900      4.151
@@ -2566,10 +2579,23 @@ mt</code></pre>
 ## alternative hypothesis: greater
 ## sample estimates:
 ## Moran I statistic       Expectation          Variance 
-##      -0.013637338      -0.004310345       0.001491834</code></pre>
+##      -0.013637343      -0.004310345       0.001491834</code></pre>
 </div>
 <div id="exercises" class="section level1">
 <h1>Exercises</h1>
+<div style="background-color: #f0f0f0; color: black; padding: 15px; border: none;">
+<p>Download a dataset that describes recorded mammal species richness
+across Egypt: url(“<a href="https://www.dropbox.com/scl/fi/hy5zlgtav7mguncqs9i0h/EgyptMammalSpeciesRichness.rds?rlkey=vavnb7d0appd16q1d14tkau46&amp;dl=1" class="uri">https://www.dropbox.com/scl/fi/hy5zlgtav7mguncqs9i0h/EgyptMammalSpeciesRichness.rds?rlkey=vavnb7d0appd16q1d14tkau46&amp;dl=1</a>”)
+%&gt;% readRDS -&gt; EgyptMammalSpeciesRichness</p>
+<p>The columns in this dataset describe recorded mammal species richness
+(SpRich), annual mean temperature (AnnualTemp), total annual
+precipitation (AnnualPrecip), as well as the Longitude and Latitude
+spatial coordinates.</p>
+<p>Try making some simple generalized linear models of species richness
+as a function of the climate variables. Then, test for spatial
+autocorrelation, and try out some of the spatial modelling techniques we
+have learned in the preceding tutorial.</p>
+</div>
 </div>
 </div>
 
