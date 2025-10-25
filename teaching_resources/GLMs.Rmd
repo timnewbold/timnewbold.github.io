@@ -81,15 +81,10 @@ In this session, we will cover Generalized Linear Models, which allow us to deal
 
 I will cover here only the practicalities of running Generalized Linear Models in R. If you are interested, <a href="https://towardsdatascience.com/generalized-linear-models-9cbf848bb8ab" target="_blank">this great article</a> gives a very short introduction to the statistics behind GLMs, although it focuses on application in Python rather than R.
 
-This session will require the use of my _MResModelling_ R package, which you can install from Github:
+As usual, we will use the _dplyr_ package for manipulating data and the _ggplot_ package for plotting:
 
-```{r,echo=TRUE,results=FALSE,eval=FALSE}
-remotes::install_github("timnewbold/StatisticalModels")
-remotes::install_github("timnewbold/MResEcologicalModelling",subdir="MResModelling")
-```
-
-```{r,echo=TRUE,results=FALSE,message=FALSE,warning=FALSE}
-library(MResModelling)
+```{r,echo=TRUE,results=TRUE,eval=TRUE}
+library(dplyr)
 library(ggplot2)
 ```
 
@@ -102,29 +97,53 @@ The first dataset describes the abundance of 21 different species of parasitoid 
 The second dataset gives site-level metrics of biodiversity (e.g., total species richness, total recorded abundance) at the same sites in Hawai'i. To keep things simple, I have focused this dataset just on the 242 sites in primary vegetation or pasture.
 
 ```{r,echo=TRUE,results=TRUE}
-# Load species-level data (loads as object 'hh')
-data(HawaiiHymenoptera)
-# For simplicity, we will select only those columns that we will use later
+# Load the species-level data
+url("https://www.dropbox.com/scl/fi/eoee7ur169hb0ewp4ne40/HawaiiHymentopteraSpecies.rds?rlkey=oz6umlsrzkhyny3c8baph4sf7&dl=1") %>%
+  readRDS() -> hh.species
+
+# We will select just data in primary vegetation and pasture, recode the land use
+# variable to have simpler labels, and then select only those columns that we
+# will need later:
 # Site_number: the site at which species were sampled
 # LandUse: the land use at the sampled site
+# ForestCover: the percentage forest cover at the sampled site
 # Taxon_name_entered: the species sampled
 # Measurement: the recorded abundance of the species
-hh <- hh[,c('Site_number','LandUse','Taxon_name_entered','Measurement')]
-# Make the site number a grouping variable (factor)
-hh$Site_number <- factor(hh$Site_number)
-str(hh)
+hh.species %>% filter(Predominant_land_use %in% c('Primary vegetation','Pasture')) %>%
+  # Note - the droplevels function here removes groupings that are not retained
+  # in the data subset
+  droplevels() %>%
+  mutate(LandUse = recode(Predominant_land_use,
+                          'Primary vegetation' = 'Primary',
+                          'Pasture' = 'Pasture')) %>%
+  select(Site_number,LandUse,ForestCover,Taxon_name_entered,Measurement) ->
+  hh.species
 
-# Load site-level data (loads as object 'hhs2')
-data(HawaiiHymenopteraSitesSubset)
-# Again, we will select the relevant columns
+# Make the site number a grouping variable (factor)
+hh.species %>% mutate(Site_number = factor(Site_number)) -> hh.species
+
+str(hh.species)
+
+# Load the site-level data
+url("https://www.dropbox.com/scl/fi/2ekglfs55ccow0u9pekcu/HawaiiHymentopteraSites.rds?rlkey=149gl3gqxahf235dvk9cv8qbt&dl=1") %>%
+  readRDS() -> hh.sites
+
+# These data are already filtered to just primary vegetation and pasture
+# Again, we will create a LandUse variable with simplified labels, and will then
+# select only the columns that we will use later
 # Site_number: the site at which species were sampled
 # Predominant_land_use: the land use at the sampled site
 # ForestCover: the percentage forest cover at the sampled site
 # Species_richness: the recorded species richness at the site
-hhs2 <- hhs2[,c('Site_number','Predominant_land_use','ForestCover','Species_richness')]
+hh.sites %>% mutate(LandUse = recode(Predominant_land_use,
+                                     'Primary vegetation' = 'Primary',
+                                     'Pasture' = 'Pasture')) %>%
+  select(Site_number,LandUse,ForestCover,Species_richness) -> hh.sites
+
 # Make the site number a grouping variable (factor)
-hhs2$Site_number <- factor(hhs2$Site_number)
-str(hhs2)
+hh.sites %>% mutate(Site_number = factor(Site_number)) -> hh.sites
+
+str(hh.sites)
 ```
 
 # Poisson GLMs
@@ -136,8 +155,8 @@ Count data often conform to a Poisson distribution, and so are commonly encounte
 Fitting a Poisson GLM in R is very similar to fitting an analysis of covariance (or linear model), except that now we need to use the _glm_ function. To run a GLM, we need to provide one extra piece of information beyond that needed for a linear model: the family of model we want to use. In this case, we want a Poisson family, *family=poisson*. 
 
 ```{r,echo=TRUE,results=TRUE}
-srMod1 <- glm(Species_richness~Predominant_land_use+ForestCover,family=poisson,
-              data=hhs2)
+srMod1 <- glm(Species_richness~LandUse+ForestCover,family=poisson,
+              data=hh.sites)
 
 summary(srMod1)
 ```
@@ -151,10 +170,10 @@ You will see that the coefficient table produced by a GLM is the same as for a l
 Model selection can be performed in almost exactly the same way for GLMs as for standard linear models. In the case of our species richness model, we have two potential explanatory variables in our model. If we use backward stepwise model selection, we would test the effect of removing each of these variables from the model:
 
 ```{r,echo=TRUE,results=TRUE}
-srMod2 <- glm(Species_richness~Predominant_land_use,family=poisson,data=hhs2)
+srMod2 <- glm(Species_richness~LandUse,family=poisson,data=hh.sites)
 anova(srMod1,srMod2)
 
-srMod3 <- glm(Species_richness~ForestCover,family=poisson,data=hhs2)
+srMod3 <- glm(Species_richness~ForestCover,family=poisson,data=hh.sites)
 anova(srMod1,srMod3)
 ```
 
@@ -178,8 +197,8 @@ anova(srMod1,srMod3,test="Chi")
 This tells us that both land use and forest cover have a significant effect on the species richness of parasitoid wasps in this study system, and that our first (most complex) model is the most parsimonious model. Let's re-run the final model, just for clarity:
 
 ```{r,echo=TRUE,results=TRUE}
-srModFinal <- glm(Species_richness~Predominant_land_use+ForestCover,
-                  family=poisson,data=hhs2)
+srModFinal <- glm(Species_richness~LandUse+ForestCover,
+                  family=poisson,data=hh.sites)
 ```
 
 ## Effect Sizes
@@ -201,7 +220,7 @@ sp.rich.primary
 
 # Now we will use the coefficient for the difference in (log) species richness in
 # pasture compared to primary vegetation to calculate the species richness in pasture
-pasture.coef <- srModFinal$coefficients['Predominant_land_usePasture']
+pasture.coef <- srModFinal$coefficients['LandUsePasture']
 sp.rich.pasture <- exp(pasture.coef+intercept)
 sp.rich.pasture
 
@@ -293,24 +312,17 @@ In this case, the model is not significantly over-dispersed, so our Poisson mode
 Now we will try to run a model of the abundance of one of the parasitoid wasp species. We will focus here on the species *Pimpla punicipes*:
 
 ```{r,echo=TRUE,results=TRUE}
-hh.sp <- droplevels(hh[(hh$Taxon_name_entered=="Pimpla punicipes"),])
-# Note - the droplevels function here removes groupings that are not retained
-# in the data subset
-
-# The estimates of forest cover were not included in the species-level dataset,
-# so we will match these from the site-level dataset
-hh.sp$ForestCover <- hhs2$ForestCover[match(hh.sp$Site_number,hhs2$Site_number)]
-
-# Remove sites that have missing (NA) forest-cover estimates
-hh.sp <- droplevels(hh.sp[!is.na(hh.sp$ForestCover),])
+hh.species %>% filter(Taxon_name_entered=="Pimpla punicipes") %>% 
+  droplevels() -> hh.species
 ```
 
 We will model the abundance of this species as a function of land use and forest cover again. Since the abundances are also counts, we will assume a Poisson distribution for now.
 
 ```{r,echo=TRUE,results=TRUE}
-abundMod1 <- glm(Measurement~LandUse+ForestCover,family=poisson,data=hh.sp)
+abundMod1 <- glm(formula = Measurement~LandUse+ForestCover,family = poisson,
+                 data = hh.species)
 
-abundMod1
+summary(abundMod1)
 ```
 
 Let's check the assumptions of this model:
@@ -329,7 +341,7 @@ Here the model is violating the assumptions of residual distribution, equality o
 
 For now, we will ignore these violations of model assumptions, and look at how we make predictions from a generalized linear model.
 
-We can generate simple median predicted values just as <a href="./ANCOVA.html">we did</a> with simpler linear models (ignore the names associated with these predictions - they refer to the line numbers in the original PREDICTS database). These predicted values are in the log-transformed space as fit in the Poisson GLM.
+We can generate simple median predicted values just as <a href="./ANCOVA.html">we did</a> with simpler linear models. These predicted values are in the log-transformed space as fit in the Poisson GLM.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 preds.abundMod <- predict(object = abundMod1)
@@ -362,9 +374,9 @@ Remember, that we also need to take the exponential of all predicted values to b
 So that we can plot the individual effects of land use and forest cover, we will make predictions onto new data frames where we separate out differences in forest cover and differences in land use.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-nd.FC <- data.frame(LandUse=factor("Primary",levels=levels(hh.sp$LandUse)),
-                    ForestCover=seq(from = min(hh.sp$ForestCover),
-                                    to = max(hh.sp$ForestCover),
+nd.FC <- data.frame(LandUse=factor("Primary",levels=levels(hh.species$LandUse)),
+                    ForestCover=seq(from = min(hh.species$ForestCover),
+                                    to = max(hh.species$ForestCover),
                                     length.out=100))
 
 preds.abundMod.FC <- predict(object = abundMod1,newdata = nd.FC,se.fit = TRUE)
@@ -389,8 +401,8 @@ p
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 nd.LU <- data.frame(LandUse=factor(
-  c("Primary","Pasture"),levels=levels(hh.sp$LandUse)),
-  ForestCover=median(hh.sp$ForestCover))
+  c("Primary","Pasture"),levels=levels(hh.species$LandUse)),
+  ForestCover=median(hh.species$ForestCover))
 
 preds.abundMod.LU <- predict(object = abundMod1,newdata = nd.LU,se.fit = TRUE)
 
@@ -425,7 +437,8 @@ A quasi-Poisson GLM has an extra parameter that represents the dispersion
 Fitting a quasi-Poisson GLM is very simple. We just have to specify _family=quasipoisson_ in the _glm_ function:
 
 ```{r,echo=TRUE,results=TRUE}
-abundMod2 <- glm(Measurement~LandUse+ForestCover,family=quasipoisson,data=hh.sp)
+abundMod2 <- glm(formula = Measurement~LandUse+ForestCover,
+                 family = quasipoisson,data = hh.species)
 
 summary(abundMod1)
 summary(abundMod2)
@@ -437,7 +450,7 @@ If we want to perform model selection on quasi-Poisson GLMs, and we compare two 
 
 ```{r,echo=TRUE,results=TRUE}
 # Let's compare our first model with a simpler model not containing forest cover
-abundMod2a <- glm(Measurement~LandUse,family=quasipoisson,data=hh.sp)
+abundMod2a <- glm(Measurement~LandUse,family=quasipoisson,data=hh.species)
 
 anova(abundMod2,abundMod2a,test="F")
 ```
@@ -487,10 +500,14 @@ An alternative to dealing with over-dispersed count data is to use a negative bi
 install.packages("MASS")
 ```
 
+```{r, echo=TRUE,results=TRUE,eval=TRUE}
+library(MASS)
+```
+
 Now, instead of using the _glm_ function, we use the _glm.nb_ function from the MASS package:
 
 ```{r,echo=TRUE,results=TRUE}
-abundMod3 <- glm.nb(Measurement~LandUse+ForestCover,data=hh.sp)
+abundMod3 <- glm.nb(formula = Measurement~LandUse+ForestCover,data = hh.species)
 
 summary(abundMod3)
 ```
@@ -498,8 +515,8 @@ summary(abundMod3)
 Let's try removing land use and forest cover in turn from the model, to assess their statistical significance in explaining differences in abundance. In the case of negative binomial GLMs, the comparison of two models is done on the basis of the ***ratio*** of their likelihoods (which is the same as the ***difference*** in their log likelihoods). This likelihood ratio can be compared to a chi-squared distribution to obtain a P value.
 
 ```{r,echo=TRUE,results=TRUE}
-abundMod3a <- glm.nb(Measurement~LandUse,data=hh.sp)
-abundMod3b <- glm.nb(Measurement~ForestCover,data=hh.sp)
+abundMod3a <- glm.nb(formula = Measurement~LandUse,data = hh.species)
+abundMod3b <- glm.nb(formula = Measurement~ForestCover,data = hh.species)
 
 anova(abundMod3,abundMod3a)
 anova(abundMod3,abundMod3b)
@@ -508,7 +525,7 @@ anova(abundMod3,abundMod3b)
 Again, we find that forest cover has a (marginally) non-significant effect on the abundance of *Pimpla punicipes*. It appears that land use has a highly significant effect. If we doing a proper analysis, we would now move on to a second round of model selection to ensure that this is definitely the case, but in the interests of time here we will accept the model with just land use as our most parsimonious model.
 
 ```{r,echo=TRUE,results=TRUE}
-abundModFinal <- glm.nb(Measurement~LandUse,data=hh.sp)
+abundModFinal <- glm.nb(formula = Measurement~LandUse,data = hh.species)
 
 summary(abundModFinal)
 ```
@@ -542,8 +559,8 @@ Reassuringly, our effect size is very similar as for the quasi-Poisson GLM.
 Finally, let's look at the explanatory power of this model:
 
 ```{r,echo=TRUE,results=TRUE}
-dev.null <- abundMod2a$null.deviance
-dev.resid <- abundMod2a$deviance
+dev.null <- abundModFinal$null.deviance
+dev.resid <- abundModFinal$deviance
 
 dev.explained <- (dev.null-dev.resid)/dev.null
 
@@ -558,7 +575,7 @@ A binomial GLM is useful when we have a binary response variable. Such a situati
 
 ```{r,echo=TRUE,results=TRUE}
 # Where abundance is > 0 set species as present, otherwise absent
-hh.sp$PresAbs <- ifelse(hh.sp$Measurement>0,1,0)
+hh.species %>% mutate(PresAbs = ifelse(Measurement>0,1,0)) -> hh.species
 ```
 
 ## Fitting a Binomial GLM in R
@@ -566,9 +583,10 @@ hh.sp$PresAbs <- ifelse(hh.sp$Measurement>0,1,0)
 We will fit a model of the presence/absence of *P. punicipes* as a function of land use and forest cover. The principle of fitting a binomial GLM is the same as for other GLMs. In this case, we have to specify *family=binomial*:
 
 ```{r,echo=TRUE,results=TRUE}
-occMod1 <- glm(PresAbs~LandUse+ForestCover,data=hh.sp,family="binomial")
+occMod1 <- glm(formula = PresAbs~LandUse+ForestCover,data = hh.species,
+               family = binomial)
 
-occMod1
+summary(occMod1)
 ```
 
 ## Model Selection
@@ -576,8 +594,8 @@ occMod1
 As before, we will test the effect of removing each explanatory variable in turn:
 
 ```{r,echo=TRUE,results=TRUE}
-occMod1a <- glm(PresAbs~LandUse,data=hh.sp,family="binomial")
-occMod1b <- glm(PresAbs~ForestCover,data=hh.sp,family="binomial")
+occMod1a <- glm(formula = PresAbs~LandUse,data = hh.species,family = binomial)
+occMod1b <- glm(formula = PresAbs~ForestCover,data = hh.species,family = binomial)
 
 anova(occMod1,occMod1a,test="Chi")
 anova(occMod1,occMod1b,test="Chi")
@@ -586,8 +604,8 @@ anova(occMod1,occMod1b,test="Chi")
 In this case, we find that both land use and forest cover have a significant effect on the occupancy of *P. punicipes* at the sampled sites in Hawai'i.
 
 ```{r,echo=TRUE,results=TRUE}
-occModFinal <- glm(PresAbs~LandUse+ForestCover,data=hh.sp,
-                   family="binomial")
+occModFinal <- glm(formula = PresAbs~LandUse+ForestCover,data = hh.species,
+                   family = binomial)
 ```
 
 ## Checking Model Assumptions
