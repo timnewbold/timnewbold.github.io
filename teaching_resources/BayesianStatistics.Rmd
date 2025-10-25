@@ -17,6 +17,7 @@ This tutorial only covers the running of some basic Bayesian models using the _b
 McElreath, R. (2020). <i> Statistical Rethinking: A Bayesian Course with Examples in R and Stan</i>. 2nd Edition. CRC Press, Boca Raton, USA.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+library(dplyr)
 library(ggplot2)
 library(brms)
 ```
@@ -31,27 +32,31 @@ We will work with the R dataset that we used for the [main linear regression tut
 data(swiss)
 head(swiss)
 
+swiss %>% mutate(LogEducation = log10(Education)) -> swiss
+
 ggplot(data = swiss,mapping = aes(x=Education,y=Fertility)) + 
   geom_point() + 
-  geom_smooth(method = 'lm') + 
+  geom_smooth(method = 'lm',formula = y~x+I(x^2)) + 
   scale_x_continuous(transform = 'log10') + 
   theme_classic()
 ```
 
 ## Running the Model
 
-As a reminder, we had previously run a standard (Ordinary Least Squares) linear regression to assess the relationship between these two variables.
+As a reminder, we had previously run a standard (Ordinary Least Squares) linear regression to assess the relationship between fertility and education, log-transforming the latter variable because of right skew in the distribution of values.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-m.ols <- lm(formula = Fertility ~ log10(Education),data = swiss)
+m.ols <- lm(formula = Fertility ~ LogEducation + I(LogEducation^2),data = swiss)
 
 summary(m.ols)
 ```
 
 To run an equivalent Bayesian model using the _brms_ package is really simple. We just use the _brm_ function instead of the standard _lm_ function (although note that it does take much longer to run, because the algorithm must now sample parameter space, since there isn't a simple analytical solution as with classical linear regression).
 
+By default, models run in the _brms_ package are run with four chains (i.e., independent sets of parameter estimates from four separate MCMC processes). The default number of iterations for each chain is 2000 (half in the burn-in and half in the sampling period). _brms_ uses a mixture of uniform and weakly informative prior probabilities. Ordinarily, all posterior parameter estimates from the sampling period (1,000 by default) will be saved, but you can set the _thin_ parameter greater than 1 if you want to thin these estimates out to save memory space.
+
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-m1.bayes <- brm(formula = Fertility ~ log10(Education),data = swiss)
+m1.bayes <- brm(formula = Fertility ~ LogEducation + I(LogEducation^2),data = swiss)
 
 summary(m1.bayes)
 ```
@@ -62,25 +67,72 @@ If you compare the coefficients estimated by the Bayesian model and by the stand
 
 ## Checking the Model
 
+There are a number of checks that we can do to ensure that the Bayesian model is behaving as expected. Importantly, we should check for convergence in the estimates for each of the parameters in the model. This can be done in two ways. First, by inspecting the Rhat values for the model summary, ensuring that they are close to one. Values greater than 1.1 indicate lack of convergence. Second, we can inspect the posterior estimates of the parameter values for the model sampling period (i.e., the iterations of parameter sampling following the specified burn-in period).
+
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 plot(m1.bayes)
 ```
 
-## Predictions and Plotting
+In these plots, we expect to see that after the burn-in period is complete, estimates of the parameter values have stabilized around their final values for all of the independent chains. If they have done so, we expect to see the right-hand plots here to look like "hairy catepillars" (i.e., with the parameter estimates in each chain jumping around the final median value). 
+
+Another thing we should check is that, for any combination of parameter estimates from the posterior samples, the density distribution of predicted values is similar to the density distribution of the observed values. The following code shows the density distribution of predicted values based on 10 draws of parameter combinations from the posterior sample (yrep) compared to the density distribution of observed values (y), showing some discrepancies in this case.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
-preds <- conditional_effects(m1)
+pp_check(object = m1.bayes,type = "dens_overlay") + theme_classic()
+```
+
+## Effect sizes, Significance and Explanatory Power
+
+We can calculate effect sizes for Bayesian models in exactly the same way as for traditional statistical models, using the coefficients from the model, which was covered in the <a href="./AssessingModels.html>tutorial on Assessing Models</a>.
+
+'Significance' of terms in Bayesian models is usually determined based on whether or not the 95% credible intervals for a parameter cross zero. Here, the coefficient (slope) of the effect of (log) education on fertility does not cross zero, so we would conclude that education has a significant effect on fertility.
+
+For Bayesian models, we can calculate a pseudo-R<sup>2</sup> value (not a true R<sup>2</sup>). In _brms_ this is done with the _bayes_R2_ function.
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+bayes_R2(m1.bayes)
+```
+
+## Predictions and Plotting
+
+In _brms_, the _conditional_effects_ function allows us easily to generate predicted values for the range of the explanatory values sampled in the original data. So, here we get predictions for average levels of post-primary education from 1% to 53%. We can then use these predictions to make a simple plot of the data along with the model-predicted values. 
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+preds <- conditional_effects(m1.bayes)
 
 ggplot() + 
   geom_point(data = swiss,mapping = aes(x = Education,y = Fertility)) + 
   scale_x_continuous(transform = 'log10') + 
-  geom_line(data = preds$Education,mapping = aes(x = Education,y=estimate__),
+  geom_line(data = preds$LogEducation,mapping = aes(x = 10^LogEducation,y=estimate__),
             colour="#2E2585",size=1) + 
-  geom_ribbon(data = preds$Education,mapping = aes(
-    x = Education,ymin = lower__,ymax = upper__),
+  geom_ribbon(data = preds$LogEducation,mapping = aes(
+    x = 10^LogEducation,ymin = lower__,ymax = upper__),
     fill = "#2E2585",alpha=0.3) + 
   theme_classic()
 ```
+
+To make predictions for new values, we can use the _posterior_epred_ function in _brms_. Similar to the _predict_ function, which we first encountered in the <a href="./LinearRegression.html#making-predictions-from-a-linear-regression-model">tutorial on linear regression</a>, we specify a model object, as well as new data onto which we want to make predictions. Exactly as we did in that tutorial, we will now make predictions for specified levels of post-primary education of 1%, 25% and 50%. Unlike the basic _predict_ function, with Bayesian models we get 4,000 individual predictions (4 chains multiplied by 1,000 parameter estimates) for each of the values of the explanatory variable we have specified. We can use the _apply_ function to summarize median, 2.5th and 97.5th percentiles across the 4,000 estimates.
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
+nd <- data.frame(Education = c(1,25,50))
+
+nd %>% mutate(LogEducation = log10(Education)) -> nd
+
+preds <- brms::posterior_epred(object = m1.bayes,newdata = nd)
+
+preds.median <- apply(X = preds,MARGIN = 2,FUN = median)
+preds.lower <- apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.025)
+preds.upper <- apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.975)
+
+final.preds <- data.frame(Education = nd$Education,
+                          Pred = preds.median,
+                          PredLower = preds.lower,
+                          PredUpper = preds.upper)
+
+final.preds
+```
+
+If you compare the new predicted values back to those we obtained in the <a href="./LinearRegression.html#making-predictions-from-a-linear-regression-model">tutorial on linear regression</a>, you will see that they are very similar.
 
 # Bayesian Generalized Linear Models
 
