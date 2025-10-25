@@ -83,7 +83,7 @@ I will cover here only the practicalities of running Generalized Linear Models i
 
 As usual, we will use the _dplyr_ package for manipulating data and the _ggplot_ package for plotting:
 
-```{r,echo=TRUE,results=TRUE,eval=TRUE}
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
 library(dplyr)
 library(ggplot2)
 ```
