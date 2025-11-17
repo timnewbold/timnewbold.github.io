@@ -5,6 +5,32 @@ author: "Tim Newbold"
 output:
   rmdformats::downcute:
   code_folding: show
+references:
+  - id: Gould2013
+    title: Forest restoration and parasitoid wasp communities in montane Hawai'i
+    author:
+      - family: Gould
+        given: Rachelle K.
+      - family: Pejchar
+        given: Liba
+      - family: Bothwell
+        given: Sara G.
+      - family: Brosi
+        given: Berry
+      - family: Wolny
+        given: Stacie
+      - family: Mendenhall
+        given: Chase
+      - family: Daily
+        given: Gretchen
+    container-title: PLoS ONE
+    volume: 8
+    page: e59356
+    DOI: 10.1371/journal.pone.0059356
+    URL: https://doi.org/10.1371/journal.pone.0059356
+    type: article-journal
+    issued:
+      year: 2013
 self_contained: true
 thumbnails: false
 lightbox: true
@@ -31,7 +57,11 @@ We will work with the R dataset that we used for the [main linear regression tut
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 data(swiss)
 head(swiss)
+```
 
+If you remember, by the end of the linear regression tutorial, we had decided to log-transfom the education variable, to deal with right skew in the distribution of values, and we had decided to fit a quadratic model to capture the non-linear relationship between education and fertility. Let's replot this relationship as a reminder.
+
+```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 swiss %>% mutate(LogEducation = log10(Education)) -> swiss
 
 ggplot(data = swiss,mapping = aes(x=Education,y=Fertility)) + 
@@ -43,7 +73,7 @@ ggplot(data = swiss,mapping = aes(x=Education,y=Fertility)) +
 
 ## Running the Model
 
-As a reminder, we had previously run a standard (Ordinary Least Squares) linear regression to assess the relationship between fertility and education, log-transforming the latter variable because of right skew in the distribution of values.
+Before we run a Bayesian model of the relationship between education and fertility, let's re-run the standard (Ordinary Least Squares) linear regression.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 m.ols <- lm(formula = Fertility ~ LogEducation + I(LogEducation^2),data = swiss)
@@ -53,7 +83,7 @@ summary(m.ols)
 
 To run an equivalent Bayesian model using the _brms_ package is really simple. We just use the _brm_ function instead of the standard _lm_ function (although note that it does take much longer to run, because the algorithm must now sample parameter space, since there isn't a simple analytical solution as with classical linear regression).
 
-By default, models run in the _brms_ package are run with four chains (i.e., independent sets of parameter estimates from four separate MCMC processes). The default number of iterations for each chain is 2000 (half in the burn-in and half in the sampling period). _brms_ uses a mixture of uniform and weakly informative prior probabilities. Ordinarily, all posterior parameter estimates from the sampling period (1,000 by default) will be saved, but you can set the _thin_ parameter greater than 1 if you want to thin these estimates out to save memory space.
+By default, models run in the _brms_ package are run with four chains (i.e., independent sets of parameter estimates from four separate MCMC processes). The default number of iterations for each chain is 2000 (half in the burn-in and half in the sampling period). By default, _brms_ uses a mixture of uniform and weakly informative prior probabilities. Ordinarily, all posterior parameter estimates from the sampling period (1,000 by default) will be saved, but you can set the _thin_ parameter greater than 1 if you want to thin these estimates out to save memory space.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 m1.bayes <- brm(formula = Fertility ~ LogEducation + I(LogEducation^2),data = swiss)
@@ -61,21 +91,21 @@ m1.bayes <- brm(formula = Fertility ~ LogEducation + I(LogEducation^2),data = sw
 summary(m1.bayes)
 ```
 
-You can see that the model output gives some familiar information, such as coefficient estimates along with associated uncertainty. Remember that estimated uncertainty with Bayesian models is derived from the posterior samples of parameter space.
+You can see that the model output gives some familiar information, such as coefficient estimates along with associated uncertainty. Remember that estimated uncertainty with Bayesian models is derived from the posterior samples of parameter space. Therefore, we would normally use the lower and upper 95% credible intervals, which represent the bounds within which 95% of posterior estimates of the parameters fall.
 
 If you compare the coefficients estimated by the Bayesian model and by the standard linear regression, you will see that they are very similar.
 
 ## Checking the Model
 
-There are a number of checks that we can do to ensure that the Bayesian model is behaving as expected. Importantly, we should check for convergence in the estimates for each of the parameters in the model. This can be done in two ways. First, by inspecting the Rhat values for the model summary, ensuring that they are close to one. Values greater than 1.1 indicate lack of convergence. Second, we can inspect the posterior estimates of the parameter values for the model sampling period (i.e., the iterations of parameter sampling following the specified burn-in period).
+There are a number of checks that we can do to ensure that the Bayesian model is behaving as expected. Importantly, we should check for convergence in the estimates for each of the parameters in the model. This can be done in two ways. First, by inspecting the Rhat values for the model summary, ensuring that they are close to one (which they are for this model). Values greater than 1.1 indicate lack of convergence. Second, we can inspect the posterior estimates of the parameter values for the model sampling period (i.e., the iterations of parameter sampling following the specified burn-in period).
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 plot(m1.bayes)
 ```
 
-In these plots, we expect to see that after the burn-in period is complete, estimates of the parameter values have stabilized around their final values for all of the independent chains. If they have done so, we expect to see the right-hand plots here to look like "hairy catepillars" (i.e., with the parameter estimates in each chain jumping around the final median value). 
+In these plots, we expect to see that after the burn-in period is complete, estimates of the parameter values have stabilized around their final values for all of the independent chains. If they have done so, we expect to see the right-hand plots here to look like "hairy caterpillars" (i.e., with the parameter estimates in each chain jumping around the final median value). 
 
-Another thing we should check is that, for any combination of parameter estimates from the posterior samples, the density distribution of predicted values is similar to the density distribution of the observed values. The following code shows the density distribution of predicted values based on 10 draws of parameter combinations from the posterior sample (yrep) compared to the density distribution of observed values (y), showing some discrepancies in this case.
+Another thing we should check is that, for any combination of parameter estimates from the posterior samples, the density distribution of predicted values is similar to the density distribution of the observed values. The following code shows the density distribution of predicted values based on 10 draws of parameter combinations from the posterior sample (y<sub>rep</sub>) compared to the density distribution of observed values (y), showing some discrepancies in this case.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 pp_check(object = m1.bayes,type = "dens_overlay") + theme_classic()
@@ -83,11 +113,11 @@ pp_check(object = m1.bayes,type = "dens_overlay") + theme_classic()
 
 ## Effect sizes, Significance and Explanatory Power
 
-We can calculate effect sizes for Bayesian models in exactly the same way as for traditional statistical models, using the coefficients from the model, which was covered in the <a href="./AssessingModels.html>tutorial on Assessing Models</a>.
+We can calculate effect sizes for Bayesian models in exactly the same way as for traditional statistical models, using the coefficients from the model, which was covered in the <a href="./AssessingModels.html">tutorial on Assessing Models</a>.
 
 'Significance' of terms in Bayesian models is usually determined based on whether or not the 95% credible intervals for a parameter cross zero. Here, the coefficient (slope) of the effect of (log) education on fertility does not cross zero, so we would conclude that education has a significant effect on fertility.
 
-For Bayesian models, we can calculate a pseudo-R<sup>2</sup> value (not a true R<sup>2</sup>). In _brms_ this is done with the _bayes_R2_ function.
+For Bayesian models, we can calculate a pseudo-R<sup>2</sup> value (not a true R<sup>2</sup>). In _brms_ this is done with the _bayes_R2_ function. Here, our model explains a good portion (45%) of the variation in fertility values.
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 bayes_R2(m1.bayes)
@@ -95,7 +125,7 @@ bayes_R2(m1.bayes)
 
 ## Predictions and Plotting
 
-In _brms_, the _conditional_effects_ function allows us easily to generate predicted values for the range of the explanatory values sampled in the original data. So, here we get predictions for average levels of post-primary education from 1% to 53%. We can then use these predictions to make a simple plot of the data along with the model-predicted values. 
+In _brms_, the _conditional_effects_ function allows us easily to generate predicted values for the range of the explanatory values sampled in the original data. Here, we get predictions for average levels of post-primary education from 1% to 53% (the range of values represented in the original dataset). We can then use these predictions to make a simple plot of the data along with the model-predicted values. 
 
 ```{r, echo=TRUE, eval=TRUE, results=TRUE, warning=FALSE, message=FALSE}
 preds <- conditional_effects(m1.bayes)
@@ -104,7 +134,7 @@ ggplot() +
   geom_point(data = swiss,mapping = aes(x = Education,y = Fertility)) + 
   scale_x_continuous(transform = 'log10') + 
   geom_line(data = preds$LogEducation,mapping = aes(x = 10^LogEducation,y=estimate__),
-            colour="#2E2585",size=1) + 
+            colour="#2E2585",linewidth=1) + 
   geom_ribbon(data = preds$LogEducation,mapping = aes(
     x = 10^LogEducation,ymin = lower__,ymax = upper__),
     fill = "#2E2585",alpha=0.3) + 
@@ -136,4 +166,245 @@ If you compare the new predicted values back to those we obtained in the <a href
 
 # Bayesian Generalized Linear Models
 
+We can also use the _brms_ package to produce generalized linear models. We will return here to the data on species richness of parasitoid wasps that we encountered in the <a href="./GLMs.html">tutorial on Generalized Linear Models</a>, which were taken from a published study [@Gould2013] that sampled parasitoid wasps along a gradient of land use in Hawai'i.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+# Load the site-level data
+url("https://www.dropbox.com/scl/fi/2ekglfs55ccow0u9pekcu/HawaiiHymentopteraSites.rds?rlkey=149gl3gqxahf235dvk9cv8qbt&dl=1") %>%
+  readRDS() -> hh.sites
+
+# These data are already filtered to just primary vegetation and pasture
+# Again, we will create a LandUse variable with simplified labels, and will then
+# select only the columns that we will use later
+# Site_number: the site at which species were sampled
+# Predominant_land_use: the land use at the sampled site
+# ForestCover: the percentage forest cover at the sampled site
+# Species_richness: the recorded species richness at the site
+hh.sites %>% mutate(LandUse = recode(Predominant_land_use,
+                                     'Primary vegetation' = 'Primary',
+                                     'Pasture' = 'Pasture')) %>%
+  select(Site_number,LandUse,ForestCover,Species_richness) -> hh.sites
+
+# Make the site number a grouping variable (factor)
+hh.sites %>% mutate(Site_number = factor(Site_number)) -> hh.sites
+```
+
+We will repeat the model of species richness as a function of land use and forest cover from the <a href="./GLMs.html">tutorial on GLMs</a>. As a reminder, this was the standard GLM that we ran before.
+
+```{r,echo=TRUE,results=TRUE}
+srMod1 <- glm(formula = Species_richness~LandUse+ForestCover,family=poisson,
+              data=hh.sites)
+
+summary(srMod1)
+```
+
+Now, we can repeat this model using a Bayesian approach. Again, we will use the default parameters, with 4 chains, 2,000 iterations per chain (1,000 burn-in and 1,000 sampling iterations), and with default priors.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+srMod.bayes <- brm(formula = Species_richness~LandUse+ForestCover,
+                   data = hh.sites,family = poisson)
+
+summary(srMod.bayes)
+```
+
+This gives us very similar results to the original GLM.
+
+As with the linear models above, we should run some basic checks of the model.
+
+The Rhat values are all 1, suggesting good convergence, but we should plot the parameter estimates for each model chain to visually assess convergence. These plots look good in this case.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+plot(srMod.bayes)
+```
+
+And again we should check the distribution of posterior predicted values against the distribution of observed values.
+
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+pp_check(object = srMod.bayes,type = "dens_overlay") + 
+  theme_classic()
+```
+
+Let's also check the pseudo-R<sup>2</sup> values of this model.
+
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+bayes_R2(srMod.bayes)
+```
+
+As with Bayesian linear models, it is relatively easy to generate predictions and plots from generalized linear models run in _brms_. Here, we will plot a simple error bar of the model-estimated effect of land use on species richness. Note the need to back-transform the estimated values, since the prediction function gives the log-transformed values as fit based on the link function in the generalized linear model.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+preds <- conditional_effects(srMod.bayes)
+
+p <- ggplot(data = preds$LandUse,mapping = aes(x = LandUse)) + 
+  geom_errorbar(mapping = aes(
+    ymin = exp(lower__),
+    ymax =exp(upper__)), width=0.1) + 
+  geom_point(mapping = aes(y = exp(estimate__))) + 
+  scale_y_continuous(name = "Species richness",transform = "log",
+                     breaks = c(2,5,10,15)) + 
+  theme_classic()
+
+p
+```
+
+We can also predict against new data. Here, for illustrative purposes, we will predict again for primary vegetation and pasture, for the mean value of forest cover in the original data (29.9% cover). As with linear models, the _posterior_epred_ function returns 4,000 individual predictions (4 chains multiplied by 1,000 parameter estimates) for each of the values of the explanatory variable we have specified. We can use the _apply_ function to summarize median, 2.5th and 97.5th percentiles across the 4,000 estimates.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+nd <- data.frame(LandUse=factor(c("Primary","Pasture"),levels=levels(hh.sites$LandUse)),
+                 ForestCover=mean(hh.sites$ForestCover))
+
+preds <- brms::posterior_epred(object = srMod.bayes,newdata = nd)
+
+# Because we fit a Poisson GLM (i.e., with a log link function), we need to
+# take the exponential to back-transform the predictions to the original
+# number of species in the dataset
+preds.median <- exp(apply(X = preds,MARGIN = 2,FUN = median))
+preds.lower <- exp(apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.025))
+preds.upper <- exp(apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.975))
+
+final.preds <- data.frame(LandUse = nd$LandUse,
+                          Pred = preds.median,
+                          PredLower = preds.lower,
+                          PredUpper = preds.upper)
+```
+
+If we now plot these predictions, you will see we get the same plot as when we used the _conditional_effects_ function to extract automatically the predictions from the model.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+ggplot(data = final.preds,mapping = aes(x = LandUse)) + 
+  geom_errorbar(mapping = aes(ymin = PredLower,ymax = PredUpper), width=0.1) + 
+  geom_point(mapping = aes(y = Pred)) + 
+  scale_y_continuous(name = "Species richness",transform = "log",
+                     breaks = c(2,5,10,15)) + 
+  theme_classic()
+```
+
 # Bayesian Mixed-effects Models
+
+We can also use the _brms_ package to run Bayesian mixed-effects models. Again, to run a Bayesian model with default parameters uses very similar code to a standard mixed-effects model such as we ran in the earlier <a href="./MixedEffectsModels.html">tutorial</a>.
+
+We will work again with the data on growth of orange trees that is built into R.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+data(Orange)
+```
+
+Here is the model that we had run previously using a standard mixed-effects model approach.
+
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+library(lme4)
+
+mOrange <- lmer(circumference~age+(1|Tree),data=Orange)
+
+summary(mOrange)
+```
+
+And here is the same model run in a Bayesian framework in the _brms_ package.
+
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+mOrange.bayes <- brm(formula = circumference~age+(1|Tree),
+                     data = Orange)
+
+summary(mOrange.bayes)
+```
+
+The Rhat values are all very near 1 again, suggesting good convergence, and plots of the posterior parameter estimates for our 4 chains also look good (hairy catepillars again).
+
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+plot(mOrange.bayes)
+```
+
+Let's also check the distribution of the posterior predicted estimates against the distribution of observed values. This looks generally OK.
+
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+pp_check(object = mOrange.bayes,type = "dens_overlay") + 
+  theme_classic()
+```
+
+Finally, let's calculate the pseudo-R<sup>2</sup> value for our model. To get a marginal R<sup>2</sup> (i.e., representing the variation in the response varaible explained by just the fixed effects), we need to specify _re.form=NA_ to exclude the random effects, while for the conditional R<sup>2</sup> (i.e., representing the variation explained by both fixed and random effects), we use _re.form=NULL_, which includes all random effects.
+
+```{r,echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+# Marginal R2
+bayes_R2(mOrange.bayes,re.form=NA)
+
+# Conditional R2
+bayes_R2(mOrange.bayes,re.form=NULL)
+```
+
+Now we can make predictions from our mixed-effects model to add to a plot, just as we did with linear and generalized linear models, above.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+preds <- conditional_effects(mOrange.bayes)
+
+p <- ggplot() + 
+  geom_point(data = Orange,
+             mapping = aes(x = age,y = circumference,col=Tree)) + 
+  geom_line(data = preds$age,mapping = aes(x = age,y = estimate__)) +
+  geom_ribbon(
+    data = preds$age,mapping = aes(
+      x = age,ymin = lower__,ymax = upper__),alpha=0.2) + 
+  theme_classic()
+
+p
+```
+
+As with the Bayesian versions of linear and generalized linear models, we can also make predictions for a new dataset. Here, if we specificy _re.form = NA_, we get predictions that ignore the identity of the random effects (here, the identity of the individual tree). In other words, we get average predictions across all random-effect groupings (here, across all individual trees). This is the default for the _conditional_effects_ function that we used earlier, and so this yields the same result as before.
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+nd <- data.frame(age = seq(from = 118,to = 1582,length.out = 100))
+
+preds <- brms::posterior_epred(object = mOrange.bayes,newdata = nd,re.form = NA)
+
+preds.median <- apply(X = preds,MARGIN = 2,FUN = median)
+preds.lower <- apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.025)
+preds.upper <- apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.975)
+
+final.preds <- data.frame(age = nd$age,
+                          Pred = preds.median,
+                          PredLower = preds.lower,
+                          PredUpper = preds.upper)
+
+p <- ggplot() + 
+  geom_point(data = Orange,
+             mapping = aes(x = age,y = circumference,col=Tree)) + 
+  geom_line(data = final.preds,mapping = aes(x = age,y = Pred)) +
+  geom_ribbon(
+    data = final.preds,mapping = aes(
+      x = age,ymin = PredLower,ymax = PredUpper),alpha=0.2) +
+  theme_classic()
+
+p
+```
+
+Alternatively, we can specify _re.form = NULL_. This means we get predictions that take into account all random effects in the model. In our model, we only had one random effect (tree identity), and so now we get predictions for the individual tree we specify in the new prediction dataset, and consequently the estimated uncertainty is much lower. Here, we will predict for Tree 5, which has an intermediate level of growth (if you change this to one of the other individual trees, you will see that the predicted tree circumferences increase or decrease accordingly).
+
+```{r, echo=TRUE,results=TRUE,eval=TRUE,warning=FALSE,message=FALSE}
+nd <- data.frame(age = seq(from = 118,to = 1582,length.out = 100),
+                 Tree = 5)
+
+preds <- brms::posterior_epred(object = mOrange.bayes,newdata = nd,re.form = NULL)
+
+preds.median <- apply(X = preds,MARGIN = 2,FUN = median)
+preds.lower <- apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.025)
+preds.upper <- apply(X = preds,MARGIN = 2,FUN = quantile,probs = 0.975)
+
+final.preds <- data.frame(age = nd$age,
+                          Pred = preds.median,
+                          PredLower = preds.lower,
+                          PredUpper = preds.upper)
+
+p <- ggplot() + 
+  geom_point(data = Orange,
+             mapping = aes(x = age,y = circumference,col=Tree)) + 
+  geom_line(data = final.preds,mapping = aes(x = age,y = Pred)) +
+  geom_ribbon(
+    data = final.preds,mapping = aes(
+      x = age,ymin = PredLower,ymax = PredUpper),alpha=0.2) +
+  theme_classic()
+
+p
+```
+
+That's it for this session. Of course, we have barely scratched the surface of the possibilities for conducting Bayesian analyses. I would strongly encourage you to explore these possibilities further, for example by reading the book referenced above.
+
+# Data References
