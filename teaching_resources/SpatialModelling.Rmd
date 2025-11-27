@@ -12,7 +12,7 @@ output:
 
 # Overview
 
-In this session, we will explore some of the basic options available for modelling spatial data in R. Given the vast number of methods available for spatial modelling, we will only be able to scratch the surface in this session. However, the tutorial will hopefully give you some insights into the necessity we often face of dealing with space in our models, some of the complexities of constructing spatial models, and some pointers towards commonly used methods you might encounter.
+In this session, we will explore some of the basic options available for modelling spatial data in R. Given the vast number of methods available for spatial modelling, we will only be able to scratch the surface in this session. However, the tutorial will hopefully give you an introduction into some of the basic approaches we might use to deal with spatial dependence in ecological data.
 
 # Further Reading
 
@@ -30,7 +30,7 @@ Finally, if you want to delve more into INLA modelling, you may find this [tutor
 
 # Dataset and Non-spatial Models
 
-For this tutorial, we will return to the dataset on beetle biodiversity that we created during the <a href="./SpatialData.html">tutorial</a> on spatial data processing, but first we load the R packages that we will be working with this session.
+For this tutorial, we will return to the dataset on beetle biodiversity that we used in the <a href="./SpatialData.html">tutorial</a> on handling spatial data, but first we will load the R packages that we will be working with this session.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 library(dplyr)
@@ -40,14 +40,14 @@ library(spatialreg)
 library(INLA)
 ```
 
-You can load the beetles dataset using the following code.
+Now let's load the beetle data.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 url("https://www.dropbox.com/scl/fi/4olcttgagt0sd92hg64vk/Ewers2007BeetleData.rds?rlkey=14c8qby2023lt9924bi3th0ee&dl=1") %>%
   readRDS() -> beetles
 ```
 
-As a reminder, this dataset contains samples of beetle species richness at sites in New Zealand. Sites were sampled either in natural forest (primary vegetation) or in livestock pastures. In the <a href="./">session</a> on spatial data, we added estimates of the proportion of natural habitat in the 5 kilometres surrounding each site.
+As a reminder, this dataset contains samples of beetle species richness at sites in New Zealand. Sites were sampled either in natural forest (primary vegetation) or in livestock pastures. In the <a href="./">session</a> on spatial data, we added estimates of the proportion of natural habitat in the 5 kilometres surrounding each site (the dataset loaded includes these estimates).
 
 We will start with a simple model of species richness as a function of the interaction between land use and the proportion of natural habitat in the surrounding landscape.
 
@@ -64,7 +64,7 @@ If we inspect the model summary, it appears that beetle species richness is sign
 summary(m1)
 ```
 
-Plotting the predictions from this model on a graph seems to support this conclusion.
+Plotting the predictions from this model seems to support this conclusion.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 preds <- predict(object = m1,se.fit = TRUE)
@@ -89,25 +89,22 @@ p
 
 However, we need to consider that the data we are analyzing are drawn from a spatially structured survey of sites. In spatial ecological data it is common to detect positive spatial autocorrelation in our response variable, and thus in the residuals of a simple model of the data. When data are positively spatially autocorrelated, it means that values sampled nearby tend to be more similar to each other than values sampled further apart. Positive spatial autocorrelation in ecological data occurs for a number of reasons. One key reason is that nearby ecosystems may be connected by dispersal of organisms between them. A second main reason is that the environment itself is spatially structured, such that environmental conditions tend to be more similar for nearby locations and less similar for locations further apart, all else being equal. Residual spatial autocorrelation can also occur if we have omitted an important spatially structured variable from our analysis.
 
-# Testing for Spatial Autocorrelation
+# Visualizing Spatial Autocorrelation
 
-Given the issues outlined above, before concluding a certain set of results from our model, we should first test for residual spatial autocorrelation. We can do this using something called a Moran test, for which we can use the _moran.test_ function in the _spdep_ package. But first we need to convert the spatial coordinates of our sampled data into a list of location neighbours, and then convert these into spatial weights. We complete these steps using the _tri2nb_ and _nb2listw_ functions, both also in the _spdep_ package.
+Before visualizing or testing for spatial autocorrelation, we first need to create a set of spatial weights, based on the spatial proximity of the locations we are considering in our analysis. To do this, we first create a list of spatial neighbours using the _tri2nb_ function in the _spdep_ package. Next, we convert these to a list of spatial weights using the _nb2listw_ function in the same package.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+# Identify spatial neighbourhoods
 nb1 <- tri2nb(coords = beetles[,c('Longitude','Latitude')])
+# Convert spatial neighbourhoods into spatial weights
 sw1 <- nb2listw(neighbours = nb1,style = "W")
-mt1 <- moran.test(x = residuals(m1),listw = sw1)
-
-mt1
 ```
 
-Inspecting the results of the Moran test reveals that we have strong and significant positive spatial autocorrelation in the residuals of our simple generalized linear model.
+To visualize potential spatial autocorrelation in our data and model residuals, we can use a Moran plot.
 
-To make a nice visualization of spatial autocorrelation in our data and models, we can use Moran's plot.
+We will start by showing spatial autocorrelation in our response variable (species richness). The _moran.plot_ function generates a data frame with, among other things, the raw values of the specified variable (here species richness), labelled _x_ in the data frame produced by the function, and a spatially weighted average of the variable at neighbouring locations, which is labelled _wx_ in the data frame.
 
-We will start by showing spatial autocorrelation in our response variable (species richness). The _moran.plot_ function generates a data frame with, among other things, the raw values of the specified variable (here species richness), labelled _x_ in the data frame, and a spatially weighted average of the variable at neighbouring locations.
-
-We will plot points identified as influential, in the _is_inf_ column, as large diamonds, and label them with the corresponding row number from the original dataset.
+We will plot points identified as influential, represented in the _is_inf_ column, as large diamonds, and label them with the corresponding row number from the original dataset.
 
 We will add a trend line to show any correlation between raw values and neighbouring values. The positive relationship that we observe here indicates the presence of positive spatial autocorrelation. In other words, smaller values of species richness tend to be associated with smaller values in neighbouring locations, while larger values tend to be associated with larger values in neighbouring locations. 
 
@@ -128,7 +125,7 @@ p <- ggplot(data = mp,mapping = aes(x = x,y = wx)) +
 p
 ```
 
-We can produce the same plot but for the residuals of our simple non-spatial model.
+We can produce the same plot but for the residuals of our simple non-spatial model. This highlights again the significant residual spatial autocorrelation, shown by the fact that positive model residuals tend to be associated with positive residuals in the surrounding neighbourhood, while negative residuals tend to be associated with negative residuals in the surrounding neighbourhood.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 mp <- moran.plot(x = residuals(m1),listw = sw1,plot = FALSE)
@@ -147,87 +144,105 @@ p <- ggplot(data = mp,mapping = aes(x = x,y = wx)) +
 p
 ```
 
+# Testing for Spatial Autocorrelation
+
+The Moran plot suggests the existence of positive spatial autocorrelation, both in the original estimates of species richness as well as in the residuals of our simple, non-spatial model. However, we should use a statistical test to check whether this apparent spatial autocorrelation is statistically significant. The test to use in this case is called a Moran test. You can run this test using the _moran.test_ function in the _spdep_ package.
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+# Run Moran test for spatial autocorrelation
+mt1 <- moran.test(x = residuals(m1),listw = sw1)
+
+mt1
+```
+
+Inspecting the results of the Moran test reveals that we have strong and significant positive spatial autocorrelation in the residuals of our simple generalized linear model.
+
 # Accounting for Spatial Dependency - Spatial Autoregression
 
 ## Running Spatial Autoregressive Models
 
-The existence of positive spatial autocorrelation in the residuals of our model indicates that we have spatial dependency in our data. I.e., the values that we are recording at one location depend on the values recorded in nearby locations. This violates the assumption of independence of data points made by standard parametric statistical tests. Even if we are not using classical statistical tests, the existence of spatial structure in the data may bias the results of our analyses.
+The existence of positive spatial autocorrelation in the residuals of our model indicates that we have spatial dependency in our data: the values that we are recording at one location depend on the values recorded in nearby locations. This violates the assumption of independence of data points made by standard parametric statistical tests. Even if we are not using classical statistical tests, the existence of spatial structure in the data may bias the results of our analyses.
 
 Therefore, to make robust inferences with our data, we need some way of accounting for the spatial dependency in the data. One simple way of doing this is to use spatial autoregression, with a number of functions to do this provided in the _spatialreg_ package.
 
 We have a two key decisions to make in running a spatial autoregressive model:
 
-1. Whether to inclucde a spatially lagged term just for the response variable (simple spatial autoregression) or for both the response and explanatory variables (spatial Durbin model).
-2. Whether to fit a spatial autoregressive component (which describes the dependency of values at one location on the values of nearby locations) for just the model error, for just the response variable, or for both the response variable and the model error.
+1. Whether to account for spatial dependency in just the model error (spatial error model), for just the response variable (spatial lag model), or for both the response variable and the model error (simultaneous autoregression model).
+2. Whether to inclucde a spatial term just for the response variable or error (simple spatial autoregression), or for both the response/error and also the explanatory variables (spatial Durbin model).
 
 Let's try all combinations of these options, and compare model fit. 
 
-These spatial autoregressive models are an adaptation of linear models, and so can't handle data drawn from a Poisson distribution. Therefore, we will have to log-transform species richness prior to analysis. As discussed in the session on generalized linear modelling, these is not ideal practice, but is unavoidable at the moment.
+These spatial autoregressive models are an adaptation of linear models, and so can't handle data drawn from a Poisson distribution. Therefore, we will have to log-transform species richness prior to analysis. As discussed in the session on generalized linear modelling, this is not best practice for count, but is unavoidable at the moment.
+
+For comparison, we will also re-run the simple non-spatial model as a linear model with log-transformed richness.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 beetles$LogRichness <- log(beetles$Species_richness)
 
-# Spatial dependence in model error only
+# Run simple non-spatial linear model with log-transformed species richness
+m1.nonspat <- lm(data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
+    LandUse:NaturalHabitat5k)
+
+# Spatial dependence in model error only (spatial error models)
+# Only the error term (simple spatial error model)
 m1.spat.sar.err <- spatialreg::errorsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,
   listw = sw1)
+# Error term and explanatory variables (spatial Durbin error model)
 m1.spat.sar.err.d <- spatialreg::errorsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,
   listw = sw1,Durbin = TRUE)
-# Spatial dependence in the response variable only
+# Spatial dependence in the response variable only (spatial lag models)
+# Only the response variable (simple spatial lag model)
 m1.spat.sar.lag <- spatialreg::lagsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,listw = sw1)
+# Response variable and explanatory variables (spatial Durbin lag model)
 m1.spat.sar.lag.d <- spatialreg::lagsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,listw = sw1,Durbin = TRUE)
 # Spatial dependence in the model error and response variable
+# (simultaneous autoregression)
+# Only error and response variable (simple simultaneous autoregression)
 m1.spat.sar.sac <- spatialreg::sacsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,listw = sw1)
+# Error and response variable, and also explanatory variables
+# (spatial Durbin simultaneous autoregression)
 m1.spat.sar.sac.d <- spatialreg::sacsarlm(
   data = beetles,formula = LogRichness~LandUse+NaturalHabitat5k+
     LandUse:NaturalHabitat5k,listw = sw1,Durbin = TRUE)
 ```
 
+If you inspect the output of these models, you will see a number of parameters that describe the strength of spatial dependency in the data. The _lambda_ parameter describes the strength of spatial dependency in the model error (spatial error and simultaneous autoregression models). The _rho_ parameter describes the strength of spatial dependency in the response variable (spatial lag and simultaneous autoregression models). Finally for the spatial Durbin models, we get model parameters describing spatial lagged effects for each of the explanatory variables, as well as interaction terms if specified (i.e., how do the values of the explanatory variables in neighbouring locations affect the response variable in the focal location).
+
 ## Comparing Spatial Autoregressive Models
 
-We can first compare the AIC values of these models to see which appears to fit the data most parsimoniously.
+We can compare the AIC values of these models to see which appears to fit the data most parsimoniously. For comparison, we will also include the simple non-spatial model in this comparison.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-AIC(m1.spat.sar.err,m1.spat.sar.err.d,
+AIC(m1.nonspat,
+    m1.spat.sar.err,m1.spat.sar.err.d,
     m1.spat.sar.lag,m1.spat.sar.lag.d,
     m1.spat.sar.sac,m1.spat.sar.sac.d)
 ```
 
-This seems to suggest that the simplest model, which accounts for spatial autoregression just in the model error, and includes a spatial lag term just for the model response variable, not also the explanatory variables, is the best fitting one.
+This AIC comparison suggests that all of the spatial models outperform the simple non-spatial model, but that the simplest spatial model, which accounts for spatial autoregression only in the model error, is the best fitting one.
 
-But let's also see whether these models have been successful in removing residual spatial autocorrelation.
+Let's check if this model has been successful in removing residual spatial autocorrelation.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-nb <- tri2nb(beetles[,c('Longitude','Latitude')])
-w <- nb2listw(neighbours = nb,style = "W")
-mt.err <- moran.test(x = residuals(m1.spat.sar.err),listw = w)
-mt.err
-mt.err.d <- moran.test(x = residuals(m1.spat.sar.err.d),listw = w)
-mt.err.d
-mt.lag <- moran.test(x = residuals(m1.spat.sar.lag),listw = w)
-mt.lag
-mt.lag.d <- moran.test(x = residuals(m1.spat.sar.lag.d),listw = w)
-mt.lag.d
-mt.sac <- moran.test(x = residuals(m1.spat.sar.sac),listw = w)
-mt.sac
-mt.sac.d <- moran.test(x = residuals(m1.spat.sar.sac.d),listw = w)
-mt.sac.d
+mt.sar.err <- moran.test(x = residuals(m1.spat.sar.err),listw = sw1)
+mt.sar.err
 ```
 
-With the exception of one model, there is no longer significant spatial autocorrelation in the residuals of these models, suggesting that they have successfully dealt with the issue of spatial dependency. Based on the AIC values and tests of residual spatial autocorrelation, it would be tempting to choose the simplest model as the final analysis.
+This test shows that there is no longer significant spatial autocorrelation in the residuals of this spatial model, suggesting that it has successfully dealt with the issue of spatial dependency.
 
 If we inspect the summary of this model, we can see that the conclusions of our non-spatial generalized linear model are still supported: there is a significant reduction in beetle species richness in pastures compared to primary vegetation, and a significantly more positive effect of surrounding natural habitat on beetle species richness in pastures compared to primary vegetation.
 
-In this model summary, the _lambda_ statistic describes the strength of spatial autoregression in the model error. For spatial model types that account for spatial autoregression in the model response variable, this is described by the _rho_ statistic.
+In this model summary, the _lambda_ statistic describes the strength of spatial autoregression in the model error.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 summary(m1.spat.sar.err)
@@ -243,18 +258,20 @@ preds.sar.err <- data.frame(predict(m1.spat.sar.err))
 head(preds.sar.err)
 ```
 
-Here, the 'trend' column represents the fitted effect of the explanatory variables (land use and surrounding natural habitat), ignoring the spatial dependency, the 'signal' represents the effect of spatial dependency, and the 'fit' column contains the overall predictions from the model, combining the effects of the explanatory variables with the effect of spatial dependency (i.e., 'trend' + 'signal').
+Here, the _'trend'_ column represents the fitted effect of the explanatory variables (land use and surrounding natural habitat), ignoring the spatial dependency, the _'signal'_ column represents the effect of spatial dependency, and the _'fit'_ column contains the overall predictions from the model, combining the effects of the explanatory variables with the effect of spatial dependency (i.e., 'trend' + 'signal').
 
-If we plot the overall predictions on a graph, the effect of the spatial dependency means it is hard to discern the response to the explanatory variables. 
-
-To make this plot, we will first rename the columns in the predictions to make sure we can identify them later, and add them to the original dataset.
+For plotting purposes, we will rename these columns to make sure we can identify them later, and add them to the original dataset.
 
 ```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 names(preds.sar.err) <- c("FitSARErr","TrendSARErr","SignalSARErr")
 # Try binding the predictions with the original dataset
 # Will fail if this operation has already been run once
 try(beetles %>% bind_cols(preds.sar.err,.name_repair = "check_unique") -> beetles)
+```
 
+If we plot the overall predictions on a graph, the effect of the spatial dependency means it is hard to discern the response to the explanatory variables. 
+
+```{r, echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 p <- ggplot(data = beetles,mapping = aes(x = NaturalHabitat5k)) + 
   geom_point(mapping = aes(y = Species_richness,colour=LandUse)) + 
   geom_line(mapping = aes(y = exp(FitSARErr),colour=LandUse),linetype = "dashed") + 
@@ -410,11 +427,12 @@ mt
 
 # Exercises
 
-<div style="background-color: #f0f0f0; color: black; padding: 15px; border: none;">
 Download a dataset that describes recorded mammal species richness across Egypt:
+
+```{r, echo=TRUE,results=FALSE,message=FALSE,warning=FALSE,eval=FALSE}
 url("https://www.dropbox.com/scl/fi/hy5zlgtav7mguncqs9i0h/EgyptMammalSpeciesRichness.rds?rlkey=vavnb7d0appd16q1d14tkau46&dl=1") %>% readRDS -> EgyptMammalSpeciesRichness
+```
 
 The columns in this dataset describe recorded mammal species richness (SpRich), annual mean temperature (AnnualTemp), total annual precipitation (AnnualPrecip), as well as the Longitude and Latitude spatial coordinates.
 
 Try making some simple generalized linear models of species richness as a function of the climate variables. Then, test for spatial autocorrelation, and try out some of the spatial modelling techniques we have learned in the preceding tutorial.
-</div>
