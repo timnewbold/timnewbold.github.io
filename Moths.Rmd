@@ -1141,6 +1141,55 @@ treemap(dtf = species.sums,index = "Sp",vSize = "N")
 ```
     
 
+## 2026
+
+```{r,echo=FALSE,results=TRUE}
+yr.data <- moth.data[(moth.data$Year==2026),]
+total.individs <- sum(yr.data$NumberCaught,na.rm=TRUE)
+
+total.species <- length(unique(na.omit(yr.data)$Species))
+
+total.traps <- length(unique(yr.data$TrapNumber))
+
+```
+
+I ran a total of `r total.traps` traps this year, catching `r total.individs` individuals of `r total.species` species
+
+```{r,echo=FALSE,results=TRUE}
+traps <- unique(yr.data$TrapNumber)
+
+sp.accum <- sapply(X = 1:length(traps),
+                   FUN = function(i){
+                     sub.data <- yr.data[(yr.data$TrapNumber<=traps[i]),]
+                     
+                     cum.sp <- length(unique(tolower(na.omit(sub.data$Species))))
+                     
+                   })
+
+par(mar=c(3.2,3.2,0.5,0.2))
+par(mgp=c(2.0,0.2,0))
+par(tck=-0.01)
+par(las=1)
+
+plot(1:length(sp.accum),sp.accum,type="l",bty="l",col="#A40122",
+     lwd=3,xlab="Trap number",ylab="Cumulative species count",
+     xaxt="n")
+axis(side = 1,at = 1:length(sp.accum))
+```
+
+```{r,echo=FALSE,results=TRUE}
+
+species.sums <- tapply(X = yr.data$NumberCaught,
+                       INDEX = yr.data$Species,
+                       FUN = sum)
+
+species.sums <- data.frame(Sp=names(species.sums),
+                           N=species.sums)
+
+treemap(dtf = species.sums,index = "Sp",vSize = "N")
+```
+    
+
 # By Species
 
 ## Angle shades
