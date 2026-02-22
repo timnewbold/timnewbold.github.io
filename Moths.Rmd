@@ -2760,10 +2760,10 @@ title(xlab="Month")
 box(bty="l")
 ```
 
-## Common Quaker
+## Common quaker
 
 ```{r,echo=FALSE,results=TRUE}
-species.data <- moth.data[which(moth.data$Species=="Common Quaker"),]
+species.data <- moth.data[which(moth.data$Species=="Common quaker"),]
 total.caught <- sum(species.data$NumberCaught,na.rm=TRUE)
 n.traps <- length(unique(species.data$TrapNumber))
 first.year <- min(species.data$Year,na.rm=TRUE)
@@ -2771,7 +2771,7 @@ last.year <- max(species.data$Year,na.rm=TRUE)
 
 species.data$Year <- factor(x = species.data$Year,levels = all.yrs)
 ```
-In total, I have caught `r total.caught` individuals of Common Quaker, in `r n.traps` traps, between `r first.year` and `r last.year`.
+In total, I have caught `r total.caught` individuals of Common quaker, in `r n.traps` traps, between `r first.year` and `r last.year`.
 
 ```{r,echo=FALSE,results=TRUE}
 yr.avg.catches <- tapply(X = species.data$NumberCaught,INDEX = species.data$Year,FUN = mean)
