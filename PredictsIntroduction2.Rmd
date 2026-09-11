@@ -409,6 +409,8 @@ The sites in PREDICTS are distributed across all of the world's 14 terrestrial b
 
 ```{r FigSitesMap, echo=FALSE,eval=TRUE, warning=FALSE, fig.cap="Map of sites with biodiversity samples in the PREDICTS database"}
 
+library(sf)
+
 ne_countries(scale = 50,returnclass = 'sv') -> world
 
 p <- ggplot() + 
@@ -570,13 +572,13 @@ There are two main ways that you can now analyze the PREDICTS data:
 
 In this tutorial, we will focus on the second model type, which is the approach used most often in published papers using the PREDICTS database.
 
-We will use the brms package for modelling.
+We will use the glmmTMB package for modelling.
 
-```{r LoadBRMS,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
-library(brms)
+```{r LoadglmmTMB,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+library(glmmTMB)
 ```
 
-Before we construct some models, we need first to calculate site-level diversity summaries (species richness, total abundance, etc.). This is done using the SiteMetrics function of the predictsFunctions package. We will also rearrange the land-use classification so that sampling is sufficient across different land-use types for creating robust models. To allow the models to run in a reasonable length of time, we will focus on one taxonomic subset of the PREDICTS data: .
+Before we construct some models, we need first to calculate site-level diversity summaries (species richness, total abundance, etc.). This is done using the SiteMetrics function of the predictsFunctions package. We will also rearrange the land-use classification so that sampling is sufficient across different land-use types for creating robust models. To allow the models to run quickly, we will focus on one taxonomic subset of the PREDICTS data: insects (Class 'Insecta').
 
 ```{r SiteSummaries, echo=TRUE,results=TRUE}
 sites <- predicts %>%
@@ -588,78 +590,67 @@ sites <- predicts %>%
               srEstimators = NULL) %>%
   mutate(LandUse = recode(Predominant_land_use,
                           'Primary vegetation'='Primary',
-                          'Mature secondary vegetation'='Secondary',
-                          'Intermediate secondary vegetation'='Secondary',
-                          'Young secondary vegetation'='Secondary',
-                          'Secondary vegetation (indeterminate age)'='Secondary',
-                          'Plantation forest'='Agriculture',
-                          'Cropland'='Agriculture',
-                          'Pasture'='Agriculture',
-                          'Urban'=NA_character_,
-                          'Cannot decide'=NA_character_))
+                          'Mature secondary vegetation'='Secondary_Mature',
+                          'Intermediate secondary vegetation'='Secondary_Intermediate',
+                          'Young secondary vegetation'='Secondary_Young',
+                          'Secondary vegetation (indeterminate age)'=NA_character_,
+                          'Plantation forest'='Plantation',
+                          'Cropland'='Cropland',
+                          'Pasture'='Pasture',
+                          'Urban'='Urban',
+                          'Cannot decide'=NA_character_)) %>%
+  mutate(LandUse = factor(LandUse,levels=c(
+    'Primary','Secondary_Mature','Secondary_Intermediate','Secondary_Young',
+    'Plantation','Pasture','Cropland','Urban')))
 ```
 
-We will start by constructing a very simple model of species richness as a function of land use, fitting the following random intercepts: 1) study identity (SS in the PREDICTS database fields), to control for variation in sampling methods, sampling effort, taxonomic group, and broad study regiong among individual studies in the PREDICTS database; and 2) Spatial Block nested within Study (SSB in the PREDICTS database fields), to account for the spatial structuring of sampled sites within each study. The PREDICTS species-richness estimates are typically highly over-dispersed, so we will use a negative binomial model.
+We will start by constructing a very simple model of species richness as a function of land use, fitting the following random intercepts: 1) study identity (SS in the PREDICTS database fields), to control for variation in sampling methods, sampling effort, taxonomic group, and broad study region among individual studies in the PREDICTS database; and 2) Spatial Block nested within Study (SSB in the PREDICTS database fields), to account for the spatial structuring of sampled sites within each study. For now, we will fit a simple Poisson model, but note that this doesn't conform well to model assumptions because of over-dispersion and zero-inflation in the counts of the number of species in the PREDICTS database. There are more appropriate ways to model the data to handle these issues, but we won't deal with those yet.
 
 ```{r RichnessModel1,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 
 # Exclude NAs from LandUse column, then build model
 richMod1 <- sites %>% 
   subset(!is.na(LandUse)) %>%
-  brm(formula = Species_richness~LandUse+(1|SS)+(1|SSB),
-      family = negbinomial(),iter=2000,chains=4,cores=4)
+  glmmTMB(formula=Species_richness~LandUse+(1|SS)+(1|SSB),family=poisson)
 
 ```
 
-To check model behaviour, we can inspect the trace plots to check that the individual model chains are well mixed, and compare the density distributions of observed and predicted values.
-
-```{r Model1Diagnostics1, echo=TRUE,eval=TRUE, warning=FALSE,message=FALSE,fig.cap="Trace plots for first model of species richness"}
-
-plot(richMod1)
-
-```
-
-```{r, Model1Diagnostics2, echo=TRUE,eval=TRUE,warning=FALSE,message=FALSE,fig.cap="Density distribution of observed and model-predicted values"}
-
-pp_check(richMod1) + scale_x_continuous(transform = 'sqrt')
-
-```
-
-Now let's plot the predicted effects of land use from the model. To do so, we will take 100 draws from the posterior predictions, and calculate the % difference in secondary vegetation and agriculture compared to primary vegetation. We will then summarize across the 100 predictions from the posterior distribution to generate final predicted values and credible intervals: 67% (approximately equal to &plusmn; 1 standard error) and 95%.
+To plot the model-estimated effects of land use on insect species richness, we can simply back-transform the coefficients of the model. Since a Poisson model uses a log-transformation on the raw values, we back-transform them by taking the exponential. This tells us what proportion of the number of species in the baseline land use (primary vegetation) are estimated to be retained in the other land-use types, on average. If we multiply these proportions by 100 and subtract 100, this tells us the model-estimated percentage difference in species richness compared to primary vegetation. We can also extract the uncertainty (given as standard error) around these coefficients, from which we can calculate confidence intervals for our modelled estimates. There are more sophisticated ways of plotting model results, but we won't cover those for now.
 
 ```{r PlotModelEffects1, echo=TRUE, eval=TRUE, warning=FALSE, message=FALSE, fig.cap="Model estimated effects of land use on insect species richness. Points show median predicted species richness as a % difference compared to primary vegetation, thick lines show 67% credible intervals, and thin lines 95% credible intervals"}
 
-# Create data frame with the three land uses for which to plot model predictions
-nd <- data.frame(
-  LandUse=factor(c("Primary","Secondary","Agriculture"),
-                 levels=levels(sites$LandUse)))
+# Get the modelled coefficients for the effect of land use on insect species richness
+luCoefs <- summary(richMod1)$coefficients$cond[,'Estimate']
+# We will replace the first coefficient with zero, since we are going to compare 
+# everything to primary vegetation as our baseline
+luCoefs[1] <- 0
 
-# Make 100 predictions from the posterior model estimates  
-preds <- sapply(X = 1:100,FUN = function(n){
-  
-  # Draw one of the posterior parameter estimates at random
-  i <- sample(x = 1:4000,size = 1,replace = FALSE)
-  
-  # Use this set of posterior parameter estimates to get predicted
-  # probability of occurrence under baseline and observed environmental
-  # conditions
-  y <- brms::posterior_epred(
-    object = richMod1,newdata = nd,re_formula = NA,
-    draw_ids = i)[1,]
-  
-  y <- ((y/y[1])*100)-100
-  
-  return(y)
-})
+# Get the uncertainty (standard error) for these land-use coefficients
+luCoefSEs <- summary(richMod1)$coefficients$cond[,'Std. Error']
+# Again, we will replace the first standard error value with zero, since we are 
+# not interested in the uncertainty for our baseline (primary vegetation)
+luCoefSEs[1] <- 0
 
-lu <- factor(c("Primary","Secondary","Agriculture"),
-             levels=c("Primary","Secondary","Agriculture"))
-y.median <- apply(X = preds,MARGIN = 1,FUN = median)
-y.lower.95 <- apply(X = preds,MARGIN = 1,FUN = quantile,probs=0.025)
-y.upper.95 <- apply(X = preds,MARGIN = 1,FUN = quantile,probs=0.975)
-y.lower.67 <- apply(X = preds,MARGIN = 1,FUN = quantile,probs=0.16667)
-y.upper.67 <- apply(X = preds,MARGIN = 1,FUN = quantile,probs=0.83333)
+# Now we will calculate the median modelled estimates for the land-use effects,
+# taking the exponential to back-transform the raw coefficients from the model
+# then multiplying by 100 and substracting 100 to get a percentage difference
+y.median <- exp(luCoefs)*100-100
+# Now we will calculate the confidence intervals, noting that the 95% confidence
+# interval is +/- 1.96 * standard error, and the 67% confidence interval
+# +/- 1 * standard error
+y.lower.95 <- exp(luCoefs - 1.96*luCoefSEs)*100-100
+y.upper.95 <- exp(luCoefs + 1.96*luCoefSEs)*100-100
+y.lower.67 <- exp(luCoefs - luCoefSEs)*100-100
+y.upper.67 <- exp(luCoefs + luCoefSEs)*100-100
+lu <- factor(c("Primary","Secondary - Mature",
+        "Secondary - Intermediate","Secondary - Young",
+        "Plantation","Pasture","Cropland","Urban"),
+        levels=c("Primary","Secondary - Mature",
+        "Secondary - Intermediate","Secondary - Young",
+        "Plantation","Pasture","Cropland","Urban"))
 
+# Now we can plot the final graph, with median modelled estimates (points) along with
+# the confidence intervals (95% as thin lines and 67% as thick lines)
 plotLU <- ggplot() + 
   geom_linerange(
     mapping = aes(x = lu,
@@ -672,14 +663,15 @@ plotLU <- ggplot() +
                                 ymax = y.upper.67,
                                 col = lu),
                   linewidth = 1, size = 0.8) +
-  scale_colour_manual(values = c("#66a61e","#1b9e77","#d95f02")) +
+  # scale_colour_manual(values = c("#66a61e","#1b9e77","#d95f02")) +
   scale_y_continuous(name = "\u0394 Species Richness (%)",
                      limits = c(-30,0)) + 
   scale_x_discrete(name = "Land use") + 
   geom_hline(mapping = aes(yintercept = 0),
              alpha = 0.3, linetype = 'dashed') +
   theme_classic() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 plotLU
 
