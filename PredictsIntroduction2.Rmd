@@ -600,11 +600,11 @@ In this tutorial, we will focus on the second model type, which is the approach 
 
 We will use the glmmTMB package for modelling.
 
-```{r InstallPackages,echo=TRUE,results=FALSE,eval=FALSE}
+```{r InstallGLMMTMB,echo=TRUE,results=FALSE,eval=FALSE}
 install.packages("glmmTMB")
 ```
 
-```{r LoadGlmmTMB,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
+```{r LoadGLMMTMB,echo=TRUE,results=TRUE,message=FALSE,warning=FALSE}
 library(glmmTMB)
 ```
 
