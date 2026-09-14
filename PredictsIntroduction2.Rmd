@@ -156,7 +156,7 @@ references:
       year: 2006
 ---
 
-```{r LoadPackagesBackground, echo=TRUE, eval=TRUE, warning=FALSE, message=FALSE}
+```{r LoadPackagesBackground, echo=FALSE, eval=TRUE, warning=FALSE, message=FALSE}
 library(kableExtra)
 library(ggwordcloud)
 library(tidyverse)
@@ -180,7 +180,7 @@ install.packages("dplyr")
 intall.packages("ggplot2")
 ```
 
-```{r LoadPackages,echo=TRUE,results=TRUE}
+```{r LoadPackages,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 library(dplyr)
 library(ggplot2)
 ```
@@ -201,7 +201,7 @@ To work with the database, you should install a package that contains some basic
 remotes::install_github("timnewbold/predicts-demo",subdir="predictsFunctions")
 ```
 
-```{r LoadPredictsFunctions,echo=TRUE,results=TRUE}
+```{r LoadPredictsFunctions,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 library(predictsFunctions)
 ```
 
@@ -423,7 +423,7 @@ install.packages("rnaturalearth")
 intall.packages("tidyterra")
 ```
 
-```{r LoadMapPackages,echo=TRUE,results=TRUE}
+```{r LoadMapPackages,echo=TRUE,results=TRUE,warning=FALSE,message=FALSE}
 library(rnaturalearth)
 library(tidyterra)
 ```
@@ -693,7 +693,8 @@ plotLU <- ggplot() +
                                 ymax = y.upper.67,
                                 col = lu),
                   linewidth = 1, size = 0.8) +
-  # scale_colour_manual(values = c("#66a61e","#1b9e77","#d95f02")) +
+  scale_colour_manual(values = c("#66a61e","#147659","#1b9e77","#8ecfbc",
+                                 "#7570b3","#d95f02","#e6ab02","#e7298a")) +
   scale_y_continuous(name = "\u0394 Species Richness (%)",
                      limits = c(-30,0)) + 
   scale_x_discrete(name = "Land use") + 
